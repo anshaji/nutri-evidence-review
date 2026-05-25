@@ -5,7 +5,7 @@ Nutrition Evidence Synthesis Pipeline v2.0
 Multi-source retrieval (PubMed + OpenAlex) with MeSH-based scoring.
 
 Usage:
-    export NCBI_API_KEY=your_key_here  # Optional but recommended (10x faster)
+    export NCBI_API_KEY=d150a9f166dce47068908eb6d4f47aa92f08
     python3 fetch_papers.py
 
 Tracks:
