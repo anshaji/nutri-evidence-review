@@ -2,9 +2,28 @@
 
 import os
 
+
+def _load_dotenv():
+    """Load .env file from project root if it exists (stdlib-only)."""
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+    if os.path.isfile(env_path):
+        with open(env_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, value = line.partition("=")
+                key, value = key.strip(), value.strip()
+                # Don't override existing env vars
+                if key not in os.environ:
+                    os.environ[key] = value
+
+
+_load_dotenv()
+
 # ── NCBI E-Utilities ────────────────────────────────────────────────────────
 NCBI_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
-NCBI_API_KEY = os.environ.get("NCBI_API_KEY")  # Set via: export NCBI_API_KEY=...
+NCBI_API_KEY = os.environ.get("NCBI_API_KEY")  # Loaded from .env or environment
 NCBI_TOOL = "nutri-evidence-review"
 NCBI_EMAIL = "anshaji06@gmail.com"
 
