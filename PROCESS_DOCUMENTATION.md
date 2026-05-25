@@ -295,15 +295,58 @@ Step function based on `cited_by_count` (from OpenAlex cross-reference):
 
 ---
 
+## Stage 3.5: Full-Text Retrieval (PMC Open Access)
+
+**Objective:** Retrieve structured full-text content from PubMed Central for top-scored papers that have open-access PMC versions, enabling deeper LLM synthesis with effect sizes, subgroup analyses, and implementation details not present in abstracts.
+
+**Method:**
+
+1. **PMID to PMCID conversion** — Batch API call to NCBI ID Converter (`https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/`) with up to 200 PMIDs per request
+2. **PMC full-text fetch** — E-Utilities efetch with `db=pmc` for each PMCID
+3. **XML parsing** — Extract structured sections (Introduction, Methods, Results, Discussion), tables (labels, captions, content), and concatenate into readable text
+4. **Caching** — Raw XML saved to `raw_responses/pmc/{PMCID}.xml` for reproducibility and to avoid re-fetching
+
+**Coverage:**
+- Typically 85/99 PubMed papers have a PMCID (PMC-indexed)
+- Of those, ~57 have downloadable full-text XML (body element present)
+- ~28 are publisher-restricted (Cochrane reviews and some Elsevier journals block XML download despite PMC indexing)
+- Final coverage: ~57% of top 100 papers have structured full text
+
+**Output fields added to papers:**
+- `fulltext_source`: "pmc" or "abstract_only"
+- `fulltext`: dict with `sections` (list of {title, text}), `tables` (list of {label, caption, content}), and `full_text` (concatenated plain text)
+- `pmcid`: PMC identifier (if available)
+
+**Module:** `pipeline/fulltext_client.py`
+
+**Known limitations:**
+- NCBI ID Converter returns PMIDs as integers — must cast to str() for matching
+- Some publishers (Cochrane/Wiley, Elsevier) restrict PMC XML body access
+- No PDF parsing fallback (would require non-stdlib libraries)
+
+---
+
 ## Stage 4: LLM Review and Synthesis
 
 **Objective:** Review the top-ranked papers and produce a structured list of nutrition interventions ranked by evidence strength, cost-effectiveness, and scalability through government-led programs in LMIC settings.
 
-**Input:** The top 100 papers from Stage 3 (titles, abstracts, metadata, MeSH terms, tiers, and scores).
+**Input:** The top 100 papers from Stage 3.5 (titles, abstracts, metadata, MeSH terms, tiers, scores, AND structured full text for ~57 papers).
+
+**Two synthesis modes:**
+
+### Mode A: Abstract-Only Synthesis (lighter)
+
+Uses only abstracts and metadata. Produces `INTERVENTION_SYNTHESIS.md`.
+
+### Mode B: Full-Text-Enhanced Synthesis (deeper)
+
+Uses full text (Results sections, tables, subgroup analyses) where available, with abstracts as fallback. Produces `FULL_INTERVENTION_SYNTH.md`.
 
 **LLM prompt (task framing):**
 
-> You are reviewing the abstracts and metadata of the top 100 papers from a multi-source systematic search of the nutrition intervention literature in LMICs. Papers were retrieved from PubMed (using MeSH terms and publication type filters) and OpenAlex (for nutrition-sensitive literature). They are ranked by a composite score weighting study design authority, MeSH-based topic relevance, setting relevance, recency, citation impact, and tier assignment.
+> You are reviewing the top 100 papers from a multi-source systematic search of the nutrition intervention literature in LMICs. Papers were retrieved from PubMed (using MeSH terms and publication type filters) and OpenAlex (for nutrition-sensitive literature). They are ranked by a composite score weighting study design authority, MeSH-based topic relevance, setting relevance, recency, citation impact, and tier assignment.
+>
+> For 57 papers, you have access to structured full text (Results sections, tables, discussion) from PubMed Central. For the remaining 43 papers, you have abstracts and metadata only. Full-text papers are marked with `fulltext_source: "pmc"`.
 >
 > Papers are organized into tiers:
 > - **Primary tier:** Confirmed meta-analyses (highest evidence quality)
@@ -313,7 +356,7 @@ Step function based on `cited_by_count` (from OpenAlex cross-reference):
 >
 > Your task:
 >
-> 1. **Identify distinct interventions.** Read across all abstracts and extract every discrete nutrition intervention. Group closely related variants under a single heading.
+> 1. **Identify distinct interventions.** Read across all papers and extract every discrete nutrition intervention. Group closely related variants under a single heading.
 >
 > 2. **Rate each intervention on three dimensions:**
 >    - **Evidence strength** (A/B/C): Based on number and quality of meta-analyses, consistency of findings, study type hierarchy
@@ -327,6 +370,7 @@ Step function based on `cited_by_count` (from OpenAlex cross-reference):
 >
 > 4. **For each intervention, document:**
 >    - Evidence rating with justification (cite specific papers by PMID, year, journal, citations)
+>    - **Specific effect sizes with confidence intervals** (from full-text Results sections where available)
 >    - Mechanism of action
 >    - Government scaling pathway
 >    - Key supporting papers from the database
@@ -336,19 +380,26 @@ Step function based on `cited_by_count` (from OpenAlex cross-reference):
 > 6. **Produce a summary table** (Rank, Intervention, Evidence, Cost-Effectiveness, Scalability, Target)
 >
 > **Constraints:**
-> - Base synthesis only on information in provided abstracts and metadata
-> - Do not fabricate effect sizes not present in abstracts
+> - Base synthesis on information in provided full text, abstracts, and metadata
+> - For full-text papers: extract and report actual effect sizes (RR, OR, SMD, MD with 95% CIs)
+> - For abstract-only papers: report only what is stated in the abstract
+> - Do not fabricate effect sizes not present in the source material
 > - Use MeSH terms and publication types to validate classification
-> - Flag misclassified or irrelevant papers
+> - Flag papers where full text was not available for key claims
 > - Distinguish nutrition-specific from nutrition-sensitive interventions
+> - Note where subgroup analyses (from full text) modify the headline finding
 
 **LLM review process:**
 - Papers are read in batches (top 40, then 41-100) due to context window constraints
-- The LLM reads: title, abstract, publication year, study type, publication types, MeSH terms, tier, citation count, journal, score
+- For each paper, the LLM reads: title, abstract, publication year, study type, publication types, MeSH terms, tier, citation count, journal, score
+- For full-text papers: additionally reads the Results section text and table data
 - MeSH terms help the LLM verify what intervention and population each paper actually studies
 - Tier assignment helps the LLM weight evidence appropriately (primary > supplementary)
+- Full-text access enables extraction of: pooled effect estimates, forest plot data, subgroup analyses, implementation context, and study heterogeneity metrics
 
-**Output:** `INTERVENTION_SYNTHESIS.md`
+**Outputs:**
+- `INTERVENTION_SYNTHESIS.md` — Abstract-only synthesis (lighter, 18 interventions)
+- `FULL_INTERVENTION_SYNTH.md` — Full-text-enhanced synthesis (deeper, 20 interventions with effect sizes)
 
 ---
 
@@ -358,46 +409,64 @@ To rerun the pipeline:
 
 ```bash
 cd nutri-evidence-review/
+# Option A: use .env file (auto-loaded by config.py)
+echo "NCBI_API_KEY=your_key_here" > .env
+python3 fetch_papers.py
+
+# Option B: export environment variable
 export NCBI_API_KEY=your_key_here
 python3 fetch_papers.py
 ```
 
 **Dependencies:** Python 3.10+ standard library only (`urllib`, `json`, `csv`, `xml.etree.ElementTree`). No external packages required.
 
-**Runtime:** ~2 minutes with NCBI API key, ~5 minutes without.
+**Runtime:** ~3-4 minutes with NCBI API key (includes PMC full-text retrieval), ~7 minutes without key.
+
+- Stage 1 (retrieval): ~50s PubMed + ~12s OpenAlex
+- Stage 2 (dedup + enrich + score): ~35s
+- Stage 3.5 (PMC full text): ~60-90s (cached on subsequent runs: instant)
+- Export: ~5s
+
+**Caching:** PMC full-text XML is cached in `raw_responses/pmc/`. Subsequent runs skip already-downloaded articles, making repeat runs much faster.
 
 **To modify:**
 - **Search queries:** Edit `pipeline/queries.py` (TRACK_A_QUERIES, TRACK_B_QUERY, TRACK_C_QUERIES)
 - **Scoring weights:** Edit `pipeline/scoring.py` (PUBTYPE_SCORES, MeSH term sets, component functions)
 - **Number of papers for review:** Edit `TOP_N_FOR_REVIEW` in `pipeline/config.py` (default: 100)
-- **API configuration:** Edit `pipeline/config.py` or set `NCBI_API_KEY` environment variable
+- **API configuration:** Edit `pipeline/config.py` or create `.env` file with `NCBI_API_KEY=your_key`
+- **Full-text retrieval:** Edit `pipeline/fulltext_client.py` (batch sizes, parsing logic)
 
 ---
 
 ## Pipeline Architecture Diagram
 
 ```
-                    STAGE 1: RETRIEVAL                          STAGE 2         STAGE 3        STAGE 4
-                                                               SCORING         EXPORT         LLM REVIEW
+                    STAGE 1: RETRIEVAL                     STAGE 2      STAGE 3     STAGE 3.5       STAGE 4
+                                                          SCORING      EXPORT      FULL TEXT        LLM REVIEW
 
 Track A Pass 1 ──► PubMed: 12 queries x meta-analysis[pt] ─┐
 (meta-analyses)     484 papers                               │
                                                              │
 Track A Pass 2 ──► PubMed: 12 queries x systematic review[pt]│
-(syst. reviews)     945 papers                               ├──► Dedup ──► Enrich ──► Score ──► Export
-                                                             │    (PMID)    (citations   (7        │
-Track B ─────────► PubMed: CEA query (no [pt] filter)  ─────┤    (DOI)     via OpenAlex) components) │
-(cost-effect.)      490 papers                               │                                     │
-                                                             │                            papers_database.json
-Track C ─────────► OpenAlex: 4 queries (econ/dev lit) ──────┘                            papers_ranked.csv
-(nutrition-         2000 papers                                                           top_papers_for_review.json
- sensitive)                                                                                        │
-                                                                                                   ▼
-                    Final deduplicated set: 2,700 papers                                   LLM reviews top 100
-                    (1,158 PubMed + 1,542 OpenAlex)                                       abstracts + metadata
-                                                                                                   │
-                                                                                                   ▼
-                                                                                          INTERVENTION_SYNTHESIS.md
+(syst. reviews)     945 papers                               ├──► Dedup ──► Enrich ──► Score ──► PMC Full Text ──► Export
+                                                             │    (PMID)    (citations   (7        (top 100)        │
+Track B ─────────► PubMed: CEA query (no [pt] filter)  ─────┤    (DOI)     via OpenAlex) components) ~57 papers     │
+(cost-effect.)      490 papers                               │                                     with body       │
+                                                             │                                                      │
+Track C ─────────► OpenAlex: 4 queries (econ/dev lit) ──────┘                                                      │
+(nutrition-         2000 papers                                                                                     │
+ sensitive)                                                                              papers_database.json       │
+                                                                                         papers_ranked.csv          │
+                    Final deduplicated set: 2,700 papers                                  top_papers_for_review.json │
+                    (1,158 PubMed + 1,542 OpenAlex)                                      (with full text)           │
+                                                                                                                    ▼
+                                                                                                  LLM reviews top 100
+                                                                                                  full text + abstracts
+                                                                                                          │
+                                                                                          ┌─────────��─────┴──────────────┐
+                                                                                          ▼                              ▼
+                                                                              INTERVENTION_SYNTHESIS.md    FULL_INTERVENTION_SYNTH.md
+                                                                              (abstract-only, lighter)     (full-text-enhanced, deeper)
 ```
 
 ---
@@ -409,7 +478,7 @@ nutri-evidence-review/
 ├── fetch_papers.py              # Entry point: python3 fetch_papers.py
 ├── pipeline/
 │   ├── __init__.py
-│   ├── config.py                # API keys, rate limits, output paths
+│   ├── config.py                # API keys, .env loader, rate limits, output paths
 │   ├── queries.py               # All query definitions (12 + 1 + 4)
 │   ├── models.py                # Paper TypedDict (unified schema)
 │   ├── pubmed_client.py         # E-Utilities: esearch, efetch, XML parsing
@@ -417,13 +486,21 @@ nutri-evidence-review/
 │   ├── citation_enrichment.py   # DOI-based cross-reference for citation counts
 │   ├── dedup.py                 # 3-phase deduplication logic
 │   ├── scoring.py               # 7-component scoring algorithm
+│   ├── fulltext_client.py       # PMC full-text retrieval (Stage 3.5)
 │   └── main.py                  # Orchestrator: runs all stages
+├── .env                         # API key (gitignored)
 ├── raw_responses/               # Saved API responses (gitignored)
+│   ├── pubmed_*.xml             # PubMed efetch responses
+│   ├── openalex_*.json          # OpenAlex API responses
+│   └── pmc/                     # PMC full-text XML (one file per PMCID)
+│       ├── PMC6572871.xml
+│       └── ...
 ├── papers_database.json         # Full output (gitignored)
 ├── papers_ranked.csv            # CSV output (gitignored)
-├── top_papers_for_review.json   # Top 100 for LLM review (gitignored)
+├── top_papers_for_review.json   # Top 100 with full text (gitignored)
 ├── PROCESS_DOCUMENTATION.md     # This file
-└── INTERVENTION_SYNTHESIS.md    # LLM synthesis output
+├── INTERVENTION_SYNTHESIS.md    # Abstract-only synthesis (Mode A)
+└── FULL_INTERVENTION_SYNTH.md   # Full-text-enhanced synthesis (Mode B)
 ```
 
 ---
@@ -434,3 +511,4 @@ nutri-evidence-review/
 |---------|------|---------|
 | v1.0 | 2026-05-22 | Initial pipeline: OpenAlex only, 16 keyword queries, binary keyword scoring |
 | v2.0 | 2026-05-24 | Multi-source (PubMed + OpenAlex), MeSH-based scoring, two-tier MA/SR separation, citation enrichment, modular architecture |
+| v2.1 | 2026-05-24 | Added Stage 3.5: PMC full-text retrieval for top papers. Full-text-enhanced synthesis (FULL_INTERVENTION_SYNTH.md). .env auto-loading. API key masked from source. |

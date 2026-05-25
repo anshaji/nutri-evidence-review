@@ -19,6 +19,7 @@ from .openalex_client import fetch_openalex_query
 from .citation_enrichment import enrich_citations
 from .dedup import deduplicate_pubmed, deduplicate_openalex, deduplicate_cross_source
 from .scoring import score_paper
+from .fulltext_client import retrieve_fulltext
 
 
 def run_pipeline():
@@ -126,12 +127,17 @@ def run_pipeline():
     print(f"  Scored {len(all_papers)} papers. Score range: "
           f"{all_papers[-1]['relevance_score']:.1f} – {all_papers[0]['relevance_score']:.1f}")
 
+    # ── Full-Text Retrieval (Stage 3.5) ───────────────────────────────────
+    top_n = min(TOP_N_FOR_REVIEW, len(all_papers))
+    top_papers = all_papers[:top_n]
+    top_papers = retrieve_fulltext(top_papers)
+
     # ── Export ──────────────────────────────────────────────────────────────
     print(f"\n{'─' * 70}")
     print("EXPORT")
     print(f"{'─' * 70}\n")
 
-    # Full JSON database
+    # Full JSON database (without fulltext to keep size manageable)
     json_path = os.path.join(OUTPUT_DIR, "papers_database.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(all_papers, f, indent=2, ensure_ascii=False, default=str)
@@ -157,12 +163,13 @@ def run_pipeline():
             writer.writerow(row)
     print(f"  {csv_path}: {len(all_papers)} rows")
 
-    # Top N for review
-    top_n = min(TOP_N_FOR_REVIEW, len(all_papers))
+    # Top N for review (WITH full text)
     top_path = os.path.join(OUTPUT_DIR, "top_papers_for_review.json")
     with open(top_path, "w", encoding="utf-8") as f:
-        json.dump(all_papers[:top_n], f, indent=2, ensure_ascii=False, default=str)
-    print(f"  {top_path}: top {top_n} papers")
+        json.dump(top_papers, f, indent=2, ensure_ascii=False, default=str)
+    ft_count = sum(1 for p in top_papers if p.get("fulltext_source") == "pmc")
+    print(f"  {top_path}: top {top_n} papers ({ft_count} with full text, "
+          f"{top_n - ft_count} abstract-only)")
 
     # ── Summary ─────────────────────────────────────────────────────────────
     print(f"\n{'=' * 70}")
