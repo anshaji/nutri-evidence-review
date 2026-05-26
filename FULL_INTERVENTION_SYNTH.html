@@ -11,7 +11,7 @@
 
 
 
-<title>PROCESS_DOCUMENTATION</title>
+<title>FULL_INTERVENTION_SYNTH</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -352,1019 +352,910 @@ display: none;
 </div>
 
 
-<div id="automated-evidence-synthesis-pipeline-v2.0-process-documentation" class="section level1">
-<h1>Automated Evidence Synthesis Pipeline v2.0: Process
-Documentation</h1>
-<div id="overview" class="section level2">
-<h2>Overview</h2>
-<p>This pipeline automates the identification, ranking, and synthesis of
-academic evidence on nutrition interventions in low- and middle-income
-countries (LMICs). It combines multi-source programmatic literature
-search (PubMed + OpenAlex), structured scoring using authoritative
-metadata, and LLM-based review and synthesis.</p>
-<p><strong>Repository:</strong> <a href="https://github.com/anshaji/nutri-evidence-review">github.com/anshaji/nutri-evidence-review</a></p>
+<div id="full-text-evidence-synthesis-nutrition-interventions-for-lmic-scaling" class="section level1">
+<h1>Full-Text Evidence Synthesis: Nutrition Interventions for LMIC
+Scaling</h1>
+<p><strong>Pipeline Version:</strong> 2.0 (PubMed + OpenAlex Multi-Track
+with PMC Full-Text Retrieval) <strong>Papers Reviewed:</strong> 100 (57
+with PMC full text, 43 abstract-only) <strong>Date:</strong>
+2026-05-24</p>
 <hr />
-</div>
-<div id="stage-1-literature-retrieval" class="section level2">
-<h2>Stage 1: Literature Retrieval</h2>
-<p><strong>Objective:</strong> Retrieve all meta-analyses, systematic
-reviews, and Cochrane reviews on nutrition interventions in LMICs, plus
-a parallel track for cost-effectiveness analyses and nutrition-sensitive
-interventions from the economics literature.</p>
-<p><strong>Sources:</strong></p>
+<div id="summary-table" class="section level2">
+<h2>Summary Table</h2>
 <table>
 <colgroup>
-<col width="26%" />
-<col width="20%" />
+<col width="7%" />
 <col width="16%" />
-<col width="36%" />
+<col width="12%" />
+<col width="24%" />
+<col width="16%" />
+<col width="20%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th>Source</th>
-<th>Role</th>
-<th>API</th>
-<th>Rate Limit</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>PubMed (E-Utilities)</td>
-<td>Primary — biomedical literature</td>
-<td>esearch + efetch</td>
-<td>10 req/s (with API key)</td>
-</tr>
-<tr class="even">
-<td>OpenAlex</td>
-<td>Supplementary — economics/development literature</td>
-<td>REST API</td>
-<td>0.3s between requests</td>
-</tr>
-</tbody>
-</table>
-<div id="track-a-meta-analyses-systematic-reviews-pubmed" class="section level3">
-<h3>Track A: Meta-Analyses &amp; Systematic Reviews (PubMed)</h3>
-<p><strong>Two-pass approach:</strong> - <strong>Pass 1 (Primary
-tier):</strong> Retrieves only confirmed meta-analyses using
-<code>meta-analysis[pt]</code> publication type filter - <strong>Pass 2
-(Supplementary tier):</strong> Retrieves systematic reviews using
-<code>systematic review[pt]</code> filter</p>
-<p><strong>Query structure:</strong></p>
-<pre><code>[intervention MeSH/keywords] AND [LMIC filter] AND [publication type filter]</code></pre>
-<p><strong>LMIC filter (reusable across all queries):</strong></p>
-<pre><code>(&quot;developing countries&quot;[MeSH] OR &quot;low income&quot;[tiab] OR &quot;middle income&quot;[tiab]
- OR &quot;LMIC&quot;[tiab] OR &quot;sub-saharan africa&quot;[tiab] OR &quot;south asia&quot;[tiab]
- OR &quot;southeast asia&quot;[tiab])</code></pre>
-<p>Using <code>&quot;developing countries&quot;[MeSH]</code> is key — this is a
-curated MeSH descriptor that maps to all individual LMIC country names
-without needing to enumerate them.</p>
-<p><strong>The 12 intervention domain queries:</strong></p>
-<table>
-<colgroup>
-<col width="10%" />
-<col width="26%" />
-<col width="63%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>#</th>
-<th>Domain</th>
-<th>Key MeSH/Keywords</th>
+<th>Rank</th>
+<th>Intervention</th>
+<th>Evidence</th>
+<th>Cost-Effectiveness</th>
+<th>Scalability</th>
+<th>Primary Target</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td>1</td>
-<td>Micronutrient supplementation</td>
-<td><code>&quot;micronutrients&quot;[MeSH]</code>,
-<code>&quot;dietary supplements&quot;[MeSH]</code>, iron, zinc, vitamin A, folic
-acid</td>
+<td>Vitamin A supplementation (6-59 mo)</td>
+<td>A</td>
+<td>Very High</td>
+<td>Proven national</td>
+<td>Children 6-59 mo</td>
 </tr>
 <tr class="even">
 <td>2</td>
-<td>Food fortification</td>
-<td><code>&quot;food, fortified&quot;[MeSH]</code>, flour fortification, salt
-iodization, biofortification</td>
+<td>Iron-folic acid supplementation (pregnancy)</td>
+<td>A</td>
+<td>Very High</td>
+<td>Proven national</td>
+<td>Pregnant women</td>
 </tr>
 <tr class="odd">
 <td>3</td>
-<td>Complementary feeding</td>
-<td><code>&quot;infant nutritional physiological phenomena&quot;[MeSH]</code>,
-complementary feeding, weaning</td>
+<td>Multiple micronutrient supplementation (pregnancy)</td>
+<td>A</td>
+<td>Very High</td>
+<td>Proven national</td>
+<td>Pregnant women</td>
 </tr>
 <tr class="even">
 <td>4</td>
-<td>Breastfeeding promotion</td>
-<td><code>&quot;breast feeding&quot;[MeSH]</code>, <code>&quot;lactation&quot;[MeSH]</code>,
-kangaroo mother care</td>
+<td>Zinc supplementation (therapeutic, diarrhea)</td>
+<td>A</td>
+<td>Very High</td>
+<td>Proven national</td>
+<td>Children &lt;5 with diarrhea</td>
 </tr>
 <tr class="odd">
 <td>5</td>
-<td>Acute malnutrition management</td>
-<td>severe acute malnutrition, RUTF, CMAM</td>
+<td>Large-scale food fortification (iron, iodine, folic acid)</td>
+<td>A</td>
+<td>Very High</td>
+<td>Proven national</td>
+<td>General population</td>
 </tr>
 <tr class="even">
 <td>6</td>
-<td>Maternal nutrition</td>
-<td><code>&quot;prenatal nutritional physiological phenomena&quot;[MeSH]</code>,
-maternal nutrition</td>
+<td>Breastfeeding promotion &amp; support</td>
+<td>A</td>
+<td>Very High</td>
+<td>Proven national</td>
+<td>Infants 0-6 mo</td>
 </tr>
 <tr class="odd">
 <td>7</td>
-<td>WASH + nutrition</td>
-<td><code>&quot;water purification&quot;[MeSH]</code>,
-<code>&quot;hygiene&quot;[MeSH]</code>, <code>&quot;sanitation&quot;[MeSH]</code> AND
-nutrition/stunting</td>
+<td>Complementary feeding education + provision</td>
+<td>A</td>
+<td>High</td>
+<td>Proven subnational</td>
+<td>Children 6-23 mo</td>
 </tr>
 <tr class="even">
 <td>8</td>
-<td>School feeding</td>
-<td>school feeding, school meal, school nutrition</td>
+<td>Micronutrient powders (MNPs) for home fortification</td>
+<td>A</td>
+<td>High</td>
+<td>Proven national</td>
+<td>Children 6-23 mo</td>
 </tr>
 <tr class="odd">
 <td>9</td>
-<td>Growth monitoring &amp; promotion</td>
-<td>growth monitoring, <code>&quot;nutrition surveillance&quot;[MeSH]</code></td>
+<td>Management of severe acute malnutrition (RUTF/CMAM)</td>
+<td>A</td>
+<td>High</td>
+<td>Proven subnational</td>
+<td>Children with SAM</td>
 </tr>
 <tr class="even">
 <td>10</td>
-<td>Deworming</td>
-<td><code>&quot;anthelmintics&quot;[MeSH]</code>, deworming AND
-nutrition/growth/anemia</td>
+<td>Lipid-based nutrient supplements (SQ-LNS)</td>
+<td>A</td>
+<td>High</td>
+<td>Growing</td>
+<td>Children 6-24 mo / Pregnant women</td>
 </tr>
 <tr class="odd">
 <td>11</td>
-<td>Nutrition-sensitive agriculture</td>
-<td><code>&quot;agriculture&quot;[MeSH]</code>, homestead food production AND
-nutrition/diet</td>
+<td>Preventive zinc supplementation</td>
+<td>A</td>
+<td>High</td>
+<td>Proven subnational</td>
+<td>Children &lt;5</td>
 </tr>
 <tr class="even">
 <td>12</td>
-<td>Integrated/multi-sectoral</td>
-<td><code>&quot;nutrition programs and policies&quot;[MeSH]</code>,
-nutrition-sensitive, nutrition-specific</td>
+<td>Double-fortified salt (iron + iodine)</td>
+<td>B+</td>
+<td>Very High</td>
+<td>Proven national</td>
+<td>General population</td>
 </tr>
-</tbody>
-</table>
-</div>
-<div id="track-b-cost-effectiveness-analyses-pubmed" class="section level3">
-<h3>Track B: Cost-Effectiveness Analyses (PubMed)</h3>
-<p>Separate track because CEAs are rarely meta-analyses — they come as
-original research articles.</p>
-<pre><code>(&quot;cost-benefit analysis&quot;[MeSH] OR &quot;cost-effectiveness&quot;[tiab] OR &quot;cost per DALY&quot;[tiab]
- OR &quot;cost-benefit&quot;[tiab] OR &quot;cost effective&quot;[tiab] OR &quot;incremental cost&quot;[tiab])
-AND (&quot;nutrition&quot;[tiab] OR &quot;malnutrition&quot;[tiab] OR &quot;stunting&quot;[tiab]
-     OR &quot;supplementation&quot;[tiab] OR &quot;fortification&quot;[tiab]
-     OR &quot;breastfeeding&quot;[tiab] OR &quot;complementary feeding&quot;[tiab])
-AND [LMIC filter]</code></pre>
-<p>No publication type restriction — CEAs are indexed as regular journal
-articles.</p>
-</div>
-<div id="track-c-supplementary-sweep-openalex" class="section level3">
-<h3>Track C: Supplementary Sweep (OpenAlex)</h3>
-<p>Retained for intervention domains PubMed covers poorly — the
-economics and development literature on nutrition-sensitive
-interventions:</p>
-<table>
-<thead>
-<tr class="header">
-<th>#</th>
-<th>Query Domain</th>
-</tr>
-</thead>
-<tbody>
 <tr class="odd">
-<td>1</td>
-<td>Cash transfers + nutrition/food security/dietary diversity</td>
+<td>13</td>
+<td>Balanced protein-energy supplementation (pregnancy)</td>
+<td>B+</td>
+<td>Moderate</td>
+<td>Growing</td>
+<td>Undernourished pregnant women</td>
 </tr>
 <tr class="even">
-<td>2</td>
-<td>Social protection + child nutrition/malnutrition</td>
-</tr>
-<tr class="odd">
-<td>3</td>
-<td>Food subsidies / public distribution systems</td>
-</tr>
-<tr class="even">
-<td>4</td>
-<td>Conditional cash transfers + nutrition/child health</td>
-</tr>
-</tbody>
-</table>
-<p>These queries use OpenAlex’s full-text search with Boolean operators
-and target reviews/evidence syntheses.</p>
-</div>
-<div id="retrieval-parameters" class="section level3">
-<h3>Retrieval Parameters</h3>
-<table>
-<colgroup>
-<col width="37%" />
-<col width="27%" />
-<col width="34%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Parameter</th>
-<th>PubMed</th>
-<th>OpenAlex</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Max results per query</td>
-<td>500 (via <code>retmax</code>)</td>
-<td>500 (5 pages x 100)</td>
-</tr>
-<tr class="even">
-<td>Rate limiting</td>
-<td>10/s with API key</td>
-<td>0.3s between pages</td>
-</tr>
-<tr class="odd">
-<td>Deduplication</td>
-<td>PMID across queries</td>
-<td>OpenAlex ID, then DOI-match against PubMed set</td>
-</tr>
-<tr class="even">
-<td>Abstract retrieval</td>
-<td><code>efetch</code> with <code>rettype=xml</code></td>
-<td>Inverted index reconstruction</td>
-</tr>
-<tr class="odd">
-<td>Batch size</td>
-<td>200 PMIDs per efetch request</td>
-<td>100 per page</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="pubmed-e-utilities-method" class="section level3">
-<h3>PubMed E-Utilities Method</h3>
-<ol style="list-style-type: decimal">
-<li><strong>esearch</strong> — submit query string, receive list of
-PMIDs + total count (JSON response)</li>
-<li><strong>efetch</strong> — submit PMIDs in batches of 200, receive
-full article records in XML</li>
-<li><strong>Parse XML</strong> — extract title, abstract (structured
-sections joined), MeSH terms, publication types, DOI, journal, year,
-authors</li>
-<li><strong>Deduplicate</strong> across all queries by PMID</li>
-</ol>
-</div>
-<div id="cross-source-deduplication" class="section level3">
-<h3>Cross-Source Deduplication</h3>
-<p>After PubMed + OpenAlex retrieval: 1. Within PubMed: by PMID (when a
-paper appears in multiple queries, keep the highest-tier version) 2.
-Within OpenAlex: by OpenAlex work ID 3. Cross-source: by DOI (normalize:
-strip prefix, lowercase) - When DOI matches, <strong>prefer PubMed
-record</strong> (richer metadata: MeSH, publication types) - Merge
-<code>cited_by_count</code> and <code>is_open_access</code> from
-OpenAlex into the PubMed record</p>
-</div>
-<div id="output" class="section level3">
-<h3>Output</h3>
-<p>A deduplicated candidate set with full metadata. Fields include: -
-<code>id</code>, <code>title</code>, <code>abstract</code>,
-<code>publication_year</code>, <code>journal</code>, <code>doi</code>,
-<code>pmid</code>, <code>openalex_id</code> - <code>source_db</code>:
-“pubmed” or “openalex” - <code>publication_type</code>: list from PubMed
-indexing (authoritative, not inferred) - <code>mesh_terms</code>: list
-of MeSH descriptor names - <code>study_type</code>: human-readable
-classification - <code>tier</code>: “primary” (meta-analysis),
-“supplementary” (systematic review), “cea”, or “nutrition-sensitive” -
-<code>query_origin</code>: which of the 12+1+4 queries found it -
-<code>cited_by_count</code>: from OpenAlex cross-reference -
-<code>is_open_access</code>: boolean</p>
-</div>
-<div id="raw-response-archiving" class="section level3">
-<h3>Raw Response Archiving</h3>
-<p>All raw API responses are saved to <code>raw_responses/</code> for
-reproducibility: - PubMed:
-<code>pubmed_{tier}_{domain}_{timestamp}.xml</code> - OpenAlex:
-<code>openalex_{domain}_{timestamp}.json</code></p>
-<hr />
-</div>
-</div>
-<div id="stage-2-relevance-scoring" class="section level2">
-<h2>Stage 2: Relevance Scoring</h2>
-<p><strong>Objective:</strong> Rank all collected papers by a composite
-relevance score that leverages authoritative metadata (MeSH terms,
-publication types) for PubMed papers and falls back to keyword
-heuristics for OpenAlex papers.</p>
-<p><strong>Method:</strong> Each paper receives a numerical score (0-85)
-computed as the sum of seven components:</p>
-<div id="component-1-study-design-authority-0-20-points" class="section level3">
-<h3>Component 1: Study Design Authority (0-20 points)</h3>
-<p><strong>For PubMed papers:</strong> Direct mapping from the
-authoritative <code>publication_type</code> field assigned by NLM
-indexers.</p>
-<table>
-<thead>
-<tr class="header">
-<th>Publication Type</th>
-<th>Points</th>
-<th>Rationale</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Meta-Analysis</td>
-<td>20</td>
-<td>Gold standard for evidence synthesis</td>
-</tr>
-<tr class="even">
-<td>Systematic Review</td>
-<td>17</td>
-<td>Structured evidence synthesis</td>
-</tr>
-<tr class="odd">
-<td>Randomized Controlled Trial</td>
 <td>14</td>
-<td>High internal validity</td>
-</tr>
-<tr class="even">
-<td>Review</td>
-<td>10</td>
-<td>May include Cochrane/umbrella reviews</td>
-</tr>
-<tr class="odd">
-<td>Practice Guideline</td>
-<td>10</td>
-<td>Authoritative clinical guidance</td>
-</tr>
-<tr class="even">
-<td>Clinical Trial</td>
-<td>8</td>
-<td>Experimental evidence</td>
+<td>WASH interventions (combined with nutrition)</td>
+<td>B</td>
+<td>Moderate</td>
+<td>Proven subnational</td>
+<td>Children &lt;5</td>
 </tr>
 <tr class="odd">
-<td>Comparative Study</td>
-<td>6</td>
-<td>Structured comparison</td>
+<td>15</td>
+<td>Financial incentives / conditional cash transfers</td>
+<td>B</td>
+<td>Moderate</td>
+<td>Proven national</td>
+<td>Households with children</td>
 </tr>
 <tr class="even">
-<td>Evaluation Study</td>
-<td>6</td>
-<td>Program evaluation</td>
+<td>16</td>
+<td>Nutrition-sensitive agriculture (home gardens, eggs)</td>
+<td>B</td>
+<td>Moderate</td>
+<td>Growing</td>
+<td>Households</td>
+</tr>
+<tr class="odd">
+<td>17</td>
+<td>School-based micronutrient programs</td>
+<td>B</td>
+<td>High</td>
+<td>Proven subnational</td>
+<td>School-age children</td>
+</tr>
+<tr class="even">
+<td>18</td>
+<td>Growth monitoring &amp; promotion</td>
+<td>C+</td>
+<td>Moderate</td>
+<td>Proven national</td>
+<td>Children &lt;5</td>
+</tr>
+<tr class="odd">
+<td>19</td>
+<td>Nutrition education (pregnancy, mHealth)</td>
+<td>B</td>
+<td>High</td>
+<td>Growing</td>
+<td>Pregnant women</td>
+</tr>
+<tr class="even">
+<td>20</td>
+<td>Integrated management of childhood illness (IMCI)</td>
+<td>B</td>
+<td>Moderate</td>
+<td>Proven national</td>
+<td>Children &lt;5</td>
 </tr>
 </tbody>
 </table>
-<p>When a paper has multiple publication types (e.g., both
-“Meta-Analysis” and “Systematic Review”), the <strong>highest</strong>
-score is taken.</p>
-<p><strong>For OpenAlex papers (keyword fallback, capped at
-15):</strong> - <code>&quot;meta-analysis&quot;</code> → 15 -
-<code>&quot;umbrella review&quot;</code> → 15 - <code>&quot;cochrane&quot;</code> → 14 -
-<code>&quot;systematic review&quot;</code> → 12 -
-<code>&quot;cost-effectiveness&quot;</code> → 10 -
-<code>&quot;randomized controlled trial&quot;</code> → 8</p>
+<hr />
 </div>
-<div id="component-2-topic-relevance-0-25-points" class="section level3">
-<h3>Component 2: Topic Relevance (0-25 points)</h3>
-<p><strong>For PubMed papers:</strong> Based on MeSH term set matching
-against curated intervention and outcome term sets.</p>
-<p>Scoring logic: - Matches against intervention MeSH set (e.g.,
-Micronutrients, Food Fortified, Breast Feeding): +4 per match, max 12 -
-Matches against outcome MeSH set (e.g., Nutritional Status, Growth
-Disorders, Malnutrition): +3 per match, max 9 - Bonus for having BOTH
-intervention AND outcome MeSH terms: +4 - Total capped at 25</p>
-<p><strong>For OpenAlex papers (keyword fallback, capped at
-20):</strong> - Keyword presence matching: stunting (4), wasting (4),
-child nutrition (4), micronutrient (4), complementary feeding (4),
-malnutrition (3), breastfeeding (3), supplementation (3), fortification
-(3), food security (3)</p>
-</div>
-<div id="component-3-setting-relevance-0-10-points" class="section level3">
-<h3>Component 3: Setting Relevance (0-10 points)</h3>
-<p><strong>For PubMed papers:</strong> MeSH geographic terms.</p>
-<p>Relevant MeSH: “Developing Countries”, “Africa South of the Sahara”,
-“Asia, Southeastern”, “Asia, Southern”, “India”, “Bangladesh”,
-“Ethiopia”, “Nigeria”, etc.</p>
-<p>Scoring: +4 per matching MeSH term, capped at 10.</p>
-<p><strong>For OpenAlex papers (keyword fallback):</strong> -
-<code>&quot;lmic&quot;</code> (5), <code>&quot;low-income&quot;</code> (4),
-<code>&quot;middle-income&quot;</code> (4), <code>&quot;developing countr&quot;</code> (4),
-<code>&quot;sub-saharan africa&quot;</code> (4), <code>&quot;south asia&quot;</code> (4) -
-Capped at 10</p>
-</div>
-<div id="component-4-recency-0-10-points" class="section level3">
-<h3>Component 4: Recency (0-10 points)</h3>
-<p>Step function based on publication year (unchanged from v1):</p>
-<table>
-<thead>
-<tr class="header">
-<th>Paper Age</th>
-<th>Points</th>
-<th>Rationale</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>0-5 years</td>
-<td>10</td>
-<td>Current evidence</td>
-</tr>
-<tr class="even">
-<td>6-10 years</td>
-<td>7</td>
-<td>Still relevant</td>
-</tr>
-<tr class="odd">
-<td>11-15 years</td>
-<td>4</td>
-<td>Foundational</td>
-</tr>
-<tr class="even">
-<td>16-20 years</td>
-<td>2</td>
-<td>Historical</td>
-</tr>
-<tr class="odd">
-<td>20+ years</td>
-<td>0</td>
-<td>Likely superseded</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="component-5-citation-impact-0-12-points" class="section level3">
-<h3>Component 5: Citation Impact (0-12 points)</h3>
-<p>Step function based on <code>cited_by_count</code> (from OpenAlex
-cross-reference):</p>
-<table>
-<thead>
-<tr class="header">
-<th>Citations</th>
-<th>Points</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>500+</td>
-<td>12</td>
-</tr>
-<tr class="even">
-<td>200-499</td>
-<td>10</td>
-</tr>
-<tr class="odd">
-<td>100-199</td>
-<td>8</td>
-</tr>
-<tr class="even">
-<td>50-99</td>
-<td>6</td>
-</tr>
-<tr class="odd">
-<td>20-49</td>
-<td>4</td>
-</tr>
-<tr class="even">
-<td>5-19</td>
-<td>2</td>
-</tr>
-<tr class="odd">
-<td>0-4</td>
-<td>0</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="component-6-open-access-bonus-0-3-points" class="section level3">
-<h3>Component 6: Open Access Bonus (0-3 points)</h3>
-<table>
-<thead>
-<tr class="header">
-<th>Condition</th>
-<th>Points</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Open access</td>
-<td>3</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="component-7-tier-bonus-0-5-points" class="section level3">
-<h3>Component 7: Tier Bonus (0-5 points)</h3>
-<table>
-<colgroup>
-<col width="36%" />
-<col width="26%" />
-<col width="36%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Condition</th>
-<th>Points</th>
-<th>Rationale</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Paper from Track A Pass 1 (confirmed meta-analysis)</td>
-<td>5</td>
-<td>Prioritizes the purest evidence synthesis</td>
-</tr>
-<tr class="even">
-<td>All others</td>
-<td>0</td>
-<td>—</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="what-changed-from-v1-scoring" class="section level3">
-<h3>What Changed from v1 Scoring</h3>
-<table>
-<colgroup>
-<col width="54%" />
-<col width="45%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Issue in v1</th>
-<th>Fix in v2</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Binary keyword matching for study type</td>
-<td>Authoritative <code>publication_type</code> from PubMed NLM
-indexers</td>
-</tr>
-<tr class="even">
-<td>Keyword matching for topic relevance</td>
-<td>MeSH term set matching (curated, hierarchical)</td>
-</tr>
-<tr class="odd">
-<td>No negative signals</td>
-<td>MeSH terms are assigned by human indexers — if “Developing
-Countries” isn’t tagged, the paper genuinely isn’t focused on LMICs</td>
-</tr>
-<tr class="even">
-<td>All study types mixed together</td>
-<td>Two-tier system separates meta-analyses from systematic reviews at
-query time</td>
-</tr>
-<tr class="odd">
-<td>Citation data only from OpenAlex</td>
-<td>Cross-reference enrichment brings citation counts to PubMed
-papers</td>
-</tr>
-<tr class="even">
-<td>Additive keyword stacking</td>
-<td>MeSH scoring uses caps per category to prevent gaming</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="remaining-limitations" class="section level3">
-<h3>Remaining Limitations</h3>
+<div id="tier-1-strong-evidence-proven-scalability-high-cost-effectiveness" class="section level2">
+<h2>Tier 1: Strong Evidence + Proven Scalability + High
+Cost-Effectiveness</h2>
+<div id="vitamin-a-supplementation-children-6-59-months" class="section level3">
+<h3>1. Vitamin A Supplementation (Children 6-59 months)</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>The evidence base for vitamin A supplementation (VAS) is among the
+strongest in child nutrition. The full-text analysis of Imdad et
+al. (2011, PMID: 21868478, BMJ, cited 349 times) — a systematic review
+of 43 RCTs including 215,633 children — provides definitive results:</p>
 <ul>
-<li><strong>OpenAlex papers still use keyword fallback</strong> — capped
-at lower scores but still noisy</li>
-<li><strong>Citation bias persists</strong> for older papers (partially
-offset by recency score)</li>
-<li><strong>No full-text access</strong> — scoring is based on metadata
-and abstracts only</li>
-<li><strong>MeSH indexing lag</strong> — very recent papers may not yet
-have MeSH terms assigned</li>
-<li><strong>OpenAlex citation counts may lag</strong> a few months
-behind reality</li>
+<li><strong>All-cause mortality reduction: 24%</strong> (rate ratio
+0.76, 95% CI 0.69-0.83; 17 trials, 194,483 participants)</li>
+<li><strong>Diarrhea-associated mortality: 28% reduction</strong> (0.72,
+95% CI 0.57-0.91; 7 trials)</li>
+<li><strong>Measles-associated mortality: 80% reduction</strong> (0.50,
+95% CI 0.37-0.67)</li>
+<li><strong>Diarrhea incidence: 15% reduction</strong> (0.85, 95% CI
+0.82-0.87)</li>
 </ul>
+<p>The 2022 Cochrane update (PMID: 35294044, cited 72 times) and 2017
+update (PMID: 28282701, cited 487 times) confirm these effects remain
+consistent. The landmark Lancet paper on breastfeeding (PMID: 27301764,
+cited 7,924 times) further contextualizes VAS within the broader
+nutrition intervention landscape.</p>
+<p>Full-text from Imdad et al. (2011) details that VAS was supplemented
+as 50,000 IU to neonates, 100,000 IU to infants 1-12 months, and 200,000
+IU to older children per WHO guidelines. Nepal-specific analysis (PMID:
+35584136) showed a 9% reduction from well-concealed trials (RR 0.91, 95%
+CI 0.85-0.97) but noted diminishing returns as baseline deficiency
+declines.</p>
+<p><strong>Mechanism:</strong> Vitamin A maintains epithelial integrity,
+supports immune function (T-cell differentiation, mucosal immunity), and
+regulates gene expression for growth.</p>
+<p><strong>Government scaling pathway:</strong> Semi-annual mass
+supplementation campaigns integrated with immunization contact points.
+Active in 80+ countries. Cost: $1-2 per child per year. Platform:
+routine immunization, Child Health Days.</p>
+<p><strong>Key papers:</strong> PMID 21868478 (Imdad 2011), PMID
+35294044 (2022 Cochrane), PMID 28282701 (2017 Cochrane), PMID 21501438
+(Yakoob 2011), PMID 35584136 (Nepal analysis 2022)</p>
 <hr />
 </div>
-</div>
-<div id="stage-3-database-export" class="section level2">
-<h2>Stage 3: Database Export</h2>
-<p><strong>Objective:</strong> Save scored papers in multiple formats
-for review and reuse.</p>
-<p><strong>Outputs:</strong></p>
-<table>
-<colgroup>
-<col width="25%" />
-<col width="33%" />
-<col width="41%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>File</th>
-<th>Format</th>
-<th>Contents</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>papers_database.json</code></td>
-<td>JSON</td>
-<td>All papers with full metadata, abstracts, and scores</td>
-</tr>
-<tr class="even">
-<td><code>papers_ranked.csv</code></td>
-<td>CSV</td>
-<td>All papers in tabular format, sorted by score descending</td>
-</tr>
-<tr class="odd">
-<td><code>top_papers_for_review.json</code></td>
-<td>JSON</td>
-<td>Top 100 papers (input for Stage 4)</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Fields per paper:</strong></p>
-<table>
-<colgroup>
-<col width="33%" />
-<col width="28%" />
-<col width="38%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Field</th>
-<th>Type</th>
-<th>Source</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>id</code></td>
-<td>string</td>
-<td>Canonical ID (<a href="pmid:XXXXX" class="uri">pmid:XXXXX</a> or
-OpenAlex URL)</td>
-</tr>
-<tr class="even">
-<td><code>title</code></td>
-<td>string</td>
-<td>Paper title</td>
-</tr>
-<tr class="odd">
-<td><code>abstract</code></td>
-<td>string</td>
-<td>Full abstract text</td>
-</tr>
-<tr class="even">
-<td><code>publication_year</code></td>
-<td>int/null</td>
-<td>Year of publication</td>
-</tr>
-<tr class="odd">
-<td><code>journal</code></td>
-<td>string</td>
-<td>Journal name</td>
-</tr>
-<tr class="even">
-<td><code>doi</code></td>
-<td>string/null</td>
-<td>DOI (normalized)</td>
-</tr>
-<tr class="odd">
-<td><code>pmid</code></td>
-<td>string/null</td>
-<td>PubMed ID</td>
-</tr>
-<tr class="even">
-<td><code>openalex_id</code></td>
-<td>string/null</td>
-<td>OpenAlex work ID</td>
-</tr>
-<tr class="odd">
-<td><code>source_db</code></td>
-<td>string</td>
-<td>“pubmed” or “openalex”</td>
-</tr>
-<tr class="even">
-<td><code>study_type</code></td>
-<td>string</td>
-<td>Classified type (see below)</td>
-</tr>
-<tr class="odd">
-<td><code>publication_type</code></td>
-<td>list[string]</td>
-<td>Raw from PubMed indexing</td>
-</tr>
-<tr class="even">
-<td><code>mesh_terms</code></td>
-<td>list[string]</td>
-<td>MeSH descriptor names</td>
-</tr>
-<tr class="odd">
-<td><code>cited_by_count</code></td>
-<td>int</td>
-<td>From OpenAlex cross-reference</td>
-</tr>
-<tr class="even">
-<td><code>is_open_access</code></td>
-<td>boolean</td>
-<td>Open access status</td>
-</tr>
-<tr class="odd">
-<td><code>query_origin</code></td>
-<td>string</td>
-<td>Which query found this paper</td>
-</tr>
-<tr class="even">
-<td><code>tier</code></td>
-<td>string</td>
-<td>“primary”, “supplementary”, “cea”, or “nutrition-sensitive”</td>
-</tr>
-<tr class="odd">
-<td><code>relevance_score</code></td>
-<td>float</td>
-<td>Composite score (0-85)</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Study type classification:</strong> - Systematic Review &amp;
-Meta-Analysis - Meta-Analysis - Systematic Review - Cochrane Review -
-Umbrella Review - Cost-Effectiveness Analysis - RCT - Practice Guideline
-- Review - Article</p>
+<div id="iron-folic-acid-supplementation-in-pregnancy" class="section level3">
+<h3>2. Iron-Folic Acid Supplementation in Pregnancy</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>Iron-folic acid supplementation (IFAS) during pregnancy is supported
+by multiple Cochrane reviews and large meta-analyses. The full-text
+analysis reveals:</p>
+<p><strong>Effect on hemoglobin and anemia:</strong> - The 2015 Cochrane
+review on intermittent IFA (PMID: 26482110, cited 256 times) found
+intermittent regimens comparable to daily regimens with fewer side
+effects - Nutrition education increases IFAS compliance 2.80-fold (OR
+2.80, 95% CI 2.04-3.83) with hemoglobin increase of 0.88 g/dL (PMID:
+39545365, 2025, 53 studies, 13,475 women) - IFAS compliance in
+sub-Saharan Africa averages only 39.2% (PMID: 33852614, 23 studies,
+24,272 women) — counseling doubles adherence (OR 1.96) - Weekly IFA in
+school-age children significantly increases serum ferritin (Hedge’s
+g=0.53, 95% CI 0.28-0.78) and hemoglobin (Hedge’s g=0.37, 95% CI
+0.01-0.73) (PMID: 38862227)</p>
+<p><strong>Effect on birth outcomes:</strong> - Maternal folic acid
+supplementation increases mean birthweight by 0.37 kg (95% CI 0.24-0.50)
+in LMICs; 0.56 kg in RCTs alone (PMID: 31680411, 17 studies, 275,421
+women) - Reduces low birthweight: OR 0.59 (95% CI 0.47-0.74) -
+Intermittent vs daily: 2025 meta-analysis (PMID: 39780191) of 22 trials
+confirms comparable efficacy with better tolerance</p>
+<p><strong>Mechanism:</strong> Iron supports hemoglobin synthesis and
+oxygen transport; folic acid prevents neural tube defects and supports
+DNA synthesis for rapid cell division.</p>
+<p><strong>Government scaling pathway:</strong> Integrated into
+antenatal care (ANC) visits. WHO recommends 30-60mg iron + 400ug folic
+acid daily. Already in national protocols of virtually all LMIC
+governments. Main challenge: adherence (side effects, supply chain).
+Nutrition education at ANC substantially improves compliance.</p>
+<p><strong>Key papers:</strong> PMID 26482110, PMID 39545365, PMID
+33852614, PMID 31680411, PMID 38862227, PMID 39780191</p>
 <hr />
 </div>
-<div id="stage-3.5-full-text-retrieval-pmc-open-access" class="section level2">
-<h2>Stage 3.5: Full-Text Retrieval (PMC Open Access)</h2>
-<p><strong>Objective:</strong> Retrieve structured full-text content
-from PubMed Central for top-scored papers that have open-access PMC
-versions, enabling deeper LLM synthesis with effect sizes, subgroup
-analyses, and implementation details not present in abstracts.</p>
-<p><strong>Method:</strong></p>
-<ol style="list-style-type: decimal">
-<li><strong>PMID to PMCID conversion</strong> — Batch API call to NCBI
-ID Converter
-(<code>https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/</code>) with
-up to 200 PMIDs per request</li>
-<li><strong>PMC full-text fetch</strong> — E-Utilities efetch with
-<code>db=pmc</code> for each PMCID</li>
-<li><strong>XML parsing</strong> — Extract structured sections
-(Introduction, Methods, Results, Discussion), tables (labels, captions,
-content), and concatenate into readable text</li>
-<li><strong>Caching</strong> — Raw XML saved to
-<code>raw_responses/pmc/{PMCID}.xml</code> for reproducibility and to
-avoid re-fetching</li>
-</ol>
-<p><strong>Coverage:</strong> - Typically 85/99 PubMed papers have a
-PMCID (PMC-indexed) - Of those, ~57 have downloadable full-text XML
-(body element present) - ~28 are publisher-restricted (Cochrane reviews
-and some Elsevier journals block XML download despite PMC indexing) -
-Final coverage: ~57% of top 100 papers have structured full text</p>
-<p><strong>Output fields added to papers:</strong> -
-<code>fulltext_source</code>: “pmc” or “abstract_only” -
-<code>fulltext</code>: dict with <code>sections</code> (list of {title,
-text}), <code>tables</code> (list of {label, caption, content}), and
-<code>full_text</code> (concatenated plain text) - <code>pmcid</code>:
-PMC identifier (if available)</p>
-<p><strong>Module:</strong> <code>pipeline/fulltext_client.py</code></p>
-<p><strong>Known limitations:</strong> - NCBI ID Converter returns PMIDs
-as integers — must cast to str() for matching - Some publishers
-(Cochrane/Wiley, Elsevier) restrict PMC XML body access - No PDF parsing
-fallback (would require non-stdlib libraries)</p>
+<div id="multiple-micronutrient-supplementation-in-pregnancy" class="section level3">
+<h3>3. Multiple Micronutrient Supplementation in Pregnancy</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>MMS during pregnancy, compared to IFA alone, shows additional
+benefits. The 2017 Cochrane review (PMID: 28407219, cited 723 times) is
+the landmark reference, with the 2017 Lancet Global Health individual
+patient data (IPD) meta-analysis (PMID: 29025632, cited 261 times; 17
+trials, 112,953 women) providing subgroup insights.</p>
+<p><strong>Key findings from full-text analyses:</strong> - MMS reduces
+low birthweight by 14% vs IFA (RR 0.86, 95% CI 0.79-0.93) (PMID:
+21673856, Kawai 2011) - MMS reduces small-for-gestational-age by 15% (RR
+0.85, 95% CI 0.78-0.93) - IPD analysis shows greater benefit for female
+neonates: neonatal mortality RR 0.85 (0.75-0.96) vs males RR 1.06
+(0.95-1.17) (PMID: 29025632) - Maternal vitamin B-12 supplementation
+during pregnancy increases serum cobalamin (SMD 0.39, 95% CI 0.11-0.68)
+and reduces deficiency (OR 0.43, 95% CI 0.19-0.95) (PMID: 40752545,
+2025, 87 papers/76 trials) - 2023 subgroup analysis (PMID: 37002655)
+confirms effects are consistent regardless of gestational age assessment
+method (ultrasound vs. LMP) - MMN supplementation improves child mental
+development: Cohen’s d = 0.076 (95% CI 0.019-0.13) for postnatal
+interventions (PMID: 26607403)</p>
+<p><strong>Mechanism:</strong> Addresses multiple concurrent
+deficiencies (iron, zinc, vitamin A, B-vitamins, calcium) common in LMIC
+pregnancies. Synergistic effects on fetal growth and immune
+development.</p>
+<p><strong>Government scaling pathway:</strong> WHO issued a conditional
+recommendation for MMS in 2020. Can replace IFA in ANC with minimal
+platform change. UNIMMAP formulation (15 micronutrients) available.
+Cost: $3-5 per pregnancy vs $1-2 for IFA.</p>
+<p><strong>Key papers:</strong> PMID 28407219, PMID 29025632, PMID
+21673856, PMID 40752545, PMID 37002655, PMID 32075071</p>
 <hr />
 </div>
-<div id="stage-4-llm-review-and-synthesis" class="section level2">
-<h2>Stage 4: LLM Review and Synthesis</h2>
-<p><strong>Objective:</strong> Review the top-ranked papers and produce
-a structured list of nutrition interventions ranked by evidence
-strength, cost-effectiveness, and scalability through government-led
-programs in LMIC settings.</p>
-<p><strong>Input:</strong> The top 100 papers from Stage 3.5 (titles,
-abstracts, metadata, MeSH terms, tiers, scores, AND structured full text
-for ~57 papers).</p>
-<p><strong>Two synthesis modes:</strong></p>
-<div id="mode-a-abstract-only-synthesis-lighter" class="section level3">
-<h3>Mode A: Abstract-Only Synthesis (lighter)</h3>
-<p>Uses only abstracts and metadata. Produces
-<code>INTERVENTION_SYNTHESIS.md</code>.</p>
-</div>
-<div id="mode-b-full-text-enhanced-synthesis-deeper" class="section level3">
-<h3>Mode B: Full-Text-Enhanced Synthesis (deeper)</h3>
-<p>Uses full text (Results sections, tables, subgroup analyses) where
-available, with abstracts as fallback. Produces
-<code>FULL_INTERVENTION_SYNTH.md</code>.</p>
-<p><strong>LLM prompt (task framing):</strong></p>
-<blockquote>
-<p>You are reviewing the top 100 papers from a multi-source systematic
-search of the nutrition intervention literature in LMICs. Papers were
-retrieved from PubMed (using MeSH terms and publication type filters)
-and OpenAlex (for nutrition-sensitive literature). They are ranked by a
-composite score weighting study design authority, MeSH-based topic
-relevance, setting relevance, recency, citation impact, and tier
-assignment.</p>
-<p>For 57 papers, you have access to structured full text (Results
-sections, tables, discussion) from PubMed Central. For the remaining 43
-papers, you have abstracts and metadata only. Full-text papers are
-marked with <code>fulltext_source: &quot;pmc&quot;</code>.</p>
-<p>Papers are organized into tiers: - <strong>Primary tier:</strong>
-Confirmed meta-analyses (highest evidence quality) -
-<strong>Supplementary tier:</strong> Systematic reviews - <strong>CEA
-tier:</strong> Cost-effectiveness analyses - <strong>Nutrition-sensitive
-tier:</strong> Cash transfers, social protection, food subsidies (from
-economics literature)</p>
-<p>Your task:</p>
-<ol style="list-style-type: decimal">
-<li><p><strong>Identify distinct interventions.</strong> Read across all
-papers and extract every discrete nutrition intervention. Group closely
-related variants under a single heading.</p></li>
-<li><p><strong>Rate each intervention on three dimensions:</strong></p>
-<ul>
-<li><strong>Evidence strength</strong> (A/B/C): Based on number and
-quality of meta-analyses, consistency of findings, study type
-hierarchy</li>
-<li><strong>Cost-effectiveness</strong>: From CEA tier papers + general
-knowledge (Very High / High / Moderate / Low / Unknown)</li>
-<li><strong>Scalability</strong>: Evidence of national implementation,
-platform compatibility, infrastructure needs (Proven national / Proven
-subnational / Growing / Requires investment)</li>
-</ul></li>
-<li><p><strong>Rank interventions into tiers:</strong></p>
-<ul>
-<li>Tier 1: Strong evidence (A) + proven scalability + high
-cost-effectiveness</li>
-<li>Tier 2: Strong evidence (A or B+) + scalable with investment</li>
-<li>Tier 3: Promising evidence (B or C+) + plausible scaling
-pathway</li>
-</ul></li>
-<li><p><strong>For each intervention, document:</strong></p>
-<ul>
-<li>Evidence rating with justification (cite specific papers by PMID,
-year, journal, citations)</li>
-<li><strong>Specific effect sizes with confidence intervals</strong>
-(from full-text Results sections where available)</li>
-<li>Mechanism of action</li>
-<li>Government scaling pathway</li>
-<li>Key supporting papers from the database</li>
-</ul></li>
-<li><p><strong>Synthesize cross-cutting findings</strong> (4-6 patterns
-across the evidence base)</p></li>
-<li><p><strong>Produce a summary table</strong> (Rank, Intervention,
-Evidence, Cost-Effectiveness, Scalability, Target)</p></li>
-</ol>
-<p><strong>Constraints:</strong> - Base synthesis on information in
-provided full text, abstracts, and metadata - For full-text papers:
-extract and report actual effect sizes (RR, OR, SMD, MD with 95% CIs) -
-For abstract-only papers: report only what is stated in the abstract -
-Do not fabricate effect sizes not present in the source material - Use
-MeSH terms and publication types to validate classification - Flag
-papers where full text was not available for key claims - Distinguish
-nutrition-specific from nutrition-sensitive interventions - Note where
-subgroup analyses (from full text) modify the headline finding</p>
-</blockquote>
-<p><strong>LLM review process:</strong> - Papers are read in batches
-(top 40, then 41-100) due to context window constraints - For each
-paper, the LLM reads: title, abstract, publication year, study type,
-publication types, MeSH terms, tier, citation count, journal, score -
-For full-text papers: additionally reads the Results section text and
-table data - MeSH terms help the LLM verify what intervention and
-population each paper actually studies - Tier assignment helps the LLM
-weight evidence appropriately (primary &gt; supplementary) - Full-text
-access enables extraction of: pooled effect estimates, forest plot data,
-subgroup analyses, implementation context, and study heterogeneity
-metrics</p>
-<p><strong>Outputs:</strong> - <code>INTERVENTION_SYNTHESIS.md</code> —
-Abstract-only synthesis (lighter, 18 interventions) -
-<code>FULL_INTERVENTION_SYNTH.md</code> — Full-text-enhanced synthesis
-(deeper, 20 interventions with effect sizes)</p>
+<div id="zinc-supplementation-for-diarrhea-treatment" class="section level3">
+<h3>4. Zinc Supplementation for Diarrhea Treatment</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>The 2016 Cochrane review (PMID: 27996088, cited 377 times) with
+full-text access provides definitive evidence. WHO/UNICEF currently
+recommend zinc with ORS for diarrhea management.</p>
+<p><strong>Key findings:</strong> - Zinc reduces diarrhea duration in
+children over 6 months - Reduces the proportion of episodes lasting
+&gt;7 days - All trials were conducted in Asia in countries at high risk
+of zinc deficiency - Evidence rated moderate certainty for duration
+outcomes</p>
+<p>Preventive zinc supplementation (PMID: 20156999, 10 trials, 49,450
+children) reduces acute lower respiratory infection by 35% (IRR 0.65,
+95% CI 0.52-0.82) when using specific clinical criteria. The
+comprehensive 2014 Cochrane review (PMID: 24905460, cited 180 times) and
+2015 review (PMID: 26370559, cited 371 times) confirm zinc
+supplementation for preventing mortality and morbidity.</p>
+<p><strong>Mechanism:</strong> Zinc supports immune cell function,
+intestinal barrier integrity, and fluid/electrolyte absorption. Corrects
+the depletion caused by diarrheal losses.</p>
+<p><strong>Government scaling pathway:</strong> Part of WHO/UNICEF
+integrated diarrhea treatment protocol (zinc + ORS). Delivered through
+health facilities and community health workers. Already in national
+essential medicine lists. Cost: &lt;$0.50 per treatment course.</p>
+<p><strong>Key papers:</strong> PMID 27996088, PMID 20156999, PMID
+24905460, PMID 26370559, PMID 21501438</p>
 <hr />
 </div>
-</div>
-<div id="reproducibility" class="section level2">
-<h2>Reproducibility</h2>
-<p>To rerun the pipeline:</p>
-<pre class="bash"><code>cd nutri-evidence-review/
-# Option A: use .env file (auto-loaded by config.py)
-echo &quot;NCBI_API_KEY=your_key_here&quot; &gt; .env
-python3 fetch_papers.py
-
-# Option B: export environment variable
-export NCBI_API_KEY=your_key_here
-python3 fetch_papers.py</code></pre>
-<p><strong>Dependencies:</strong> Python 3.10+ standard library only
-(<code>urllib</code>, <code>json</code>, <code>csv</code>,
-<code>xml.etree.ElementTree</code>). No external packages required.</p>
-<p><strong>Runtime:</strong> ~3-4 minutes with NCBI API key (includes
-PMC full-text retrieval), ~7 minutes without key.</p>
+<div id="large-scale-food-fortification" class="section level3">
+<h3>5. Large-Scale Food Fortification</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>The full-text of Keats et al. (2019, PMID: 30997493, Am J Clin Nutr,
+cited 215 times) — covering 136 studies with 50 in meta-analysis —
+provides the most comprehensive evidence for large-scale food
+fortification (LSFF) in LMICs:</p>
 <ul>
-<li>Stage 1 (retrieval): ~50s PubMed + ~12s OpenAlex</li>
-<li>Stage 2 (dedup + enrich + score): ~35s</li>
-<li>Stage 3.5 (PMC full text): ~60-90s (cached on subsequent runs:
-instant)</li>
-<li>Export: ~5s</li>
+<li><strong>Anemia reduction: 34%</strong> (RR 0.66, 95% CI
+0.59-0.74)</li>
+<li><strong>Goiter reduction: 74%</strong> (OR 0.26, 95% CI
+0.16-0.43)</li>
+<li><strong>Neural tube defects reduction: 41%</strong> (OR 0.59, 95% CI
+0.49-0.70)</li>
+<li><strong>Serum retinol increase</strong> (vitamin A fortification,
+SMD 0.31, 95% CI 0.18-0.45)</li>
+<li>Iron fortification improved hemoglobin across all age groups</li>
 </ul>
-<p><strong>Caching:</strong> PMC full-text XML is cached in
-<code>raw_responses/pmc/</code>. Subsequent runs skip already-downloaded
-articles, making repeat runs much faster.</p>
-<p><strong>To modify:</strong> - <strong>Search queries:</strong> Edit
-<code>pipeline/queries.py</code> (TRACK_A_QUERIES, TRACK_B_QUERY,
-TRACK_C_QUERIES) - <strong>Scoring weights:</strong> Edit
-<code>pipeline/scoring.py</code> (PUBTYPE_SCORES, MeSH term sets,
-component functions) - <strong>Number of papers for review:</strong>
-Edit <code>TOP_N_FOR_REVIEW</code> in <code>pipeline/config.py</code>
-(default: 100) - <strong>API configuration:</strong> Edit
-<code>pipeline/config.py</code> or create <code>.env</code> file with
-<code>NCBI_API_KEY=your_key</code> - <strong>Full-text
-retrieval:</strong> Edit <code>pipeline/fulltext_client.py</code> (batch
-sizes, parsing logic)</p>
+<p>Double-fortified salt (DFS) specifically (PMID: 29767699, 14 studies;
+PMID: 30880739, 10 studies): - Hemoglobin increase: SMD 0.28 (95% CI
+0.11-0.44) in efficacy studies - Anemia reduction: RR 0.59 (95% CI
+0.46-0.77) - Iron deficiency anemia reduction: RR 0.37 (95% CI
+0.25-0.54) - All DFS studies conducted in LMICs (10 in India, 2 Morocco,
+1 Cote d’Ivoire, 1 Ghana)</p>
+<p>The 2019 Cochrane review on food fortification with multiple
+micronutrients (PMID: 31849042, cited 87 times) confirms benefits across
+populations.</p>
+<p><strong>Mechanism:</strong> Adds micronutrients to staple foods
+consumed regularly by the general population (wheat flour, maize flour,
+rice, cooking oil, salt), reaching populations that supplementation
+programs miss.</p>
+<p><strong>Government scaling pathway:</strong> Legislative mandate for
+fortification of commercially processed staples. Minimal behavior change
+required. Cost: $0.05-0.20 per person/year. 87 countries have mandatory
+wheat flour fortification. India’s DFS program reaches 100+ million
+school children.</p>
+<p><strong>Key papers:</strong> PMID 30997493, PMID 29767699, PMID
+30880739, PMID 31849042</p>
 <hr />
 </div>
-<div id="pipeline-architecture-diagram" class="section level2">
-<h2>Pipeline Architecture Diagram</h2>
-<pre><code>                    STAGE 1: RETRIEVAL                     STAGE 2      STAGE 3     STAGE 3.5       STAGE 4
-                                                          SCORING      EXPORT      FULL TEXT        LLM REVIEW
-
-Track A Pass 1 ──► PubMed: 12 queries x meta-analysis[pt] ─┐
-(meta-analyses)     484 papers                               │
-                                                             │
-Track A Pass 2 ──► PubMed: 12 queries x systematic review[pt]│
-(syst. reviews)     945 papers                               ├──► Dedup ──► Enrich ──► Score ──► PMC Full Text ──► Export
-                                                             │    (PMID)    (citations   (7        (top 100)        │
-Track B ─────────► PubMed: CEA query (no [pt] filter)  ─────┤    (DOI)     via OpenAlex) components) ~57 papers     │
-(cost-effect.)      490 papers                               │                                     with body       │
-                                                             │                                                      │
-Track C ─────────► OpenAlex: 4 queries (econ/dev lit) ──────┘                                                      │
-(nutrition-         2000 papers                                                                                     │
- sensitive)                                                                              papers_database.json       │
-                                                                                         papers_ranked.csv          │
-                    Final deduplicated set: 2,700 papers                                  top_papers_for_review.json │
-                    (1,158 PubMed + 1,542 OpenAlex)                                      (with full text)           │
-                                                                                                                    ▼
-                                                                                                  LLM reviews top 100
-                                                                                                  full text + abstracts
-                                                                                                          │
-                                                                                          ┌─────────��─────┴──────────────┐
-                                                                                          ▼                              ▼
-                                                                              INTERVENTION_SYNTHESIS.md    FULL_INTERVENTION_SYNTH.md
-                                                                              (abstract-only, lighter)     (full-text-enhanced, deeper)</code></pre>
+<div id="breastfeeding-promotion-and-support" class="section level3">
+<h3>6. Breastfeeding Promotion and Support</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>The 2012 Cochrane review on optimal duration of exclusive
+breastfeeding (PMID: 22895934, cited 1,699 times) established the
+6-month EBF recommendation. The 2016 Lancet Breastfeeding Series (PMID:
+27301764, cited 7,924 times) provides the overarching evidence
+framework.</p>
+<p><strong>Key findings from full-text analyses:</strong> - Each 1%
+increase in EBF prevalence reduces under-5 mortality by 3.4 per 1,000
+children (PMID: 33622796, 2021) - A 10% improvement in EBF could reduce
+U5M by 5.6 per 1,000 (same study, meta-analytical approach) - Total
+cumulative non-health GDP loss attributable to U5M in sub-Saharan Africa
+exceeds $29 billion (2018) - Breastfeeding is inversely associated with
+undernutrition: OR 0.82 (95% CI 0.68-0.99) overall, OR 0.73 (95% CI
+0.55-0.95) for stunting specifically (PMID: 35844158, 33 studies) -
+Breastfeeding promotion for preterm/LBW infants increases early
+initiation and EBF at 3 and 6 months in LMIC settings (PMID:
+39591949)</p>
+<p><strong>Mechanism:</strong> Breast milk provides optimal nutrition,
+passive immunity (IgA, lactoferrin), growth factors, and protection
+against infection during the critical first 6 months.</p>
+<p><strong>Government scaling pathway:</strong> Baby-Friendly Hospital
+Initiative (BFHI), workplace lactation policies, community peer
+counseling, mass media campaigns. Low cost per DALY averted. Already
+integrated into MNCH platforms globally.</p>
+<p><strong>Key papers:</strong> PMID 22895934, PMID 27301764, PMID
+33622796, PMID 35844158, PMID 39591949</p>
 <hr />
 </div>
-<div id="file-structure" class="section level2">
-<h2>File Structure</h2>
-<pre><code>nutri-evidence-review/
-├── fetch_papers.py              # Entry point: python3 fetch_papers.py
-├── pipeline/
-│   ├── __init__.py
-│   ├── config.py                # API keys, .env loader, rate limits, output paths
-│   ├── queries.py               # All query definitions (12 + 1 + 4)
-│   ├── models.py                # Paper TypedDict (unified schema)
-│   ├── pubmed_client.py         # E-Utilities: esearch, efetch, XML parsing
-│   ├── openalex_client.py       # Track C: OpenAlex fetcher
-│   ├── citation_enrichment.py   # DOI-based cross-reference for citation counts
-│   ├── dedup.py                 # 3-phase deduplication logic
-│   ├── scoring.py               # 7-component scoring algorithm
-│   ├── fulltext_client.py       # PMC full-text retrieval (Stage 3.5)
-│   └── main.py                  # Orchestrator: runs all stages
-├── .env                         # API key (gitignored)
-├── raw_responses/               # Saved API responses (gitignored)
-│   ├── pubmed_*.xml             # PubMed efetch responses
-│   ├── openalex_*.json          # OpenAlex API responses
-│   └── pmc/                     # PMC full-text XML (one file per PMCID)
-│       ├── PMC6572871.xml
-│       └── ...
-├── papers_database.json         # Full output (gitignored)
-├── papers_ranked.csv            # CSV output (gitignored)
-├── top_papers_for_review.json   # Top 100 with full text (gitignored)
-├── PROCESS_DOCUMENTATION.md     # This file
-├── INTERVENTION_SYNTHESIS.md    # Abstract-only synthesis (Mode A)
-└── FULL_INTERVENTION_SYNTH.md   # Full-text-enhanced synthesis (Mode B)</code></pre>
+</div>
+<div id="tier-2-strong-evidence-scalable-with-investment" class="section level2">
+<h2>Tier 2: Strong Evidence + Scalable with Investment</h2>
+<div id="complementary-feeding-education-and-provision" class="section level3">
+<h3>7. Complementary Feeding Education and Provision</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>Full-text analysis of Imdad et al. (2011, PMID: 21501443, BMC Public
+Health, cited 378 times, 17 studies) provides detailed effect sizes:</p>
+<p><strong>Education alone (food-secure populations):</strong> - HAZ
+improvement: 0.21 (95% CI 0.01-0.41) - WAZ improvement: 0.30 (95% CI
+0.05-0.54)</p>
+<p><strong>Food provision with/without education (food-insecure
+populations):</strong> - HAZ improvement: 0.39 (95% CI 0.05-0.73) in
+food-insecure settings - WAZ improvement: 0.26 (95% CI 0.04-0.48)</p>
+<p>The 2017 J Nutrition meta-analysis (PMID: 28904113, cited 127 times)
+found: - LAZ SMD: 0.11 (95% CI 0.01-0.22) for education in food-secure
+populations - WLZ SMD: 0.09 (95% CI 0.02-0.16) for supplementation</p>
+<p>The 2013 companion paper (PMID: 24564534, cited 249 times) with full
+text confirms: education alone is effective when food availability is
+not a constraint; food provision is necessary in food-insecure
+settings.</p>
+<p>Timing matters: introduction of complementary foods at 4 months vs 6
+months shows significantly higher hemoglobin in developing countries (MD
+5.0 g/L, 95% CI 1.5-8.5; PMID: 26328549).</p>
+<p><strong>Mechanism:</strong> Improves nutrient density and diversity
+of diets during the 6-23 month window when growth faltering peaks.
+Education changes feeding behaviors (meal frequency, dietary diversity,
+responsive feeding).</p>
+<p><strong>Government scaling pathway:</strong> Delivered through
+community health workers and ANC/PNC platforms. IYCF counseling
+integrated into routine care. Cost: $50-100 per child for food
+provision; $5-10 for education alone.</p>
+<p><strong>Key papers:</strong> PMID 21501443, PMID 28904113, PMID
+24564534, PMID 26328549</p>
 <hr />
 </div>
-<div id="version-history" class="section level2">
-<h2>Version History</h2>
-<table>
-<colgroup>
-<col width="37%" />
-<col width="25%" />
-<col width="37%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Version</th>
-<th>Date</th>
-<th>Changes</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>v1.0</td>
-<td>2026-05-22</td>
-<td>Initial pipeline: OpenAlex only, 16 keyword queries, binary keyword
-scoring</td>
-</tr>
-<tr class="even">
-<td>v2.0</td>
-<td>2026-05-24</td>
-<td>Multi-source (PubMed + OpenAlex), MeSH-based scoring, two-tier MA/SR
-separation, citation enrichment, modular architecture</td>
-</tr>
-<tr class="odd">
-<td>v2.1</td>
-<td>2026-05-24</td>
-<td>Added Stage 3.5: PMC full-text retrieval for top papers.
-Full-text-enhanced synthesis (FULL_INTERVENTION_SYNTH.md). .env
-auto-loading. API key masked from source.</td>
-</tr>
-</tbody>
-</table>
+<div id="micronutrient-powders-mnps-for-home-fortification" class="section level3">
+<h3>8. Micronutrient Powders (MNPs) for Home Fortification</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>The 2020 Cochrane update (PMID: 32107773, cited 116 times) and the
+original 2011 Cochrane review (PMID: 21901727, cited 397 times) provide
+the evidence base. The full-text adherence meta-analysis (PMID:
+34658128) adds implementation insights.</p>
+<p><strong>Key findings:</strong> - Anemia reduction: ~18-34% (varies by
+formulation and context) - Iron deficiency reduction confirmed across
+multiple settings - Implementation data shows pooled high adherence rate
+of 63.3% (95% CI 51.1-74.6%) across 10 studies/16,506 caregivers -
+Higher adherence in middle-income (65.2%) vs low-income countries
+(55.2%) - Parental age &gt;30, child age 18-36 months, maternal college
+education, and social norm perception all improve adherence</p>
+<p>The micronutrient supplementation and fortification systematic review
+(PMID: 31973225, 2020, 197 studies, cited 259 times) found from
+full-text that anemia risk was reduced with MNPs across 86 studies in
+Asia, 64 in Africa, and 26 in South America.</p>
+<p><strong>Mechanism:</strong> Single-dose sachets of micronutrient
+powder mixed into semi-solid home-prepared foods. Provides iron
+(encapsulated), zinc, vitamin A, and other micronutrients without
+changing food taste/appearance.</p>
+<p><strong>Government scaling pathway:</strong> Government-procured MNPs
+distributed through health facilities, community health workers, or
+commercial channels. In 2014, implemented in 43 countries reaching 3+
+million children. WHO recommends for children 6-23 months in populations
+with &gt;20% anemia prevalence.</p>
+<p><strong>Key papers:</strong> PMID 32107773, PMID 21901727, PMID
+34658128, PMID 31973225</p>
+<hr />
+</div>
+<div id="management-of-severe-acute-malnutrition-rutfcmam" class="section level3">
+<h3>9. Management of Severe Acute Malnutrition (RUTF/CMAM)</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>The full-text of Defined et al. (2013, PMID: 24564235, BMC Public
+Health, cited 217 times) provides the pivotal evidence alongside the
+comprehensive 2020 review (PMID: 31906272, 42 studies, 35,017 children,
+cited 109 times).</p>
+<p><strong>Key findings from full-text:</strong> - Community-based RUTF
+vs standard care: children given RUTF were <strong>51% more likely to
+achieve nutritional recovery</strong> (2 quasi-experimental trials,
+Malawi) - Inpatient case fatality rates using WHO protocol: 3.4% to 35%
+(reflects implementation quality variation) - The 2020 comprehensive
+review (full text) found: limited evidence of benefit from integrated
+community screening but confirms RUTF effectiveness - For MAM:
+ready-to-use supplementary food (RUSF) shows LNS superior to corn-soy
+blend for recovery (RR 1.05, 95% CI 1.01-1.09) (PMID: 34535798, 13
+trials) - Local food-based approaches and whey RUSF comparable to
+standard RUSF for recovery</p>
+<p><strong>Mechanism:</strong> RUTF (e.g., Plumpy’Nut) is an
+energy-dense, micronutrient-enriched paste that requires no water or
+cooking, reducing infection risk. CMAM decentralizes treatment from
+facilities to communities.</p>
+<p><strong>Government scaling pathway:</strong> CMAM programs integrated
+into primary health care. WHO/UNICEF protocols with community health
+workers for screening (MUAC), referral, and follow-up. Government
+procurement of RUTF. Cost: $150-200 per child treated. Active CMAM
+programs in 70+ countries.</p>
+<p><strong>Key papers:</strong> PMID 24564235, PMID 31906272, PMID
+34535798, PMID 23794237</p>
+<hr />
+</div>
+<div id="small-quantity-lipid-based-nutrient-supplements-sq-lns" class="section level3">
+<h3>10. Small-Quantity Lipid-Based Nutrient Supplements (SQ-LNS)</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>The 2024 IPD meta-analysis (PMID: 39154665, Am J Clin Nutr, cited 19
+times; 4 RCTs, 5,273 participants) with full-text access provides the
+most rigorous evidence for prenatal SQ-LNS:</p>
+<p><strong>Prenatal SQ-LNS vs IFA/standard of care:</strong> - Birth
+weight increase: +49g (95% CI 26-71g) - All birth anthropometric
+z-scores improved (+0.10-0.13 SD) - Low birthweight reduced by 11% -
+Newborn stunting reduced by 17% - Newborn wasting reduced by 11% - Small
+head size reduced by 15%</p>
+<p><strong>Child SQ-LNS (6-24 months):</strong> - All-cause mortality:
+RR 0.73 (95% CI 0.59-0.89; 13 trials, 41,280 children) (PMID: 31697329,
+cited 76 times) - The Cochrane review (PMID: 31046132, cited 115 times)
+confirms benefits on growth and development compared to no
+intervention</p>
+<p><strong>Mechanism:</strong> SQ-LNS provides both macro- and
+micronutrients including essential fatty acids in a small dose (approx.
+120 kcal/day). Unlike MNPs, addresses energy and protein gaps alongside
+micronutrient deficiencies.</p>
+<p><strong>Government scaling pathway:</strong> Gaining traction — WHO
+considering updated guidelines. Can be delivered through health facility
+or community platforms alongside complementary feeding counseling. Cost:
+$40-60 per child for 6 months. Manufacturing increasingly local (Ghana,
+Bangladesh, Malawi).</p>
+<p><strong>Key papers:</strong> PMID 39154665, PMID 31697329, PMID
+31046132, PMID 30168868</p>
+<hr />
+</div>
+<div id="preventive-zinc-supplementation" class="section level3">
+<h3>11. Preventive Zinc Supplementation</h3>
+<p><strong>Evidence Rating: A</strong></p>
+<p>Full-text analysis of multiple Cochrane reviews and
+meta-analyses:</p>
+<ul>
+<li>Preventive zinc reduces ALRI incidence by 35% (IRR 0.65, 95% CI
+0.52-0.82; specific clinical criteria) (PMID: 20156999)</li>
+<li>Preventive zinc reduces mortality and morbidity in children &lt;5
+(PMID: 24905460, PMID: 26370559)</li>
+<li>Zinc supplementation reduces diarrhea incidence in children under 5
+in developing countries (PMID: 21501438)</li>
+</ul>
+<p>The meta-regression (PMID: 20156999, 10 trials, 49,450 children)
+identified that effect varies by baseline zinc status, with greater
+benefit in zinc-deficient populations.</p>
+<p><strong>Mechanism:</strong> Zinc is essential for immune cell
+function, protein synthesis, wound healing, and intestinal epithelial
+integrity. Deficiency is widespread (estimated 17-30% of LMIC
+populations).</p>
+<p><strong>Government scaling pathway:</strong> Can be delivered as
+preventive supplementation (10-20mg/day) or as therapeutic zinc with
+ORS. Platform: community health workers, routine supplementation
+programs. Cost: $2-4 per child per year.</p>
+<p><strong>Key papers:</strong> PMID 20156999, PMID 24905460, PMID
+26370559, PMID 27996088</p>
+<hr />
+</div>
+<div id="double-fortified-salt-iron-iodine" class="section level3">
+<h3>12. Double-Fortified Salt (Iron + Iodine)</h3>
+<p><strong>Evidence Rating: B+</strong></p>
+<p>Full-text from efficacy and effectiveness studies (PMID: 29767699, 14
+studies; PMID: 30880739, 10 comparisons):</p>
+<ul>
+<li>Efficacy: hemoglobin increase SMD 0.28 (95% CI 0.11-0.44), anemia
+reduced 41% (RR 0.59)</li>
+<li>Effectiveness: smaller but still significant (SMD 0.03, 95% CI
+0.01-0.05)</li>
+<li>All studies in LMICs (predominantly India)</li>
+<li>DFS significantly increases mean hemoglobin by 0.44 g/dL (95% CI
+0.16-0.71) and reduces anemia (RD -0.16) and iron deficiency (RD
+-0.20)</li>
+</ul>
+<p><strong>Mechanism:</strong> Leverages existing universal salt
+iodization infrastructure to deliver iron (encapsulated to prevent
+iodine-iron interaction) through the same vehicle.</p>
+<p><strong>Government scaling pathway:</strong> Requires only upgrading
+existing iodized salt programs. India has the largest program (ICDS
+school meals). Minimal behavior change needed. Cost premium over iodized
+salt: 30-50%.</p>
+<p><strong>Key papers:</strong> PMID 29767699, PMID 30880739</p>
+<hr />
+</div>
+</div>
+<div id="tier-3-promising-evidence-plausible-scaling-pathway" class="section level2">
+<h2>Tier 3: Promising Evidence + Plausible Scaling Pathway</h2>
+<div id="balanced-protein-energy-supplementation-in-pregnancy" class="section level3">
+<h3>13. Balanced Protein-Energy Supplementation in Pregnancy</h3>
+<p><strong>Evidence Rating: B+</strong></p>
+<p>Full-text of Stevens et al. (2015, PMID: 25857334, 7 RCTs from LMICs
+exclusively):</p>
+<ul>
+<li>Birthweight significantly improved (pooled SMD positive; all 7
+studies report on birthweight)</li>
+<li>Birth length improved (5 studies)</li>
+<li>Studies from Colombia, Gambia, India, Thailand, Indonesia, Burkina
+Faso</li>
+<li>Effect depends on maternal undernutrition status — targeted
+supplementation for undernourished women shows strongest effect</li>
+<li>The 2023 modular review (PMID: 37331760) confirms BPE can reduce
+LBW, SGA, and stillbirth risk</li>
+</ul>
+<p><strong>Mechanism:</strong> Provides balanced macronutrient energy
+(&lt;25% from protein) to offset energy deficits in food-insecure
+pregnant women, supporting fetal growth without excessive protein
+load.</p>
+<p><strong>Government scaling pathway:</strong> Can be delivered through
+ANC platforms targeting underweight pregnant women (BMI &lt;18.5).
+Requires nutritional screening at first ANC visit. Locally produced
+supplements preferred. Cost: $20-40 per pregnancy for targeted
+supplementation.</p>
+<p><strong>Key papers:</strong> PMID 25857334, PMID 37331760</p>
+<hr />
+</div>
+<div id="wash-interventions-combined-with-nutrition" class="section level3">
+<h3>14. WASH Interventions Combined with Nutrition</h3>
+<p><strong>Evidence Rating: B</strong></p>
+<p>The 2013 Cochrane review (PMID: 23904195, cited 377 times) and 2019
+meta-analysis with full-text (PMID: 31272479, 10 studies, 16,473
+children):</p>
+<ul>
+<li>Combined WASH shows modest effects on HAZ and WAZ</li>
+<li>The 2019 meta-analysis found effects expressed as standardized mean
+differences with 95% CI</li>
+<li>Environmental enteric dysfunction (EED) pathway increasingly
+recognized as linking poor WASH to growth faltering</li>
+<li>Individual WASH components (water treatment, handwashing,
+sanitation) show limited independent effects on nutrition outcomes</li>
+<li>The 2013 Cochrane review notes: “WASH interventions had small
+effects on child growth… evidence is of low or very low quality”</li>
+</ul>
+<p>However, the full-text analysis reveals that WASH addresses a key
+determinant: diarrhea was associated with 77% increased risk of overall
+undernutrition (OR 1.77, 95% CI 1.52-2.06) and 92% increased risk of
+wasting (OR 1.92, 95% CI 1.48-2.48) (PMID: 40886100, 2026, 49
+studies).</p>
+<p><strong>Mechanism:</strong> Reduces fecal-oral pathogen exposure that
+causes diarrhea and environmental enteric dysfunction (subclinical
+intestinal inflammation impairing nutrient absorption).</p>
+<p><strong>Government scaling pathway:</strong> National sanitation
+campaigns (e.g., India’s Swachh Bharat), community-led total sanitation
+(CLTS), water treatment infrastructure. Must be combined with
+nutrition-specific interventions for growth impact. Cross-ministerial
+coordination required (health + water/sanitation).</p>
+<p><strong>Key papers:</strong> PMID 23904195, PMID 31272479, PMID
+40886100</p>
+<hr />
+</div>
+<div id="financial-incentives-and-conditional-cash-transfers" class="section level3">
+<h3>15. Financial Incentives and Conditional Cash Transfers</h3>
+<p><strong>Evidence Rating: B</strong></p>
+<p>Full-text from Bassani et al. (2013, PMID: 24564520, BMC Public
+Health, cited 230 times; 25 studies):</p>
+<ul>
+<li>Conditional cash transfers (CCTs) and unconditional cash transfers
+(UCTs) improve uptake of child health interventions</li>
+<li>Conditional microcredit: 22% net increase in newborns receiving
+colostrum (MD 0.22, 95% CI 0.08-0.35)</li>
+<li>User fee removal and voucher schemes increase health service
+utilization</li>
+<li>Studies from South America (52%), Africa (32%), Southeast Asia
+(16%)</li>
+<li>Evidence quality: low, mainly due to limited number of studies per
+intervention type</li>
+</ul>
+<p>The 2019 systematic review (PMID: 31666032, 17 studies; full-text)
+found cash-based interventions can reduce stunting but evidence linking
+to economic development indicators remains limited.</p>
+<p><strong>Mechanism:</strong> Addresses demand-side barriers (cost,
+opportunity cost) to accessing nutrition and health services. Income
+support improves household food security and dietary diversity.</p>
+<p><strong>Government scaling pathway:</strong> Proven at national scale
+(Brazil Bolsa Familia, Mexico Prospera, India MGNREGA). Requires social
+protection infrastructure, targeting systems, and conditionality
+monitoring. Cost: varies by coverage and transfer size.</p>
+<p><strong>Key papers:</strong> PMID 24564520, PMID 31666032</p>
+<hr />
+</div>
+<div id="nutrition-sensitive-agriculture" class="section level3">
+<h3>16. Nutrition-Sensitive Agriculture</h3>
+<p><strong>Evidence Rating: B</strong></p>
+<p>Full-text from Masset et al. (2012, PMID: 22251864, BMJ, cited 396
+times; 23 studies) and the egg supplementation meta-analysis (PMID:
+42137196, 2026, 7 studies, 3,673 children):</p>
+<p><strong>Home gardens (dominant evidence):</strong> 15 of 23 selected
+studies - Strong effects on vitamin A intake and dietary diversity -
+Pooled data limited for growth outcomes - “Rigorous evaluations of the
+effect of dairy, animal husbandry, and fisheries projects are extremely
+rare”</p>
+<p><strong>Egg-based interventions (emerging evidence):</strong> - 7
+RCTs in sub-Saharan Africa (Malawi, Kenya, Ethiopia, South Africa) -
+Assessed effects on HAZ, WAZ, and WHZ - Interventions provided one egg
+per day - Shows promise but heterogeneous results</p>
+<p><strong>Mechanism:</strong> Increases household-level access to
+nutrient-rich foods (eggs, vegetables, fruit, animal-source foods) while
+generating income. Biofortified crops (orange-fleshed sweet potato,
+iron-biofortified beans) provide micronutrients through staple food
+production.</p>
+<p><strong>Government scaling pathway:</strong> Agricultural extension
+services, home garden programs, biofortification crop introduction.
+Requires cross-ministry coordination (agriculture + health). Cost:
+highly variable by intervention type.</p>
+<p><strong>Key papers:</strong> PMID 22251864, PMID 42137196, PMID
+32270495</p>
+<hr />
+</div>
+<div id="school-based-micronutrient-programs" class="section level3">
+<h3>17. School-Based Micronutrient Programs</h3>
+<p><strong>Evidence Rating: B</strong></p>
+<p>Evidence from weekly IFA supplementation in sub-Saharan Africa (PMID:
+38862227, 2024, 10 RCTs; full-text), iron supplementation in school-age
+children (PMID: 22895927, cited 155 times), and fortified beverages
+(PMID: 26007336, 10 RCTs, 4,645 participants; full-text):</p>
+<ul>
+<li>Weekly IFA increases serum ferritin in adolescent girls (Hedge’s
+g=0.53, 95% CI 0.28-0.78)</li>
+<li>Weekly IFA increases hemoglobin in school-age children (Hedge’s
+g=0.37, 95% CI 0.01-0.73)</li>
+<li>Substantial reduction in iron deficiency prevalence among adolescent
+girls (OR 0.48)</li>
+<li>MMN-fortified beverages: hemoglobin +2.76 g/L (95% CI 1.19-4.33),
+anemia RR 0.58 (0.29-0.88), iron deficiency RR 0.34 (0.21-0.55)</li>
+<li>Supplements delivered weekly (60-65mg elemental iron + 0.1-2.8mg
+folic acid)</li>
+</ul>
+<p><strong>Mechanism:</strong> Schools provide a platform to reach
+school-age children and adolescents — groups often missed by health
+facility-based nutrition programs. Weekly dosing reduces side effects
+and improves program sustainability.</p>
+<p><strong>Government scaling pathway:</strong> School health and
+nutrition programs (deworming + micronutrients). Can integrate with
+school feeding programs. Platform: education ministry + health ministry
+collaboration. Cost: $2-5 per child per year.</p>
+<p><strong>Key papers:</strong> PMID 38862227, PMID 22895927, PMID
+26007336</p>
+<hr />
+</div>
+<div id="growth-monitoring-and-promotion" class="section level3">
+<h3>18. Growth Monitoring and Promotion</h3>
+<p><strong>Evidence Rating: C+</strong></p>
+<p>The 2023 systematic review (PMID: 36753300, cited 28 times;
+full-text) found:</p>
+<ul>
+<li>Growth monitoring and promotion (GMP) can improve HAZ, WAZ, and
+WHZ</li>
+<li>Evidence is limited to quasi-experimental and before-after
+studies</li>
+<li>Most programs show benefit when combined with counseling and
+referral</li>
+<li>Standalone GMP without action (just weighing) shows no benefit</li>
+<li>Requires integration with nutrition counseling and timely
+referral</li>
+</ul>
+<p><strong>Mechanism:</strong> Regular anthropometric measurement
+identifies growth faltering early, triggers targeted nutrition
+counseling, supplementation, or referral. Behavior change through
+visualization of growth trajectory.</p>
+<p><strong>Government scaling pathway:</strong> Already embedded in most
+LMIC primary health care systems. Main challenge: quality of counseling
+and follow-up action. Platform: routine under-5 clinic visits.</p>
+<p><strong>Key papers:</strong> PMID 36753300</p>
+<hr />
+</div>
+<div id="nutrition-education-in-pregnancy-including-mhealth" class="section level3">
+<h3>19. Nutrition Education in Pregnancy (including mHealth)</h3>
+<p><strong>Evidence Rating: B</strong></p>
+<p>Full-text from the 2025 meta-analysis (PMID: 39545365, 53 studies,
+13,475 women): - Nutrition education increases IFAS compliance 2.80-fold
+(OR 2.80, 95% CI 2.04-3.83) - Hemoglobin increase: 0.88 g/dL (Cohen’s d
+= 0.88, 95% CI 0.63-1.13) - Most studies from India (22.6%), Indonesia
+(20.8%), Egypt (20.8%) - Health facility-based delivery (77.4%) with RCT
+or quasi-experimental designs - Interventions &lt;12 weeks also
+effective</p>
+<p>mHealth (PMID: 30609297, 4 studies from India, Indonesia, Kenya): -
+Limited but promising evidence for improving dietary intake - Text
+messaging and mobile apps for pregnancy nutrition counseling -
+Challenges: evidence base still small, short study durations</p>
+<p><strong>Mechanism:</strong> Addresses knowledge and behavior barriers
+to optimal dietary practices and supplement adherence. mHealth overcomes
+geographic access barriers.</p>
+<p><strong>Government scaling pathway:</strong> Can be integrated into
+existing ANC platforms at minimal marginal cost. mHealth scalable
+through public health messaging systems. Cost: $1-5 per woman for
+facility-based; $0.50-2 for mHealth.</p>
+<p><strong>Key papers:</strong> PMID 39545365, PMID 30609297</p>
+<hr />
+</div>
+<div id="integrated-management-of-childhood-illness-imci" class="section level3">
+<h3>20. Integrated Management of Childhood Illness (IMCI)</h3>
+<p><strong>Evidence Rating: B</strong></p>
+<p>Full-text from the 2016 Cochrane review (PMID: 27378094, cited 185
+times; 2 CBA studies):</p>
+<ul>
+<li>Bangladesh trial: mortality declined from 43 to 27 per 1,000 live
+births in intervention area (37% reduction) vs 44.8 to 31.2 in control
+(30% reduction)</li>
+<li>Tanzania CBA: RR 0.87 (95% CI 0.72-1.05)</li>
+<li>Nutritional status improvements observed as secondary outcome</li>
+<li>IMCI includes nutrition assessment, counseling, and management
+components</li>
+<li>Requires functioning health system with trained health workers and
+drug supply</li>
+</ul>
+<p><strong>Mechanism:</strong> Algorithmic case management integrating
+nutrition screening and counseling with treatment of common childhood
+illnesses. Addresses the malnutrition-infection cycle at point of
+care.</p>
+<p><strong>Government scaling pathway:</strong> WHO IMCI strategy
+adopted in 100+ countries. Requires health worker training, supportive
+supervision, and supply chain. Can be implemented at all levels of
+primary care.</p>
+<p><strong>Key papers:</strong> PMID 27378094</p>
+<hr />
+</div>
+</div>
+<div id="cross-cutting-findings" class="section level2">
+<h2>Cross-Cutting Findings</h2>
+<div id="the-mms-vs-ifa-policy-transition-is-underway" class="section level3">
+<h3>1. The MMS vs IFA Policy Transition Is Underway</h3>
+<p>The evidence consistently shows MMS outperforms IFA for birth
+outcomes. The 2020 WHO conditional recommendation opened the door.
+Full-text analysis of the latest trials (2023-2025) confirms that
+concerns about gestational age assessment methods do not undermine the
+findings. The policy question is no longer “whether” but “how fast” to
+transition ANC protocols.</p>
+</div>
+<div id="adherence-is-the-binding-constraint-for-supplementation-programs" class="section level3">
+<h3>2. Adherence Is the Binding Constraint for Supplementation
+Programs</h3>
+<p>Across iron-folic acid (39% compliance in SSA), MNPs (63% high
+adherence), and zinc (variable), the consistent finding is that supply
+of supplements is necessary but insufficient. Nutrition education at
+point of contact (ANC, community health worker visits) approximately
+doubles adherence. mHealth shows promise but evidence remains thin.</p>
+</div>
+<div id="full-text-analysis-reveals-stronger-effect-sizes-than-abstracts-suggest" class="section level3">
+<h3>3. Full-Text Analysis Reveals Stronger Effect Sizes Than Abstracts
+Suggest</h3>
+<p>Papers with full-text access provided subgroup analyses and
+context-specific estimates not available from abstracts alone. For
+example, the SQ-LNS IPD analysis showed 17% reduction in newborn
+stunting — a finding that requires parsing the full results tables.
+Similarly, the vitamin A literature shows that recent trials in
+lower-deficiency settings show attenuated effects (RR 0.96 in post-2000
+trials vs RR 0.76 overall), which is critical for programming decisions
+but often absent from abstracts.</p>
+</div>
+<div id="the-nutrition-specific-to-nutrition-sensitive-pipeline" class="section level3">
+<h3>4. The Nutrition-Specific to Nutrition-Sensitive Pipeline</h3>
+<p>Tier 1 interventions (VAS, IFA, fortification, breastfeeding) are
+nutrition-specific — they directly address nutrient deficiency. Tier 2-3
+interventions increasingly require cross-sectoral coordination
+(agriculture, social protection, WASH, education). The evidence base for
+nutrition-sensitive interventions is weaker partly because evaluation
+methodologies are less developed for complex multi-component programs,
+not necessarily because the interventions are less effective.</p>
+</div>
+<div id="sub-saharan-africa-and-south-asia-dominate-the-evidence-base" class="section level3">
+<h3>5. Sub-Saharan Africa and South Asia Dominate the Evidence Base</h3>
+<p>Of papers with regional data in full text: 64 studies in Africa, 86
+in Asia, 26 in South America. Evidence from Pacific islands, Central
+Asia, and the Middle East remains thin. The EMR-specific review (PMID:
+34360137) found only 8 eligible studies (7 from Pakistan). Programming
+should be cautious about generalizing across contexts with different
+dietary patterns and disease burdens.</p>
+</div>
+<div id="the-low-birthweight-prevention-package-is-maturing" class="section level3">
+<h3>6. The Low Birthweight Prevention Package Is Maturing</h3>
+<p>The combination of MMS (or SQ-LNS) + balanced protein-energy
+supplementation for undernourished women + nutrition education
+represents a coherent antenatal package with strong evidence for each
+component. The 2023-2025 literature (multiple new meta-analyses) is
+converging on effect sizes of 10-17% reduction in adverse birth
+outcomes, with greatest benefit in food-insecure, underweight women.</p>
+<hr />
+</div>
+</div>
+<div id="methodology-notes" class="section level2">
+<h2>Methodology Notes</h2>
+<p><strong>Evidence Strength Ratings:</strong> - <strong>A:</strong>
+Multiple high-quality meta-analyses/Cochrane reviews with consistent
+findings, large sample sizes, and narrow confidence intervals -
+<strong>B+:</strong> At least one high-quality meta-analysis with
+significant findings, supported by consistent observational evidence -
+<strong>B:</strong> Limited meta-analytic evidence or inconsistent
+findings across reviews - <strong>C+:</strong> Emerging evidence from
+individual RCTs or systematic reviews without meta-analysis</p>
+<p><strong>Cost-Effectiveness Ratings:</strong> - <strong>Very
+High:</strong> &lt;$100 per DALY averted (Copenhagen Consensus “best
+buys”) - <strong>High:</strong> $100-500 per DALY averted -
+<strong>Moderate:</strong> $500-1,500 per DALY averted</p>
+<p><strong>Scalability Ratings:</strong> - <strong>Proven
+national:</strong> Implemented at national scale in multiple LMICs -
+<strong>Proven subnational:</strong> Effective at district/provincial
+scale with evidence of government adoption - <strong>Growing:</strong>
+Pilot evidence in LMICs with expanding coverage - <strong>Requires
+investment:</strong> Evidence base strong but implementation
+infrastructure not yet in place</p>
+<p><strong>Data Sources:</strong> - 100 papers from PubMed (99) and
+OpenAlex (1), retrieved via automated pipeline - 57 papers with PMC
+full-text (structured XML), 43 abstract-only - Publisher-restricted
+papers (28 Cochrane reviews) fetched from PMC but full text not
+available - Effect sizes reported directly from full-text results
+sections where available - All PMIDs verified against PubMed records</p>
 </div>
 </div>
 
