@@ -577,28 +577,24 @@ style: |
     <div class="col">
       <h2 style="color:var(--green);">Pipeline Strengths</h2>
       <ul class="check-list">
-        <li>Identified <strong>3 separate Cochrane reviews</strong> (2011, 2017, 2022) spanning different eras of evidence</li>
-        <li>Extracted <strong>detailed effect sizes with CIs</strong> from full-text Results sections</li>
+        <li>Surfaced the <strong>three landmark syntheses</strong>: Imdad 2011 (CHERG/LiST) + Cochrane CD008524 (2017 &amp; 2022 update)</li>
+        <li>Extracted <strong>detailed effect sizes with CIs</strong> across mortality, morbidity, and deficiency outcomes</li>
         <li>Distinguished <strong>neonatal VAS</strong> (no benefit; possible harm in Africa) from <strong>6–59 month VAS</strong></li>
-        <li>Detected <strong>attenuation of effect</strong> in recent trials: RR 0.96 post-2000 vs 0.76 overall</li>
+        <li>Detected the <strong>fixed vs random divergence</strong>: RR 0.88 vs 0.76 for all-cause mortality</li>
         <li>Flagged <strong>Asia vs Africa differential</strong>: RR 0.69 vs 0.85 in mortality reduction</li>
         <li>Identified <strong>adverse effects</strong>: vomiting RR 1.97, bulging fontanelle in &lt;6 mo</li>
         <li>Noted <strong>declining absolute benefit</strong> as vitamin A deficiency prevalence falls — important for programme reassessment</li>
       </ul>
     </div>
     <div class="col">
-      <h2>Effect Sizes Across Cochrane Generations</h2>
-      <table style="font-size:10px;">
-        <tr><th style="padding:4px 7px;">Outcome</th><th style="padding:4px 7px;">Effect</th><th style="padding:4px 7px;">Period</th><th style="padding:4px 7px;">PMID</th></tr>
-        <tr><td>All-cause mortality (fixed)</td><td>RR 0.88 (0.83–0.93)</td><td>2022 Cochrane</td><td>35294044</td></tr>
-        <tr><td>All-cause mortality (random)</td><td>RR 0.76 (0.66–0.88)</td><td>2017 Cochrane</td><td>28282701</td></tr>
-        <tr><td>Neonatal VAS (overall)</td><td>RR 0.97 (0.89–1.06)</td><td>IPD, 11 trials</td><td>30425075</td></tr>
-        <tr><td>Neonatal VAS — Asia</td><td>RR 0.87 (0.77–0.98)</td><td>Subgroup</td><td>30425075</td></tr>
-        <tr><td>Neonatal VAS — Africa</td><td>RR 1.06 (0.98–1.15)</td><td>Subgroup</td><td>30425075</td></tr>
-        <tr><td>Post-2000 trials only</td><td>RR 0.96 (0.89–1.03)</td><td>Temporal</td><td>35584136</td></tr>
-        <tr><td>Diarrhoea mortality</td><td>RR 0.88 (0.79–0.98)</td><td>2022 Cochrane</td><td>35294044</td></tr>
+      <h2>The Three Landmark Syntheses</h2>
+      <table style="font-size:9.5px;">
+        <tr><th style="padding:4px 6px;">Paper</th><th style="padding:4px 6px;">Type</th><th style="padding:4px 6px;">All-cause mortality</th><th style="padding:4px 6px;">N children</th></tr>
+        <tr><td>Imdad 2011<br><span style="color:#888;">BMC Public Health</span></td><td>CHERG meta-analysis (for LiST)</td><td>RR 0.75 (0.64–0.88)<br><span style="color:#888;">random</span></td><td>~250K</td></tr>
+        <tr><td>Cochrane 2017<br><span style="color:#888;">CD008524.pub3</span></td><td>Systematic review + GRADE</td><td>RR 0.88 (0.83–0.93) fixed<br>0.76 (0.66–0.88) random</td><td>1,202,382</td></tr>
+        <tr><td>Cochrane 2022<br><span style="color:#888;">CD008524 update</span></td><td>Update — <strong>no new RCTs</strong></td><td>Identical to 2017</td><td>Identical</td></tr>
       </table>
-      <p class="footnote" style="margin-top:10px;">The pipeline successfully synthesized evolving evidence across 3 Cochrane generations, detecting both the declining effect trend and critical population-specific signals without human guidance.</p>
+      <p class="footnote" style="margin-top:10px;">Two of the "three" are the <strong>same Cochrane review</strong> (2022 found no new trials); Imdad 2011 is a <strong>CHERG meta-analysis, not Cochrane</strong>. The fixed/random split is driven by one trial — see next slide.</p>
     </div>
   </div>
   <div class="slide-number">8</div>
@@ -612,13 +608,12 @@ style: |
     <div class="col" style="flex:1.15;">
       <h2 style="color:var(--red);">Structural Gaps</h2>
       <ul class="x-list">
+        <li><strong>Study-type misclassification:</strong> Labelled Imdad 2011 (a CHERG meta-analysis in <em>BMC Public Health</em>) a "Cochrane review," and counted a no-new-evidence update as a third independent generation</li>
+        <li><strong>Couldn't trace the divergence to its cause:</strong> Flagged fixed 0.88 vs random 0.76 but never identified <strong>DEVTA</strong> as the driver (see callout)</li>
+        <li><strong>Mechanism left unexamined:</strong> The thin link is <em>cause-specific</em> mortality (diarrhoea/measles pathways underpowered), not the all-cause finding the deck dwelt on</li>
         <li><strong>CEA blind spot:</strong> Rated "Very High" cost-effectiveness but zero cost-effectiveness papers were retrieved</li>
-        <li><strong>External knowledge leak:</strong> "$1–3/child/yr" comes from LLM training data, not from any paper in the database</li>
-        <li><strong>Misattribution:</strong> "823,000 deaths preventable" cited from PMID 26869575 — but that is the Lancet <em>Breastfeeding</em> Series</li>
-        <li><strong>Statistical model tension:</strong> Fixed-effect RR 0.88 vs random-effects RR 0.76 not flagged as methodological divergence</li>
-        <li><strong>Overlapping studies:</strong> Cannot detect shared primary trials across the 3 Cochrane reviews</li>
-        <li><strong>Publication bias:</strong> Cannot assess funnel plot asymmetry</li>
-        <li><strong>No alternatives:</strong> Biofortification and dietary diversification not evaluated as VAS substitutes</li>
+        <li><strong>External knowledge leak:</strong> "$1–3/child/yr" comes from LLM training data, not from any retrieved paper</li>
+        <li><strong>Misattribution:</strong> "823,000 deaths preventable" cited from PMID 26869575 — but that is the Lancet <em>Breastfeeding</em> Series, not VAS</li>
       </ul>
     </div>
     <div class="col" style="flex:0.85;">
@@ -627,12 +622,12 @@ style: |
         <p>The search included a dedicated cost-effectiveness track (Track B) but retrieved <strong>zero usable papers</strong> for VAS. All cost claims rely on LLM external knowledge. The synthesis acknowledges this but the confidence of the "Very High" rating does not reflect the gap.</p>
       </div>
       <div class="callout callout-red">
-        <h3>The Statistical Model Tension</h3>
-        <p>The 2022 Cochrane used <strong>fixed-effect</strong> (RR 0.88); the 2017 used <strong>random-effects</strong> (RR 0.76). These are different statistical approaches on overlapping primary data. A human reviewer would note: the true effect likely lies between these estimates, and the choice of model matters more than additional trials.</p>
+        <h3>It's One Trial: DEVTA</h3>
+        <p>Fixed-effect RR 0.88 vs random-effects RR 0.76 isn't an abstract "model choice" — it's <strong>DEVTA</strong> (India, ~1M children, RR ~0.96), which carries <strong>61.7% of the fixed-effect weight</strong> and drags the pooled estimate up. Down-weight it (random-effects) and you recover Imdad 2011's ~24% reduction. A domain expert names DEVTA in one sentence; the LLM produced only a vague "models differ."</p>
       </div>
     </div>
   </div>
-  <p class="footnote">These are structural pipeline gaps, not LLM reasoning failures. Fixes require dedicated cost-effectiveness databases (e.g., Tufts CEA Registry), primary trial registry matching, and explicit statistical model comparison.</p>
+  <p class="footnote">A mix of LLM reasoning gaps (study-type misclassification, missing DEVTA, mechanism left unexamined) and structural pipeline gaps (no CEA source, no trial-overlap detection). Fixes need both better prompting and pipeline changes — see notes.</p>
   <div class="slide-number">9</div>
 </div>
 
