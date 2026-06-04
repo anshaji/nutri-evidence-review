@@ -115,8 +115,32 @@ Expected runtime: ~3-4 minutes (includes PMC full-text retrieval). Expected yiel
 - **`from __future__ import annotations`** must be first import in modules using `int | None` in TypedDict
 - **pip is broken** on this machine — all code must use stdlib only
 
+## Validation Findings — Vitamin A Supplementation (VAS) Case Study
+
+A deep manual audit of the VAS synthesis surfaced a set of recurring LLM-reasoning and structural gaps. These generalize to the whole pipeline and should guide future work.
+
+### LLM reasoning gaps (Stage 4 synthesis)
+- **Study-type misclassification.** The synthesis labelled Imdad 2011 (a CHERG-methods meta-analysis in *BMC Public Health*, built to feed the Lives Saved Tool / LiST) as a "Cochrane review." The authoritative `journal` and `publication_type` fields were in context but ignored — the LLM pattern-matched on "systematic review by Imdad."
+- **Version vs. evidence confusion.** The 2017 and 2022 Cochrane reviews are the **same review** (CD008524); the 2022 update found **no new RCTs** (same 47 studies, 1,223,856 children, near-identical conclusions). The synthesis presented them as three independent "evidence generations" — double-counting one review and inflating apparent robustness.
+- **Effect-size divergence not traced to its cause.** All-cause mortality is RR 0.88 (fixed-effect) vs RR 0.76 (random-effect). This is driven by the **DEVTA trial** (India, ~1M children, RR ~0.96), which holds ~61.7% of the fixed-effect weight. The random-effect estimate ≈ Imdad 2011's ~24% reduction. The LLM flagged "models differ" but never named DEVTA — the actual explanation a domain expert reaches for immediately.
+- **Mechanism left unexamined.** The genuinely thin evidence is *cause-specific* mortality (diarrhoea/measles pathways are underpowered and inconsistent), not the all-cause finding. The synthesis dwelt on the all-cause effect-size dispute and missed the real gap.
+
+### Structural / data gaps (retrieval + architecture)
+- **CEA blind spot.** VAS was rated "Very High" cost-effectiveness, but Track B retrieved **zero usable CEA papers** for it. PubMed is not where CEAs live.
+- **External-knowledge leak.** Figures like "$1–3 per child per year" and "823,000 deaths preventable" came from LLM training data, not the corpus. The 823K figure is actually the Lancet **Breastfeeding** Series (PMID 26869575) — misattributed to VAS.
+- **No trial-overlap detection.** The pipeline treats each meta-analysis as an atomic blob and cannot tell that reviews share primary trials, that one trial dominates a pooled estimate, or that an update supersedes a prior version.
+- **Root cause:** the pipeline has **no entity model of the evidence** — no representation of `Review → {included trials, weights, version-of}`. The data to detect the version/overlap/DEVTA issues is sitting in the retrieved full-text XML, but it is never extracted into structure.
+
 ## Future Work
 
+### Pipeline reliability fixes (prioritized, from the VAS audit)
+1. **Prompt hardening (Stage 4, cheap, do first).** Ground every claim in provided metadata: state study type/source verbatim from `journal` + `publication_type` (never infer "Cochrane" unless `journal` == "Cochrane Database of Systematic Reviews"); require a corpus PMID on every numeric claim (else emit `not in corpus`); separate all-cause from cause-specific evidence and flag underpowered pathways; report both fixed/random estimates and name any dominant trial the review identifies.
+2. **Cochrane-ID dedup + CEA-rating guard (structural, cheap).** Collapse records sharing a Cochrane review ID (e.g. CD008524) so a version update is not counted as new evidence (`dedup.py`); forbid assigning a cost-effectiveness rating unless a CEA record exists, else output `Unknown` (`scoring.py` / `main.py`).
+3. **Claim-verification pass (new `verify.py`, medium effort).** For each `{value, pmid}`, confirm the PMID is in the corpus and that its title/abstract supports the claim (string match + LLM check). Catches misattribution and external-knowledge leaks.
+4. **Trial-level extraction / evidence graph (large effort).** Parse included-studies lists and forest-plot weights from full text; match trials by registry ID (NCT/ISRCTN) or author+year; build `Review → trials → weights`. Enables overlap/double-counting detection and DEVTA-class insights.
+5. **Dedicated CEA data source.** Integrate the Tufts CEA Registry / GHCEA or DCP3 rather than relying on PubMed Track B for cost-effectiveness.
+
+### Longer-term / methodological
 - List of LMIC countries (standardized)
 - PubMed & Web of Science discovery validation
 - Comparison between OpenAlex & PubMed-Web of Science coverage
