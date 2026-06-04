@@ -1,0 +1,19 @@
+{
+  "generated_from": "top_papers_for_review.json",
+  "review_date": "YYYY-MM-DD",
+  "_comment": "Copy this file to shortlist.json and replace the interventions below with those shortlisted from the Phase 1 evidence review. Each entry needs a 'name' (used in PubMed [tiab] + OpenAlex + registry matching). 'synonyms' and 'mesh' are optional and broaden the CEA search; 'population' is informational only. Avoid ambiguous short synonyms (e.g. 'VAS' also means Visual Analog Scale) — they cause topical false positives in OpenAlex's free-text CEA search.",
+  "interventions": [
+    {
+      "name": "vitamin A supplementation",
+      "synonyms": ["VAS", "retinol supplementation", "vitamin A capsule"],
+      "mesh": ["Vitamin A", "Vitamin A Deficiency"],
+      "population": "under-5"
+    },
+    {
+      "name": "multiple micronutrient supplementation in pregnancy",
+      "synonyms": ["MMS", "antenatal multiple micronutrients", "UNIMMAP"],
+      "mesh": ["Micronutrients", "Prenatal Nutritional Physiological Phenomena"],
+      "population": "WRA"
+    }
+  ]
+}

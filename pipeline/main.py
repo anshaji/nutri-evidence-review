@@ -11,22 +11,31 @@ from datetime import datetime
 
 from .config import OUTPUT_DIR, RAW_RESPONSE_DIR, TOP_N_FOR_REVIEW, NCBI_API_KEY
 from .queries import (
-    TRACK_A_QUERIES, TRACK_B_QUERY, TRACK_C_QUERIES,
-    MA_FILTER, SR_FILTER,
+    TRACK_A_QUERIES, TRACK_C_QUERIES,
+    MA_FILTER, SR_FILTER, build_openalex_search,
 )
-from .pubmed_client import fetch_pubmed_track, fetch_pubmed_cea
+from .pubmed_client import fetch_pubmed_track
 from .openalex_client import fetch_openalex_query
 from .citation_enrichment import enrich_citations
-from .dedup import deduplicate_pubmed, deduplicate_openalex, deduplicate_cross_source
+from .dedup import (
+    deduplicate_pubmed, deduplicate_cochrane,
+    deduplicate_openalex, deduplicate_cross_source,
+)
 from .scoring import score_paper
 from .fulltext_client import retrieve_fulltext
 
 
-def run_pipeline():
-    """Execute the full evidence synthesis pipeline."""
+def run_phase1():
+    """Execute Phase 1 of the pipeline: evidence retrieval, ranking, full text.
+
+    Phase 1 finds strong evidence for nutrition interventions in children under
+    5 and women of reproductive age (PubMed Track A + OpenAlex Track C). Cost-
+    effectiveness is deliberately excluded here — it is handled per shortlisted
+    intervention in Phase 2 (see pipeline/cea_main.py).
+    """
     print("=" * 70)
-    print("NUTRITION EVIDENCE SYNTHESIS PIPELINE v2.0")
-    print(f"PubMed + OpenAlex Multi-Track | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print("NUTRITION EVIDENCE SYNTHESIS PIPELINE v3.0 — PHASE 1 (EVIDENCE)")
+    print(f"PubMed + OpenAlex | under-5 + WRA | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print("=" * 70)
 
     if NCBI_API_KEY:
@@ -64,16 +73,8 @@ def run_pipeline():
 
     print(f"\n  Track A Pass 2 total: {len(pubmed_supplementary)} papers")
 
-    # ── Track B: Cost-Effectiveness ─────────────────────────────────────────
-    print(f"\n{'─' * 70}")
-    print("TRACK B: Cost-Effectiveness Analyses (PubMed)")
-    print(f"{'─' * 70}")
-
-    print(f"\n  [{TRACK_B_QUERY['name']}]")
-    pubmed_cea = fetch_pubmed_cea(TRACK_B_QUERY)
-    print(f"\n  Track B total: {len(pubmed_cea)} papers")
-
     # ── Track C: Non-Biomedical (OpenAlex) ──────────────────────────────────
+    # (Cost-effectiveness is NOT searched in Phase 1 — see Phase 2.)
     print(f"\n{'─' * 70}")
     print("TRACK C: Nutrition-Sensitive (OpenAlex)")
     print(f"{'─' * 70}")
@@ -81,7 +82,9 @@ def run_pipeline():
     openalex_papers = []
     for i, qdef in enumerate(TRACK_C_QUERIES, 1):
         print(f"\n  [{i}/{len(TRACK_C_QUERIES)}] {qdef['name']}")
-        papers = fetch_openalex_query(qdef)
+        # AND the population clause (under-5 / WRA) into the free-text search
+        scoped = {"name": qdef["name"], "search": build_openalex_search(qdef["search"])}
+        papers = fetch_openalex_query(scoped)
         openalex_papers.extend(papers)
         print(f"    → {len(papers)} papers")
 
@@ -92,10 +95,11 @@ def run_pipeline():
     print("DEDUPLICATION")
     print(f"{'─' * 70}")
 
-    # Phase 1: Within PubMed
-    all_pubmed = pubmed_primary + pubmed_supplementary + pubmed_cea
+    # Phase 1: Within PubMed (by PMID), then collapse Cochrane review versions
+    all_pubmed = pubmed_primary + pubmed_supplementary
     print(f"\n  PubMed before dedup: {len(all_pubmed)}")
     all_pubmed = deduplicate_pubmed(all_pubmed)
+    all_pubmed = deduplicate_cochrane(all_pubmed)
     print(f"  PubMed after dedup: {len(all_pubmed)}")
 
     # Phase 2: Within OpenAlex
@@ -188,7 +192,7 @@ def run_pipeline():
     # Score distribution
     print(f"\n{'=' * 70}")
     print("SCORE DISTRIBUTION")
-    brackets = [(70, 999), (60, 70), (50, 60), (40, 50), (30, 40), (20, 30), (0, 20)]
+    brackets = [(80, 999), (70, 80), (60, 70), (50, 60), (40, 50), (30, 40), (20, 30), (0, 20)]
     for lo, hi in brackets:
         count = sum(1 for p in all_papers if lo <= p.get("relevance_score", 0) < hi)
         label = f"{lo}+" if hi >= 999 else f"{lo}-{hi}"
@@ -225,7 +229,12 @@ def run_pipeline():
         print(f"  {s:<20s}: {c:4d}")
 
     print(f"\n{'=' * 70}")
-    print(f"DONE. Files saved in {os.path.abspath(OUTPUT_DIR)}/")
+    print(f"DONE (Phase 1). Files saved in {os.path.abspath(OUTPUT_DIR)}/")
+    print("Next: review top_papers_for_review.json, author shortlist.json, then run run_cea.py (Phase 2).")
     print(f"{'=' * 70}")
 
     return all_papers
+
+
+# Backwards-compatible alias
+run_pipeline = run_phase1

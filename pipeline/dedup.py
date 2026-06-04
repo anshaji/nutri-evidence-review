@@ -40,6 +40,47 @@ def deduplicate_pubmed(papers: list[Paper]) -> list[Paper]:
     return deduped
 
 
+def deduplicate_cochrane(papers: list[Paper]) -> list[Paper]:
+    """
+    Collapse records that share a Cochrane accession (CDxxxxxx).
+
+    A Cochrane review update (e.g. CD008524 published 2017 and again 2022) is
+    the SAME review, not new evidence — counting both inflates apparent
+    robustness (the VAS audit's version-vs-evidence confusion). Keep the newest
+    version per accession; tag dropped records `superseded_by` the kept id.
+
+    Records without a cochrane_id are passed through untouched.
+    """
+    by_accession: dict[str, Paper] = {}
+    passthrough: list[Paper] = []
+
+    for paper in papers:
+        acc = paper.get("cochrane_id")
+        if not acc:
+            passthrough.append(paper)
+            continue
+        kept = by_accession.get(acc)
+        if kept is None:
+            by_accession[acc] = paper
+        else:
+            # Keep the newer version (higher publication_year; unknown years lose)
+            new_year = paper.get("publication_year") or 0
+            kept_year = kept.get("publication_year") or 0
+            if new_year > kept_year:
+                paper["superseded_by"] = None
+                kept["superseded_by"] = paper.get("id")
+                by_accession[acc] = paper
+            else:
+                paper["superseded_by"] = kept.get("id")
+
+    deduped = passthrough + list(by_accession.values())
+    removed = len(papers) - len(deduped)
+    if removed:
+        print(f"  Cochrane version dedup: {len(papers)} → {len(deduped)} "
+              f"({removed} superseded version(s) collapsed)", file=sys.stderr)
+    return deduped
+
+
 def deduplicate_openalex(papers: list[Paper]) -> list[Paper]:
     """Deduplicate OpenAlex papers by OpenAlex ID."""
     seen: dict[str, Paper] = {}

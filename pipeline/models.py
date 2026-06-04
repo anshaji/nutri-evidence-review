@@ -1,6 +1,7 @@
 """Unified paper data model."""
 
 from __future__ import annotations
+import re
 from typing import TypedDict
 
 
@@ -37,6 +38,14 @@ class Paper(TypedDict, total=False):
     relevance_score: float
     tier: str  # "primary" (meta-analysis) | "supplementary" (SR) | "cea" | "nutrition-sensitive"
 
+    # Cochrane versioning (for version-aware dedup)
+    cochrane_id: str | None  # Cochrane accession, e.g. "CD008524" (version-independent)
+    superseded_by: str | None  # If this record was collapsed: id of the kept (newer) version
+
+    # Phase 2 (cost-effectiveness)
+    cea_hits: int  # Count of cost-effectiveness markers in title/abstract/MeSH
+    cea_rank_score: float  # relevance_score + CEA-strength bonus (Phase 2 ranking)
+
 
 def normalize_doi(doi: str | None) -> str | None:
     """Normalize DOI for deduplication: lowercase, strip prefix."""
@@ -47,3 +56,21 @@ def normalize_doi(doi: str | None) -> str | None:
         if doi.startswith(prefix):
             doi = doi[len(prefix):]
     return doi.rstrip("/")
+
+
+_COCHRANE_RE = re.compile(r"(CD\d{6,})", re.IGNORECASE)
+
+
+def extract_cochrane_id(doi: str | None, journal: str | None = None) -> str | None:
+    """Extract the version-independent Cochrane accession (e.g. 'CD008524').
+
+    Cochrane Reviews carry DOIs like 10.1002/14651858.CD008524.pub3 — the
+    .pubN suffix marks the version; the CDxxxxxx accession identifies the
+    review itself, so a 2017 and 2022 update share one accession.
+    """
+    if not doi:
+        return None
+    m = _COCHRANE_RE.search(doi)
+    if m:
+        return m.group(1).upper()
+    return None

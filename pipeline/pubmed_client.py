@@ -19,7 +19,7 @@ from .config import (
     NCBI_BASE, NCBI_API_KEY, NCBI_TOOL, NCBI_EMAIL,
     PUBMED_DELAY, PUBMED_RETMAX, PUBMED_BATCH_SIZE, RAW_RESPONSE_DIR,
 )
-from .models import Paper
+from .models import Paper, extract_cochrane_id
 
 
 def _ncbi_params() -> dict:
@@ -248,6 +248,8 @@ def _parse_article(article: ET.Element) -> Paper | None:
         is_open_access=False,  # PubMed doesn't reliably report this
         relevance_score=0.0,
         tier="",  # Set by caller
+        cochrane_id=extract_cochrane_id(doi, journal),  # Version-independent accession
+        superseded_by=None,
     )
 
 

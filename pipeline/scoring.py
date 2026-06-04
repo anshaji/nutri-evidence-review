@@ -11,9 +11,13 @@ Components:
 5. Citation Impact (0-12) — cited_by_count brackets
 6. Open Access (0-3) — accessibility bonus
 7. Tier Bonus (0-5) — confirmed meta-analyses from Pass 1
+8. Population Relevance (0-10) — under-5 / women-of-reproductive-age targeting
+
+Max ≈ 95.
 """
 
 from datetime import datetime
+from .config import POPULATION_SCORE_MAX
 from .models import Paper
 
 CURRENT_YEAR = datetime.now().year
@@ -220,6 +224,41 @@ def score_tier_bonus(paper: Paper) -> float:
     return 5.0 if paper.get("tier") == "primary" else 0.0
 
 
+# ── Component 8: Population Relevance ────────────────────────────────────────
+# Targets children under 5 OR women of reproductive age. A paper on EITHER
+# population scores; this is a first-class ranking signal so under-5 / WRA
+# evidence rises into the top 200.
+
+POPULATION_MESH = {
+    "Infant", "Infant, Newborn", "Child, Preschool",
+    "Infant Nutritional Physiological Phenomena",
+    "Pregnant Women", "Pregnancy",
+    "Maternal Nutritional Physiological Phenomena",
+    "Prenatal Nutritional Physiological Phenomena",
+    "Reproductive Health", "Women",
+}
+
+POPULATION_KEYWORDS = {
+    "under-five": 5, "under 5": 5, "preschool": 4, "infant": 4,
+    "young child": 4, "neonatal": 3,
+    "women of reproductive age": 5, "reproductive age": 4,
+    "pregnant": 4, "pregnancy": 4, "maternal": 4,
+    "antenatal": 3, "prenatal": 3,
+}
+
+
+def score_population_relevance(paper: Paper) -> float:
+    """Score under-5 / women-of-reproductive-age relevance (MeSH or keywords)."""
+    mesh = set(paper.get("mesh_terms", []))
+    if mesh:
+        matches = mesh & POPULATION_MESH
+        return min(len(matches) * 4, POPULATION_SCORE_MAX) if matches else 0
+    # Keyword fallback for OpenAlex (no MeSH)
+    combined = (paper.get("title", "") + " " + paper.get("abstract", "")).lower()
+    score = sum(pts for kw, pts in POPULATION_KEYWORDS.items() if kw in combined)
+    return min(score, POPULATION_SCORE_MAX)
+
+
 # ── Composite Score ─────────────────────────────────────────────────────────
 
 def score_paper(paper: Paper) -> float:
@@ -231,6 +270,7 @@ def score_paper(paper: Paper) -> float:
         score_recency(paper) +
         score_citations(paper) +
         score_open_access(paper) +
-        score_tier_bonus(paper)
+        score_tier_bonus(paper) +
+        score_population_relevance(paper)
     )
     return round(total, 1)

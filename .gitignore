@@ -3,6 +3,11 @@ papers_database.json
 papers_ranked.csv
 top_papers_for_review.json
 
+# Phase 2 (cost-effectiveness)
+shortlist.json
+cea_by_intervention.json
+data/*.csv
+
 # Raw API responses (reproducibility archive, not tracked)
 raw_responses/
 
@@ -11,6 +16,14 @@ __pycache__/
 *.pyc
 *.pyo
 .env
+
+# R
+.Rhistory
+.RData
+.Rproj.user
+
+# Harness / editor
+.claude/scheduled_tasks.lock
 
 # OS
 .DS_Store

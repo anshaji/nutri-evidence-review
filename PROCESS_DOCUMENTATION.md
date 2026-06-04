@@ -1,5 +1,15 @@
 # Automated Evidence Synthesis Pipeline v2.0: Process Documentation
 
+> **⚠️ This document describes the v2.x single-phase methodology.** The pipeline
+> has since been restructured into a **two-phase design (v3.0)** — evidence
+> retrieval (Phase 1, no cost-effectiveness) → manual intervention shortlist →
+> targeted cost-effectiveness search (Phase 2) — with population targeting
+> (under-5 / WRA), Cochrane-version deduplication, an 8th scoring component, and
+> a synthesis claim-verifier. For the current architecture see
+> [claude.md](claude.md) and [README.md](README.md). The Stage 1–3 retrieval and
+> scoring mechanics below remain largely accurate; the track structure (Track B
+> is removed from Phase 1) and the synthesis flow have changed.
+
 ## Overview
 
 This pipeline automates the identification, ranking, and synthesis of academic evidence on nutrition interventions in low- and middle-income countries (LMICs). It combines multi-source programmatic literature search (PubMed + OpenAlex), structured scoring using authoritative metadata, and LLM-based review and synthesis.
@@ -512,3 +522,4 @@ nutri-evidence-review/
 | v1.0 | 2026-05-22 | Initial pipeline: OpenAlex only, 16 keyword queries, binary keyword scoring |
 | v2.0 | 2026-05-24 | Multi-source (PubMed + OpenAlex), MeSH-based scoring, two-tier MA/SR separation, citation enrichment, modular architecture |
 | v2.1 | 2026-05-24 | Added Stage 3.5: PMC full-text retrieval for top papers. Full-text-enhanced synthesis (FULL_INTERVENTION_SYNTH.md). .env auto-loading. API key masked from source. |
+| v3.0 | 2026-06-03 | **Two-phase restructure.** Phase 1 (evidence, no CEA) + Phase 2 (targeted per-intervention cost-effectiveness). Population targeting (under-5 / WRA) as query filter + scoring component (8th component). Cochrane-version dedup. Top-N raised to 200. Synthesis claim-verifier (`verify_synthesis.py`) and grounding prompt (`prompts/synthesis_prompt.md`). See [claude.md](claude.md). |

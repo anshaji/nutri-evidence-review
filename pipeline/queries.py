@@ -13,6 +13,29 @@ LMIC_FILTER = (
     'OR "southeast asia"[tiab])'
 )
 
+# Population filter: target children under 5 OR women of reproductive age.
+# OR logic — a paper on EITHER population qualifies. Applied to every Track A
+# sub-query via build_pubmed_query (Phase 1 evidence search).
+POPULATION_FILTER = (
+    '("infant"[MeSH] OR "child, preschool"[MeSH] '
+    'OR "infant nutritional physiological phenomena"[MeSH] '
+    'OR "pregnant women"[MeSH] OR "pregnancy"[MeSH] '
+    'OR "maternal nutritional physiological phenomena"[MeSH] '
+    'OR "reproductive health"[MeSH] '
+    'OR "under-five"[tiab] OR "under 5"[tiab] OR "preschool"[tiab] '
+    'OR "infant"[tiab] OR "neonatal"[tiab] OR "young child"[tiab] '
+    'OR "women of reproductive age"[tiab] OR "reproductive age"[tiab] '
+    'OR "pregnant"[tiab] OR "pregnancy"[tiab] OR "maternal"[tiab] '
+    'OR "antenatal"[tiab] OR "prenatal"[tiab])'
+)
+
+# OpenAlex free-text equivalent of POPULATION_FILTER (Track C).
+OPENALEX_POPULATION = (
+    '("infant" OR "child" OR "preschool" OR "under-five" OR "young child" '
+    'OR "pregnant" OR "pregnancy" OR "maternal" OR "antenatal" '
+    'OR "women of reproductive age")'
+)
+
 # Pass 1: meta-analyses only
 MA_FILTER = '(meta-analysis[pt] OR "Cochrane Database Syst Rev"[Journal])'
 
@@ -122,24 +145,60 @@ TRACK_A_QUERIES = [
 
 
 def build_pubmed_query(query_def: dict, type_filter: str) -> str:
-    """Construct full PubMed query string from components."""
-    return f'{query_def["terms"]} AND {LMIC_FILTER} AND {type_filter}'
+    """Construct full PubMed query string from components.
+
+    Single chokepoint for all 24 Track A sub-queries: ANDs in the population
+    filter (under-5 / women of reproductive age) and the LMIC filter.
+    """
+    return (f'{query_def["terms"]} AND {POPULATION_FILTER} '
+            f'AND {LMIC_FILTER} AND {type_filter}')
 
 
-# ── Track B: Cost-Effectiveness (PubMed) ────────────────────────────────────
+def build_openalex_search(search_text: str) -> str:
+    """AND the population clause into an OpenAlex free-text search (Track C)."""
+    return f'({search_text}) AND {OPENALEX_POPULATION}'
 
-TRACK_B_QUERY = {
-    "name": "cost_effectiveness",
-    "query": (
-        '("cost-benefit analysis"[MeSH] OR "cost-effectiveness"[tiab] '
-        'OR "cost per DALY"[tiab] OR "cost-benefit"[tiab] '
-        'OR "cost effective"[tiab] OR "incremental cost"[tiab]) '
-        'AND ("nutrition"[tiab] OR "malnutrition"[tiab] OR "stunting"[tiab] '
-        'OR "supplementation"[tiab] OR "fortification"[tiab] '
-        'OR "breastfeeding"[tiab] OR "complementary feeding"[tiab]) '
-        f'AND {LMIC_FILTER}'
-    ),
-}
+
+# ── Phase 2: Cost-Effectiveness (PubMed, per shortlisted intervention) ──────
+#
+# Phase 1 deliberately excludes cost-effectiveness. In Phase 2 the CEA search
+# is run targeted *per shortlisted intervention* — the intervention name (plus
+# synonyms/MeSH from the shortlist) replaces the broad nutrition-noun half of
+# the old Track B query, AND-ed with this cost-term skeleton.
+
+CEA_TERM_SKELETON = (
+    '("cost-benefit analysis"[MeSH] OR "cost-effectiveness"[tiab] '
+    'OR "cost per DALY"[tiab] OR "cost-benefit"[tiab] '
+    'OR "cost effective"[tiab] OR "incremental cost"[tiab] '
+    'OR "cost-utility"[tiab])'
+)
+
+
+def build_cea_pubmed_query(intervention: dict) -> str:
+    """Build a targeted PubMed CEA query for one shortlisted intervention.
+
+    intervention: {"name": str, "synonyms": [str], "mesh": [str], ...}
+    """
+    name = intervention["name"]
+    syns = intervention.get("synonyms", [])
+    mesh = intervention.get("mesh", [])
+    tiab_terms = [f'"{t}"[tiab]' for t in [name] + syns]
+    mesh_terms = [f'"{m}"[MeSH]' for m in mesh]
+    intervention_clause = "(" + " OR ".join(tiab_terms + mesh_terms) + ")"
+    return f'{CEA_TERM_SKELETON} AND {intervention_clause} AND {LMIC_FILTER}'
+
+
+def build_cea_openalex_search(intervention: dict) -> str:
+    """Build a targeted OpenAlex CEA free-text search for one intervention."""
+    name = intervention["name"]
+    syns = intervention.get("synonyms", [])
+    names = " OR ".join(f'"{t}"' for t in [name] + syns)
+    return (
+        '("cost-effectiveness" OR "cost per DALY" OR "cost-benefit" '
+        'OR "cost-utility" OR "incremental cost") '
+        f'AND ({names}) '
+        'AND ("low-income" OR "LMIC" OR "developing")'
+    )
 
 
 # ── Track C: Non-Biomedical (OpenAlex) ─────────────────────────────────────

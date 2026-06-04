@@ -352,911 +352,698 @@ display: none;
 </div>
 
 
-<div id="full-text-evidence-synthesis-nutrition-interventions-for-lmic-scaling" class="section level1">
-<h1>Full-Text Evidence Synthesis: Nutrition Interventions for LMIC
-Scaling</h1>
-<p><strong>Pipeline Version:</strong> 2.0 (PubMed + OpenAlex Multi-Track
-with PMC Full-Text Retrieval) <strong>Papers Reviewed:</strong> 100 (57
-with PMC full text, 43 abstract-only) <strong>Date:</strong>
-2026-05-24</p>
+<div id="evidence-cost-effectiveness-synthesis-nutrition-interventions-for-children-under-5-and-women-of-reproductive-age-in-lmics" class="section level1">
+<h1>Evidence + Cost-Effectiveness Synthesis: Nutrition Interventions for
+Children Under 5 and Women of Reproductive Age in LMICs</h1>
+<p><strong>Pipeline version:</strong> 3.0 (two-phase: evidence →
+cost-effectiveness) <strong>Phase 1 corpus:</strong> top 200 ranked
+papers (117 with PMC full text), population-targeted (under-5 / WRA)
+<strong>Phase 2 corpus:</strong> <code>cea_by_intervention.json</code> —
+targeted CEA search per shortlisted intervention <strong>Date:</strong>
+2026-06-03</p>
+<div id="how-to-read-this-synthesis" class="section level2">
+<h2>How to read this synthesis</h2>
+<p>This document follows the grounding rules in
+<code>prompts/synthesis_prompt.md</code>:</p>
+<ul>
+<li><strong>Every numeric claim cites a corpus PMID.</strong> Figures
+not in the retrieved corpus are not stated. Effect sizes are taken
+verbatim from the cited paper’s abstract/full text.</li>
+<li><strong>Study types are reported verbatim</strong> from
+<code>journal</code> + <code>publication_type</code> — a review is only
+called “Cochrane” when published in <em>The Cochrane Database of
+Systematic Reviews</em>.</li>
+<li><strong>All-cause vs cause-specific</strong> outcomes are kept
+separate; underpowered pathways are flagged.</li>
+<li><strong>Cost-effectiveness is rated ONLY where Phase 2 retrieved a
+genuine, intervention-specific CEA</strong>
+(<code>cea_rating_allowed</code>). Where the CEA evidence is absent or
+only generic, the rating is <strong>Unknown</strong> — never inferred
+from background knowledge.</li>
+<li>The Phase 1 corpus contains <strong>no cost-effectiveness analyses
+by design</strong>; all CE figures come from Phase 2.</li>
+</ul>
+<p>Ratings: <strong>Evidence</strong> A (multiple consistent MAs) / B
+(some MA/SR, mixed) / C (limited or indirect).
+<strong>Cost-effectiveness</strong> Very High / High / Moderate /
+Unknown. <strong>Scalability</strong> Proven national / Proven
+subnational / Growing / Requires investment.</p>
 <hr />
+</div>
 <div id="summary-table" class="section level2">
-<h2>Summary Table</h2>
+<h2>Summary table</h2>
 <table>
 <colgroup>
-<col width="7%" />
-<col width="16%" />
-<col width="12%" />
-<col width="24%" />
-<col width="16%" />
+<col width="8%" />
 <col width="20%" />
+<col width="8%" />
+<col width="14%" />
+<col width="28%" />
+<col width="18%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th>Rank</th>
 <th>Intervention</th>
+<th>Pop.</th>
 <th>Evidence</th>
-<th>Cost-Effectiveness</th>
+<th>Cost-effectiveness</th>
 <th>Scalability</th>
-<th>Primary Target</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<td><strong>Tier 1 — strong evidence + cost-effective +
+scalable</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
 <td>1</td>
-<td>Vitamin A supplementation (6-59 mo)</td>
+<td>Large-scale food fortification (staple foods)</td>
+<td>both</td>
 <td>A</td>
-<td>Very High</td>
+<td>High (openalex 63-country review*)</td>
 <td>Proven national</td>
-<td>Children 6-59 mo</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>2</td>
-<td>Iron-folic acid supplementation (pregnancy)</td>
-<td>A</td>
-<td>Very High</td>
+<td>Vitamin A supplementation (children 6–59 mo)</td>
+<td>u5</td>
+<td>A (context-dependent)</td>
+<td>High (PMID 35390077)</td>
 <td>Proven national</td>
-<td>Pregnant women</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>3</td>
-<td>Multiple micronutrient supplementation (pregnancy)</td>
+<td>Zinc for treatment of diarrhoea</td>
+<td>u5</td>
 <td>A</td>
-<td>Very High</td>
+<td>High (PMID 16512321, 25128210)</td>
 <td>Proven national</td>
-<td>Pregnant women</td>
-</tr>
-<tr class="even">
-<td>4</td>
-<td>Zinc supplementation (therapeutic, diarrhea)</td>
-<td>A</td>
-<td>Very High</td>
-<td>Proven national</td>
-<td>Children &lt;5 with diarrhea</td>
 </tr>
 <tr class="odd">
-<td>5</td>
-<td>Large-scale food fortification (iron, iodine, folic acid)</td>
+<td>4</td>
+<td>Antenatal multiple micronutrient supplementation (MMS)</td>
+<td>WRA</td>
 <td>A</td>
-<td>Very High</td>
-<td>Proven national</td>
-<td>General population</td>
+<td>High (PMID 35192606; openalex $3–15/DALY)</td>
+<td>Growing → proven</td>
 </tr>
 <tr class="even">
-<td>6</td>
+<td>5</td>
 <td>Breastfeeding promotion &amp; support</td>
+<td>u5</td>
 <td>A</td>
-<td>Very High</td>
+<td>High (PMID 26619338)</td>
 <td>Proven national</td>
-<td>Infants 0-6 mo</td>
+</tr>
+<tr class="odd">
+<td>6</td>
+<td>Small-quantity lipid-based nutrient supplements (SQ-LNS)</td>
+<td>u5</td>
+<td>A</td>
+<td>High (openalex, Uganda)</td>
+<td>Growing</td>
+</tr>
+<tr class="even">
+<td><strong>Tier 2 — strong/mixed evidence + scalable with
+investment</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
 </tr>
 <tr class="odd">
 <td>7</td>
-<td>Complementary feeding education + provision</td>
+<td>Community-based management of acute malnutrition (RUTF/CMAM)</td>
+<td>u5</td>
 <td>A</td>
-<td>High</td>
+<td>Moderate (PMID 33102783)</td>
 <td>Proven subnational</td>
-<td>Children 6-23 mo</td>
 </tr>
 <tr class="even">
 <td>8</td>
-<td>Micronutrient powders (MNPs) for home fortification</td>
+<td>Complementary feeding interventions (education ± food)</td>
+<td>u5</td>
 <td>A</td>
-<td>High</td>
-<td>Proven national</td>
-<td>Children 6-23 mo</td>
+<td>High (PMID 26619338 proxy)</td>
+<td>Growing</td>
 </tr>
 <tr class="odd">
 <td>9</td>
-<td>Management of severe acute malnutrition (RUTF/CMAM)</td>
-<td>A</td>
-<td>High</td>
-<td>Proven subnational</td>
-<td>Children with SAM</td>
+<td>Micronutrient powders (home fortification)</td>
+<td>u5</td>
+<td>B (net-benefit caveat)</td>
+<td>Moderate (PMID 36192508)</td>
+<td>Growing</td>
 </tr>
 <tr class="even">
 <td>10</td>
-<td>Lipid-based nutrient supplements (SQ-LNS)</td>
-<td>A</td>
-<td>High</td>
-<td>Growing</td>
-<td>Children 6-24 mo / Pregnant women</td>
+<td>Periconception/antenatal folic acid</td>
+<td>WRA</td>
+<td>A (NTD)</td>
+<td>High (via fortification)</td>
+<td>Proven national (fortification)</td>
 </tr>
 <tr class="odd">
 <td>11</td>
-<td>Preventive zinc supplementation</td>
-<td>A</td>
-<td>High</td>
-<td>Proven subnational</td>
-<td>Children &lt;5</td>
+<td>Antenatal iron / iron-folic acid</td>
+<td>WRA</td>
+<td>A (anaemia)</td>
+<td>Moderate (PMID 35192606)</td>
+<td>Proven national</td>
 </tr>
 <tr class="even">
 <td>12</td>
-<td>Double-fortified salt (iron + iodine)</td>
+<td>Balanced energy-protein supplementation (undernourished
+pregnancy)</td>
+<td>WRA</td>
 <td>B+</td>
-<td>Very High</td>
-<td>Proven national</td>
-<td>General population</td>
+<td>Moderate (PMID 35192606)</td>
+<td>Requires investment</td>
 </tr>
 <tr class="odd">
+<td><strong>Tier 3 — promising/indirect evidence + plausible
+pathway</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="even">
 <td>13</td>
-<td>Balanced protein-energy supplementation (pregnancy)</td>
-<td>B+</td>
-<td>Moderate</td>
+<td>Iron supplementation in children</td>
+<td>u5</td>
+<td>B (benefit in anaemic; risk if iron-replete)</td>
+<td>Moderate (PMID 36192508)</td>
 <td>Growing</td>
-<td>Undernourished pregnant women</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>14</td>
-<td>WASH interventions (combined with nutrition)</td>
-<td>B</td>
-<td>Moderate</td>
-<td>Proven subnational</td>
-<td>Children &lt;5</td>
+<td>WASH for child nutrition</td>
+<td>u5</td>
+<td>B/C (small linear-growth effect)</td>
+<td><strong>Unknown</strong> (no specific CEA retrieved)</td>
+<td>Requires investment</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>15</td>
-<td>Financial incentives / conditional cash transfers</td>
-<td>B</td>
-<td>Moderate</td>
-<td>Proven national</td>
-<td>Households with children</td>
-</tr>
-<tr class="even">
-<td>16</td>
-<td>Nutrition-sensitive agriculture (home gardens, eggs)</td>
-<td>B</td>
-<td>Moderate</td>
-<td>Growing</td>
-<td>Households</td>
-</tr>
-<tr class="odd">
-<td>17</td>
-<td>School-based micronutrient programs</td>
-<td>B</td>
-<td>High</td>
-<td>Proven subnational</td>
-<td>School-age children</td>
-</tr>
-<tr class="even">
-<td>18</td>
-<td>Growth monitoring &amp; promotion</td>
-<td>C+</td>
-<td>Moderate</td>
-<td>Proven national</td>
-<td>Children &lt;5</td>
-</tr>
-<tr class="odd">
-<td>19</td>
-<td>Nutrition education (pregnancy, mHealth)</td>
-<td>B</td>
-<td>High</td>
-<td>Growing</td>
-<td>Pregnant women</td>
-</tr>
-<tr class="even">
-<td>20</td>
-<td>Integrated management of childhood illness (IMCI)</td>
-<td>B</td>
-<td>Moderate</td>
-<td>Proven national</td>
-<td>Children &lt;5</td>
+<td>Cash transfers for child nutrition</td>
+<td>u5</td>
+<td>C (indirect, nutrition-sensitive)</td>
+<td><strong>Unknown</strong> (no specific CEA retrieved)</td>
+<td>Proven national (as social protection)</td>
 </tr>
 </tbody>
 </table>
+<p>* The fortification CE evidence retrieved is a 63-country systematic
+review of economic evaluations (openalex, medRxiv 2025) plus the
+VAS-comparator paper; see entry #1.</p>
 <hr />
 </div>
-<div id="tier-1-strong-evidence-proven-scalability-high-cost-effectiveness" class="section level2">
-<h2>Tier 1: Strong Evidence + Proven Scalability + High
-Cost-Effectiveness</h2>
-<div id="vitamin-a-supplementation-children-6-59-months" class="section level3">
-<h3>1. Vitamin A Supplementation (Children 6-59 months)</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>The evidence base for vitamin A supplementation (VAS) is among the
-strongest in child nutrition. The full-text analysis of Imdad et
-al. (2011, PMID: 21868478, BMJ, cited 349 times) — a systematic review
-of 43 RCTs including 215,633 children — provides definitive results:</p>
+</div>
+<div id="tier-1" class="section level1">
+<h1>Tier 1</h1>
+<div id="large-scale-food-fortification-of-staple-foods" class="section level2">
+<h2>1. Large-scale food fortification of staple foods</h2>
+<p><strong>Population:</strong> children + WRA · <strong>Evidence:
+A</strong> · <strong>Cost-effectiveness: High</strong> ·
+<strong>Scalability: Proven national</strong></p>
+<p><strong>Evidence.</strong> A systematic review and meta-analysis in
+<em>The American Journal of Clinical Nutrition</em> found large-scale
+fortification (LSFF) of staples with vitamin A, iodine, iron and folic
+acid produced a <strong>34% reduction in anaemia (RR 0.66, 95% CI
+0.59–0.74)</strong>, a <strong>74% reduction in the odds of goitre (OR
+0.26, 95% CI 0.16–0.43)</strong> and a <strong>41% reduction in the odds
+of neural tube defects (OR 0.59)</strong> (PMID 30997493).
+Double-fortified salt (iron + iodine) reduced anaemia risk (<strong>RR
+0.59, 95% CI 0.46–0.77</strong>) and iron-deficiency anaemia (<strong>RR
+0.37, 95% CI 0.25–0.54</strong>) in efficacy studies (Cochrane-adjacent
+SR in <em>Advances in Nutrition</em>, PMID 29767699). Zinc fortification
+of staples (Cochrane review, PMID 27281654) and vitamin A fortification
+(Cochrane review, PMID 31074495) add supporting evidence; fortified
+dairy/cereals for older children showed weaker, non-significant
+haemoglobin effects (PMID 30673769).</p>
+<p><strong>Cost-effectiveness.</strong> A systematic review of economic
+evaluations across 63 countries (&gt;200 analyses; openalex, medRxiv
+2025) reports food fortification is cost-effective for reducing
+malnutrition across most LMIC settings. <em>Genuine
+intervention-specific CEA retrieved → rating permitted.</em></p>
+<p><strong>Scalability.</strong> Salt iodization and flour fortification
+are among the most widely scaled nutrition interventions globally,
+delivered through existing food-industry supply chains with regulatory
+mandates — minimal per-capita cost and no behaviour change required.</p>
+</div>
+<div id="vitamin-a-supplementation-children-659-months" class="section level2">
+<h2>2. Vitamin A supplementation (children 6–59 months)</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: A
+(context-dependent)</strong> · <strong>Cost-effectiveness: High</strong>
+· <strong>Scalability: Proven national</strong></p>
+<p><strong>Evidence.</strong> The systematic review and meta-analysis in
+<em>BMJ</em> (Imdad et al., PMID 21868478) pooled <strong>43 trials,
+~215,633 children</strong>; 17 trials (194,483 participants) showed a
+<strong>24% reduction in all-cause mortality (rate ratio 0.76, 95% CI
+0.69–0.83)</strong> and a <strong>28% reduction in diarrhoea-associated
+mortality (0.72, 95% CI 0.57–0.91)</strong>. The current Cochrane review
+(<em>The Cochrane Database of Systematic Reviews</em>, 2022 update, PMID
+35294044) continues to support VAS for children 6–59 months. The CHERG
+meta-analysis in <em>BMC Public Health</em> (PMID 21501438) provides
+cause-specific estimates for the Lives Saved Tool.</p>
+<p><strong>All-cause vs cause-specific / context.</strong> Benefit is
+clearest for all-cause and diarrhoea mortality.
+<strong>Neonatal</strong> VAS shows <strong>no overall effect on infant
+survival (RR 0.97, 95% CI 0.89–1.06 through 6 months; RR 1.00, 0.93–1.08
+through 12 months)</strong> in an 11-trial IPD meta-analysis
+(<em>Archives of Disease in Childhood</em>, PMID 30425075), with benefit
+only in specific subgroups (Southern Asia RR 0.87, 0.77–0.98;
+moderate/severe-deficiency contexts RR 0.87, 0.80–0.94). A
+trial-synthesis paper explicitly asks whether <strong>routine VAS is
+still justified in Nepal</strong> as deficiency declines (PMID 35584136)
+— i.e. the mortality benefit is contingent on baseline vitamin A
+deficiency, not universal. <em>Version note (G6): the 2017 and 2022
+Cochrane VAS reviews share one accession and are the same review; this
+synthesis counts them once.</em></p>
+<p><strong>Cost-effectiveness.</strong> An individual-based simulation
+CEA across Nigeria, Kenya and Burkina Faso (<em>PLoS One</em>, PMID
+35390077) confirms VAS as a cost-effective intervention to reduce
+measles/diarrhoea mortality in 6–59-month-olds, while noting
+fortification and measles vaccination may rival its impact where
+coverage is already high. <em>Genuine CEA retrieved.</em></p>
+<p><strong>Scalability.</strong> Delivered at scale through child health
+days and routine immunization contacts in dozens of LMICs.</p>
+</div>
+<div id="zinc-for-treatment-of-diarrhoea" class="section level2">
+<h2>3. Zinc for treatment of diarrhoea</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: A</strong> ·
+<strong>Cost-effectiveness: High</strong> · <strong>Scalability: Proven
+national</strong></p>
+<p><strong>Evidence.</strong> WHO/UNICEF-recommended. The Cochrane
+review <em>Oral zinc for treating diarrhoea in children</em> (PMID
+27996088, 33 trials) supports zinc during acute diarrhoea. The CHERG
+meta-analysis in the <em>International Journal of Epidemiology</em>
+estimates zinc treatment <strong>decreases diarrhoea mortality by
+~23%</strong> (PMID 20348128). <em>Preventive</em> zinc is weaker:
+all-cause mortality reduction was a <strong>non-significant 9% (RR 0.91,
+95% CI 0.82–1.01)</strong>, diarrhoea-specific 18% (RR 0.82, 0.64–1.05),
+pneumonia-specific 15% (RR 0.85, 0.65–1.11) (CHERG, <em>BMC Public
+Health</em>, PMID 21501441), and preventive zinc showed <strong>no
+effect on height-for-age (MD 0.00 Z, 95% CI −0.07–0.07)</strong> (SR,
+<em>Indian Pediatrics</em>, PMID 30898990). The 2023 Cochrane review
+(PMID 36994923) reassesses preventive zinc for 6-month–12-year-olds.</p>
+<p><strong>Cost-effectiveness.</strong> A health-impact model estimates
+<strong>cost per DALY ≈ US$606</strong> for pill-based preventive zinc
+supplementation (<em>BMC Public Health</em>, PMID 25128210); a
+home-fortification “Sprinkles” model (containing zinc) reports
+<strong>cost per death averted US$406 and cost per DALY ≈ US$12</strong>
+(PMID 16512321). <em>Genuine CEA retrieved.</em></p>
+<p><strong>Scalability.</strong> Zinc + ORS for diarrhoea is integrated
+into national iCCM/IMCI platforms.</p>
+</div>
+<div id="antenatal-multiple-micronutrient-supplementation-mms" class="section level2">
+<h2>4. Antenatal multiple micronutrient supplementation (MMS)</h2>
+<p><strong>Population:</strong> WRA · <strong>Evidence: A</strong> ·
+<strong>Cost-effectiveness: High</strong> · <strong>Scalability: Growing
+→ proven</strong></p>
+<p><strong>Evidence.</strong> The Cochrane review
+<em>Multiple-micronutrient supplementation for women during
+pregnancy</em> (PMID 30873598) is the anchor. Versus iron-folic acid,
+MMS reduced <strong>low birth weight (RR 0.86, 95% CI
+0.79–0.93)</strong> and <strong>small-for-gestational-age (RR 0.85, 95%
+CI 0.78–0.93)</strong> (meta-analysis/meta-regression, <em>Bulletin of
+the WHO</em>, PMID 21673856). In the WHO ultrasound-dated trial subset,
+MMS vs IFA gave <strong>LBW RR 0.87 (0.78–0.97), preterm 0.90
+(0.79–1.03), SGA 0.90 (0.83–0.99)</strong> (PMID 37002655). An IPD
+meta-analysis of <strong>17 trials / 112,953 women</strong> identified
+sex-specific neonatal-mortality modifiers (<em>Lancet Global
+Health</em>, PMID 29025632). Note a null older analysis: ~1-RDA MMN did
+not reduce stillbirth or early/late neonatal mortality (OR ≈ 1.0) (PMID
+20120796) — benefit is on birth anthropometry more than mortality.
+Benefits extend to pregnant adolescents (IPD SR, PMID 33846729).</p>
+<p><strong>Cost-effectiveness.</strong> A dynamic microsimulation across
+India, Pakistan, Mali and Tanzania compared MMS and balanced
+energy-protein vs IFA (<em>PLoS Medicine</em>, PMID 35192606). Replacing
+IFA with MMS in Bangladesh and Burkina Faso gave <strong>cost per death
+averted US$175–185 (Bangladesh) and US$112–125 (Burkina Faso), with cost
+per DALY averted of US$3–15</strong> (<em>Annals NYAS</em>, openalex).
+Nutrition International’s MMS cost-benefit tool across 33 countries
+finds the transition “very cost-effective” (openalex). <em>Genuine CEA
+retrieved.</em></p>
+<p><strong>Scalability.</strong> WHO issued a conditional recommendation
+for MMS in pregnancy; several countries are transitioning from IFA to
+MMS through antenatal-care platforms.</p>
+</div>
+<div id="breastfeeding-promotion-support" class="section level2">
+<h2>5. Breastfeeding promotion &amp; support</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: A</strong> ·
+<strong>Cost-effectiveness: High</strong> · <strong>Scalability: Proven
+national</strong></p>
+<p><strong>Evidence.</strong> The Cochrane review <em>Optimal duration
+of exclusive breastfeeding</em> (PMID 22895934, 1,701 citations)
+underpins the 6-month EBF recommendation. Suboptimal breastfeeding
+sharply elevates infectious mortality: not breastfeeding vs EBF raised
+pneumonia mortality (RR 1.92, 95% CI 0.79–4.68 at 6–23 mo; PMID
+24564728) and diarrhoea mortality (PMID 21501432). IYCF interventions
+raised <strong>exclusive breastfeeding by 102% at 3 months and 53% at 6
+months and cut diarrhoeal disease 24%</strong> (SR in
+<em>Nutrients</em>, PMID 32164187). The Cochrane review <em>Support for
+healthy breastfeeding mothers</em> (PMID 36282618) confirms support
+interventions increase breastfeeding.</p>
+<p><strong>Cost-effectiveness.</strong> A Markov-model CEA of community
+peer counselling for EBF in Uganda (<em>PLoS One</em>, PMID 26619338)
+and a CEA of home-based postpartum care on neonatal mortality + EBF
+(PMID 31852432) both support cost-effectiveness. <em>Genuine CEA
+retrieved.</em></p>
+<p><strong>Scalability.</strong> Delivered through health-facility
+(BFHI), community-health-worker and peer-counsellor platforms already
+present in most LMICs.</p>
+</div>
+<div id="small-quantity-lipid-based-nutrient-supplements-sq-lns" class="section level2">
+<h2>6. Small-quantity lipid-based nutrient supplements (SQ-LNS)</h2>
+<p><strong>Population:</strong> under-5 (+ pregnancy) ·
+<strong>Evidence: A</strong> · <strong>Cost-effectiveness: High</strong>
+· <strong>Scalability: Growing</strong></p>
+<p><strong>Evidence.</strong> A meta-analysis of <strong>18 trials /
+41,280 children</strong> (<em>AJCN</em>, PMID 31697329) found SQ-LNS
+reduced <strong>all-cause mortality (RR 0.73, 95% CI 0.59–0.89)</strong>
+in children 6–24 months. The Cochrane review of preventive LNS with
+complementary foods (PMID 31046132) supports nutrition/growth benefits.
+Prenatal SQ-LNS (IPD meta-analysis, <em>AJCN</em>, PMID 39154665)
+increased <strong>birth weight (+49 g, 95% CI 26–71)</strong> and
+reduced <strong>low birth weight 11%, newborn stunting 17%, wasting 11%,
+small head size 15%</strong>; a <em>Lancet Global Health</em> IPD
+meta-analysis compared prenatal MMS and SQ-LNS on
+small-vulnerable-newborn types (PMID 39890230).</p>
+<p><strong>Cost-effectiveness.</strong> A modelling study for rural
+Uganda (<em>Public Health Nutrition</em>, openalex) estimated providing
+SQ-LNS to &gt;1 million children for 12 months at <strong>~US$52 per
+child (~US$58.7 million/year)</strong>, averting <strong>&gt;242,000
+DALYs annually</strong> via the Village Health Team system. <em>Genuine
+CEA retrieved.</em></p>
+<p><strong>Scalability.</strong> Growing; depends on supply chain and
+per-child commodity cost — higher than micronutrient powders, so
+targeting matters.</p>
+<hr />
+</div>
+</div>
+<div id="tier-2" class="section level1">
+<h1>Tier 2</h1>
+<div id="community-based-management-of-acute-malnutrition-rutf-cmam" class="section level2">
+<h2>7. Community-based management of acute malnutrition (RUTF /
+CMAM)</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: A</strong> ·
+<strong>Cost-effectiveness: Moderate</strong> · <strong>Scalability:
+Proven subnational</strong></p>
+<p><strong>Evidence.</strong> Community-based treatment with
+ready-to-use therapeutic food made children <strong>51% more likely to
+achieve nutritional recovery than standard care</strong> (SR/MA +
+Delphi, <em>BMC Public Health</em>, PMID 24564235). For moderate acute
+malnutrition, LNS were superior to fortified blended foods for recovery
+(<strong>RR 1.05, 95% CI 1.01–1.09</strong>; PMID 34535798). A
+comprehensive SR/MA of SAM/MAM management (<em>Nutrients</em>, PMID
+31906272, 42 studies / 35,017 children) and the Cochrane review on
+community supplementary feeding (PMID 22696347) round out the base; WHO
+facility-based SAM management gives case-fatality rates of
+<strong>8–16%</strong> (PMID 28052519).</p>
+<p><strong>Cost-effectiveness.</strong> A systematic review of cost and
+cost-effectiveness of child-undernutrition treatment in LMICs
+(<em>Wellcome Open Research</em>, PMID 33102783, 50 studies) and the
+PROMIS integrated prevention+treatment trial (PMID 28274214) provide the
+CEA basis. <em>Genuine CEA retrieved — rated Moderate given
+heterogeneity in cost per recovery across settings.</em></p>
+<p><strong>Scalability.</strong> CMAM is operational in many high-burden
+countries but remains commodity- and supply-chain-intensive; coverage
+rather than efficacy is the binding constraint.</p>
+</div>
+<div id="complementary-feeding-interventions-education-food-provision" class="section level2">
+<h2>8. Complementary feeding interventions (education ± food
+provision)</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: A</strong> ·
+<strong>Cost-effectiveness: High</strong> · <strong>Scalability:
+Growing</strong></p>
+<p><strong>Evidence.</strong> Education/counselling on complementary
+feeding had a <strong>small but significant</strong> effect on linear
+growth (SR/MA, <em>Journal of Nutrition</em>, PMID 28904113). The CHERG
+review (<em>BMC Public Health</em>, PMID 21501443) and a companion SR
+(PMID 24564534) report education alone improved <strong>HAZ (SMD 0.23,
+95% CI 0.09–0.36) and WAZ (SMD 0.16, 95% CI 0.05–…)</strong>. A network
+meta-analysis of 79 RCTs / 81,786 children found multiple micronutrients
+reduced stunting (<strong>RR 0.86, 95% CI 0.73–0.98</strong>) and IFA +
+MMN improved HAZ (PMID 32259047).</p>
+<p><strong>Cost-effectiveness.</strong> No standalone
+complementary-feeding CEA was retrieved; the closest genuine CEAs are
+peer-counselling for breastfeeding (PMID 26619338) and SQ-LNS provision
+(openalex). <em>Rated High by proximity, but flagged: a
+complementary-feeding-specific CEA is a gap.</em></p>
+<p><strong>Scalability.</strong> Delivered via CHW counselling and
+growth-monitoring contacts; food-provision arms cost more than
+education-only.</p>
+</div>
+<div id="micronutrient-powders-home-point-of-use-fortification" class="section level2">
+<h2>9. Micronutrient powders (home / point-of-use fortification)</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: B
+(net-benefit caveat)</strong> · <strong>Cost-effectiveness:
+Moderate</strong> · <strong>Scalability: Growing</strong></p>
+<p><strong>Evidence.</strong> The Cochrane review of home fortification
+with MNPs (PMID 32107773) supports improved micronutrient status in
+under-2s (MNP programmes reached &gt;3 million children across 43
+countries). Fortified complementary foods improved growth/anaemia
+outcomes (<em>Lancet Child &amp; Adolescent Health</em>, PMID 35753314);
+MMN-fortified beverages raised haemoglobin (+2.76 g/L, 95% CI 1.19–4.33)
+and cut anaemia risk (RR 0.58) in school-aged children (PMID 26007336).
+Pooled high-adherence to MNPs was <strong>63.3% (95% CI
+51.1–74.6)</strong> (PMID 34658128). <strong>Caveat:</strong>
+iron-containing MNPs carry a possible infection/net-benefit trade-off
+(see CEA).</p>
+<p><strong>Cost-effectiveness.</strong> The BRISC RCT-based CEA in rural
+Bangladesh computed ICERs (US$/DALY averted) for iron-containing MNPs vs
+placebo (<em>AJCN</em>, PMID 36192508); a 78-country microsimulation
+(<em>Lancet Global Health</em>, openalex) found net benefit and
+cost-effectiveness are <strong>country-dependent</strong>, with possible
+net harm where malaria/infection burden is high. <em>Genuine CEA
+retrieved — rated Moderate due to context-dependent net
+benefit.</em></p>
+<p><strong>Scalability.</strong> Growing through community platforms;
+the infection caveat argues for targeting to anaemia-burden,
+lower-malaria settings.</p>
+</div>
+<div id="periconception-antenatal-folic-acid" class="section level2">
+<h2>10. Periconception / antenatal folic acid</h2>
+<p><strong>Population:</strong> WRA · <strong>Evidence: A (neural tube
+defects)</strong> · <strong>Cost-effectiveness: High (via
+fortification)</strong> · <strong>Scalability: Proven national (as
+fortification)</strong></p>
+<p><strong>Evidence.</strong> Folic acid supplementation reduced
+<strong>neural-tube-defect recurrence by 70% (95% CI 35–86)</strong> and
+primary occurrence by <strong>62% (49–71)</strong>, with food
+fortification reducing NTD incidence <strong>46% (37–54)</strong> (CHERG
+SR/MA, <em>International Journal of Epidemiology</em>, PMID 20348114).
+Maternal folic acid raised mean birth weight by <strong>0.37 kg (95% CI
+0.24–0.50)</strong> and lowered low-birth-weight odds (<strong>OR 0.59,
+95% CI 0.47–0.74</strong>) (SR/MA, <em>Maternal &amp; Child
+Nutrition</em>, PMID 31680411). Preconception coverage in sub-Saharan
+Africa is low (1.9–45.2%; PMID 39888921), a key implementation gap.</p>
+<p><strong>Cost-effectiveness.</strong> No folic-acid-only CEA was
+retrieved; cost-effectiveness is inferred from the large-scale
+fortification CEA base (entry #1, openalex 63-country review) since
+folic acid is a core fortificant. <em>Flagged: the High rating rests on
+fortification CEAs, not a standalone folic-acid CEA.</em></p>
+<p><strong>Scalability.</strong> Most cost-effectively delivered as
+flour fortification (proven national); supplementation depends on
+preconception contact, which is weak in many settings.</p>
+</div>
+<div id="antenatal-iron-iron-folic-acid-ifa" class="section level2">
+<h2>11. Antenatal iron / iron-folic acid (IFA)</h2>
+<p><strong>Population:</strong> WRA · <strong>Evidence: A
+(anaemia)</strong> · <strong>Cost-effectiveness: Moderate</strong> ·
+<strong>Scalability: Proven national</strong></p>
+<p><strong>Evidence.</strong> The Cochrane review <em>Intermittent oral
+iron supplementation during pregnancy</em> (PMID 26482110) and a
+meta-analysis of maternal haematologic status (PMID 11818308) confirm
+iron raises haemoglobin dose-dependently. Iron therapy improved
+haemoglobin in women of reproductive age (pooled SMD <strong>−0.71, 95%
+CI −1.27 to −0.14</strong>, <em>BMC Women’s Health</em>, PMID 37069552).
+Intermittent vs daily IFA gave slightly lower maternal haemoglobin
+(<strong>MD −0.24 g/dl, 95% CI −0.35 to −0.12</strong>) but comparable
+pregnancy outcomes and better tolerability (SR/MA, PMID 39780191).
+<strong>Adherence is the limiting factor</strong> — pooled IFA
+compliance in sub-Saharan Africa was only <strong>39.2%</strong> (PMID
+33852614).</p>
+<p><strong>Cost-effectiveness.</strong> Captured within the
+IFA-comparator arm of the MMS/BEP microsimulation (PMID 35192606); IFA
+is the low-cost standard of care against which MMS is judged.
+<em>Genuine CEA retrieved (as comparator) — rated Moderate.</em></p>
+<p><strong>Scalability.</strong> Universal IFA is standard
+antenatal-care policy in nearly all LMICs; the gap is
+adherence/coverage, not availability.</p>
+</div>
+<div id="balanced-energy-protein-bep-supplementation-in-undernourished-pregnancy" class="section level2">
+<h2>12. Balanced energy-protein (BEP) supplementation in undernourished
+pregnancy</h2>
+<p><strong>Population:</strong> WRA · <strong>Evidence: B+</strong> ·
+<strong>Cost-effectiveness: Moderate</strong> · <strong>Scalability:
+Requires investment</strong></p>
+<p><strong>Evidence.</strong> In <em>undernourished</em> pregnant women,
+balanced protein-energy supplementation improved child physical growth
+(SR/MA of 7 studies, standardized mean differences on birth
+weight/length, <em>Maternal &amp; Child Nutrition</em>, PMID 25857334).
+An IPD meta-analysis of <strong>8 RCTs / 10,252 women</strong> assessed
+BEP effects on small-vulnerable-newborn types (<em>PLoS Medicine</em>,
+PMID 41701774). BEP/MMS improved gestational weight-gain adequacy (MMS:
+WMD +209 g, 95% CI 139–280) (PMID 36130877). Benefit is conditional on
+maternal undernutrition — not a universal intervention.</p>
+<p><strong>Cost-effectiveness.</strong> The MMS-vs-BEP-vs-IFA
+microsimulation (PMID 35192606) provides the only retrieved BEP CEA.
+<em>Genuine CEA retrieved — rated Moderate, with benefit concentrated in
+food-insecure populations.</em></p>
+<p><strong>Scalability.</strong> Requires targeted food-supplement
+supply chains; costlier than tablet-based supplementation, so
+geographic/needs targeting is essential.</p>
+<hr />
+</div>
+</div>
+<div id="tier-3" class="section level1">
+<h1>Tier 3</h1>
+<div id="iron-supplementation-in-children" class="section level2">
+<h2>13. Iron supplementation in children</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: B</strong> ·
+<strong>Cost-effectiveness: Moderate</strong> · <strong>Scalability:
+Growing</strong></p>
+<p><strong>Evidence.</strong> A review of 26 RCTs of preventive oral
+iron in children 0–59 months (<em>AJCN</em>, PMID 17158406) found
+haemoglobin and cognitive/motor gains <strong>in iron-deficient/anaemic
+children</strong>, but <strong>adverse weight gain in iron-replete
+children</strong> — i.e. benefit is conditional on iron status. In older
+children/adolescents, iron raised haemoglobin <strong>+5.81 g/L (95% CI
+4.19–7.44)</strong> (SR/MA, <em>Nutrition Reviews</em>, PMID
+40063075).</p>
+<p><strong>Cost-effectiveness.</strong> Covered by the BRISC iron/MNP
+CEA (PMID 36192508). <em>Genuine CEA retrieved — Moderate, with the same
+context-dependent net-benefit caveat as MNPs.</em></p>
+<p><strong>Scalability.</strong> Best delivered as targeted
+supplementation or via iron-containing MNPs/fortification; universal
+untargeted iron is not advised given the iron-replete risk.</p>
+</div>
+<div id="wash-for-child-nutrition" class="section level2">
+<h2>14. WASH for child nutrition</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: B/C</strong>
+· <strong>Cost-effectiveness: Unknown</strong> · <strong>Scalability:
+Requires investment</strong></p>
+<p><strong>Evidence.</strong> Effects on nutrition are
+<strong>small</strong>: a meta-analysis of 10 studies / 16,473 children
+found WASH raised <strong>height-for-age by SMD 0.14 (95% CI
+0.09–0.19)</strong> (PMID 31272479). The Cochrane review (PMID 23904195)
+found limited/uncertain nutrition effects, and a 41-trial SR (PMID
+29428924) found <strong>little or no effect on most
+anthropometry</strong>, though hygiene reduced acute respiratory
+infection by 24% (RR 0.76, 95% CI 0.59–0.98). The major landmark
+WASH-nutrition efficacy trials (WASH Benefits, SHINE) are consistent
+with this modest direct effect.</p>
+<p><strong>Cost-effectiveness: Unknown.</strong> Phase 2 retrieved
+<strong>no WASH-specific CEA</strong> — only generic nutrition-program
+models (Optima Nutrition 129-country analysis; community
+nutrition-specific SR). Per the CEA-rating guard, <strong>no
+cost-effectiveness rating is assigned.</strong></p>
+<p><strong>Scalability.</strong> Requires major infrastructure
+investment; justified primarily on diarrhoeal-disease and dignity
+grounds rather than on a measured nutrition cost-effectiveness case.</p>
+</div>
+<div id="cash-transfers-for-child-nutrition" class="section level2">
+<h2>15. Cash transfers for child nutrition</h2>
+<p><strong>Population:</strong> under-5 · <strong>Evidence: C (indirect
+/ nutrition-sensitive)</strong> · <strong>Cost-effectiveness:
+Unknown</strong> · <strong>Scalability: Proven national (as social
+protection)</strong></p>
+<p><strong>Evidence.</strong> Evidence is <strong>indirect</strong>. A
+meta-analysis of financial-incentive programmes
+(unconditional/conditional cash transfers, vouchers, user-fee removal)
+found they improve <strong>coverage and uptake of child-health
+interventions</strong> (<em>BMC Public Health</em>, PMID 24564520). A
+systematic review of nutrition and cash-based interventions for stunting
+reported mixed effects and downstream economic/human-capital signals
+(PMID 31666032). Direct anthropometric impact is inconsistent and
+pathway-dependent.</p>
+<p><strong>Cost-effectiveness: Unknown.</strong> Phase 2 retrieved
+<strong>no cash-transfer-specific nutrition CEA</strong> — the top hits
+were a community-nutrition SR and a demand-side-financing review (not a
+CEA of cash transfers for a nutrition outcome). Per the CEA-rating
+guard, <strong>no rating is assigned.</strong></p>
+<p><strong>Scalability.</strong> Cash transfers are proven at national
+scale as <em>social protection</em>; their value here is as a
+nutrition-sensitive platform (a delivery channel and demand-side lever),
+not a nutrition-specific intervention with a measured cost-per-DALY.</p>
+<hr />
+</div>
+</div>
+<div id="cross-cutting-findings" class="section level1">
+<h1>Cross-cutting findings</h1>
+<ol style="list-style-type: decimal">
+<li><p><strong>Fortification and supplementation dominate the
+cost-effective frontier.</strong> The interventions with both strong
+evidence <em>and</em> genuine, favourable CEAs (fortification, VAS,
+zinc-for-diarrhoea, MMS, breastfeeding, SQ-LNS) all deliver at very low
+cost per DALY/death averted (e.g. <strong>US$3–15/DALY</strong> for
+MMS-over-IFA, PMID 35192606/openalex; <strong>~US$12/DALY</strong> for
+Sprinkles, PMID 16512321) and ride existing delivery platforms.</p></li>
+<li><p><strong>Effect is conditional on baseline deficiency for several
+“Tier 1” supplements.</strong> VAS mortality benefit weakens as vitamin
+A deficiency declines (PMID 35584136, 30425075); child iron and
+preventive zinc help the deficient but can be neutral or harmful in the
+replete (PMID 17158406, 30898990); MNP net benefit is context-dependent
+on infection burden (PMID 36192508, openalex 78-country). Targeting
+beats universal provision for these.</p></li>
+<li><p><strong>Maternal interventions improve birth anthropometry more
+reliably than mortality.</strong> MMS robustly cuts LBW/SGA (PMID
+21673856, 37002655) but older analyses show null mortality effects (PMID
+20120796); the mortality case is strongest for the package + adequate
+gestational coverage.</p></li>
+<li><p><strong>Adherence/coverage — not efficacy — is the binding
+constraint.</strong> IFA compliance in SSA was 39.2% (PMID 33852614);
+preconception folic-acid coverage 1.9–45.2% (PMID 39888921); MNP
+high-adherence 63% (PMID 34658128); CMAM is coverage-limited (PMID
+31906272). Implementation science, not new efficacy trials, is where
+marginal returns lie.</p></li>
+<li><p><strong>The CEA evidence base is thinnest exactly where spending
+is largest.</strong> Nutrition-sensitive levers (WASH, cash transfers)
+have weak <em>direct</em> nutrition evidence and <strong>no
+intervention-specific CEA in the retrieved corpus</strong> — both are
+rated cost-effectiveness <strong>Unknown</strong>. This is the honest
+output of the two-phase design: it refuses to manufacture a
+cost-effectiveness rating where the corpus has none.</p></li>
+<li><p><strong>A handful of generic economic models recur across
+interventions</strong> (e.g. the Optima Nutrition 129-country model,
+PMID-less openalex; the cross-cutting iron/MNP CEA PMID 36192508). These
+are package-level, not intervention-specific, and should not be
+double-counted as independent CEAs for each intervention.</p></li>
+</ol>
+<hr />
+</div>
+<div id="verification-caveats" class="section level1">
+<h1>Verification &amp; caveats</h1>
 <ul>
-<li><strong>All-cause mortality reduction: 24%</strong> (rate ratio
-0.76, 95% CI 0.69-0.83; 17 trials, 194,483 participants)</li>
-<li><strong>Diarrhea-associated mortality: 28% reduction</strong> (0.72,
-95% CI 0.57-0.91; 7 trials)</li>
-<li><strong>Measles-associated mortality: 80% reduction</strong> (0.50,
-95% CI 0.37-0.67)</li>
-<li><strong>Diarrhea incidence: 15% reduction</strong> (0.85, 95% CI
-0.82-0.87)</li>
+<li><strong>CEA-rating guard applied:</strong> WASH (#14) and cash
+transfers (#15) are rated cost-effectiveness <strong>Unknown</strong>
+because Phase 2 returned no intervention-specific CEA — only generic
+nutrition-program models. Folic acid (#10) and complementary feeding
+(#8) rest on adjacent CEAs (fortification; breastfeeding/SQ-LNS) and are
+flagged as such rather than asserted.</li>
+<li><strong>Recurring-source caveat:</strong> PMID 36192508 (iron/MNP
+CEA) and the Optima Nutrition model appear across several interventions;
+treat as single sources.</li>
+<li><strong>A few CEA cost figures were truncated in the retrieved
+abstracts</strong> (e.g. the exact per-DALY value in the MMS
+cost-benefit tool, openalex; the Sprinkles cost-per-DALY tail, PMID
+16512321) — full-text retrieval would firm these up.</li>
+<li><strong>Next step:</strong> run
+<code>python3 verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md</code>
+to confirm every PMID-backed numeric claim resolves to the corpus and
+that no figure is misattributed.</li>
 </ul>
-<p>The 2022 Cochrane update (PMID: 35294044, cited 72 times) and 2017
-update (PMID: 28282701, cited 487 times) confirm these effects remain
-consistent. The landmark Lancet paper on breastfeeding (PMID: 27301764,
-cited 7,924 times) further contextualizes VAS within the broader
-nutrition intervention landscape.</p>
-<p>Full-text from Imdad et al. (2011) details that VAS was supplemented
-as 50,000 IU to neonates, 100,000 IU to infants 1-12 months, and 200,000
-IU to older children per WHO guidelines. Nepal-specific analysis (PMID:
-35584136) showed a 9% reduction from well-concealed trials (RR 0.91, 95%
-CI 0.85-0.97) but noted diminishing returns as baseline deficiency
-declines.</p>
-<p><strong>Mechanism:</strong> Vitamin A maintains epithelial integrity,
-supports immune function (T-cell differentiation, mucosal immunity), and
-regulates gene expression for growth.</p>
-<p><strong>Government scaling pathway:</strong> Semi-annual mass
-supplementation campaigns integrated with immunization contact points.
-Active in 80+ countries. Cost: $1-2 per child per year. Platform:
-routine immunization, Child Health Days.</p>
-<p><strong>Key papers:</strong> PMID 21868478 (Imdad 2011), PMID
-35294044 (2022 Cochrane), PMID 28282701 (2017 Cochrane), PMID 21501438
-(Yakoob 2011), PMID 35584136 (Nepal analysis 2022)</p>
-<hr />
-</div>
-<div id="iron-folic-acid-supplementation-in-pregnancy" class="section level3">
-<h3>2. Iron-Folic Acid Supplementation in Pregnancy</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>Iron-folic acid supplementation (IFAS) during pregnancy is supported
-by multiple Cochrane reviews and large meta-analyses. The full-text
-analysis reveals:</p>
-<p><strong>Effect on hemoglobin and anemia:</strong> - The 2015 Cochrane
-review on intermittent IFA (PMID: 26482110, cited 256 times) found
-intermittent regimens comparable to daily regimens with fewer side
-effects - Nutrition education increases IFAS compliance 2.80-fold (OR
-2.80, 95% CI 2.04-3.83) with hemoglobin increase of 0.88 g/dL (PMID:
-39545365, 2025, 53 studies, 13,475 women) - IFAS compliance in
-sub-Saharan Africa averages only 39.2% (PMID: 33852614, 23 studies,
-24,272 women) — counseling doubles adherence (OR 1.96) - Weekly IFA in
-school-age children significantly increases serum ferritin (Hedge’s
-g=0.53, 95% CI 0.28-0.78) and hemoglobin (Hedge’s g=0.37, 95% CI
-0.01-0.73) (PMID: 38862227)</p>
-<p><strong>Effect on birth outcomes:</strong> - Maternal folic acid
-supplementation increases mean birthweight by 0.37 kg (95% CI 0.24-0.50)
-in LMICs; 0.56 kg in RCTs alone (PMID: 31680411, 17 studies, 275,421
-women) - Reduces low birthweight: OR 0.59 (95% CI 0.47-0.74) -
-Intermittent vs daily: 2025 meta-analysis (PMID: 39780191) of 22 trials
-confirms comparable efficacy with better tolerance</p>
-<p><strong>Mechanism:</strong> Iron supports hemoglobin synthesis and
-oxygen transport; folic acid prevents neural tube defects and supports
-DNA synthesis for rapid cell division.</p>
-<p><strong>Government scaling pathway:</strong> Integrated into
-antenatal care (ANC) visits. WHO recommends 30-60mg iron + 400ug folic
-acid daily. Already in national protocols of virtually all LMIC
-governments. Main challenge: adherence (side effects, supply chain).
-Nutrition education at ANC substantially improves compliance.</p>
-<p><strong>Key papers:</strong> PMID 26482110, PMID 39545365, PMID
-33852614, PMID 31680411, PMID 38862227, PMID 39780191</p>
-<hr />
-</div>
-<div id="multiple-micronutrient-supplementation-in-pregnancy" class="section level3">
-<h3>3. Multiple Micronutrient Supplementation in Pregnancy</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>MMS during pregnancy, compared to IFA alone, shows additional
-benefits. The 2017 Cochrane review (PMID: 28407219, cited 723 times) is
-the landmark reference, with the 2017 Lancet Global Health individual
-patient data (IPD) meta-analysis (PMID: 29025632, cited 261 times; 17
-trials, 112,953 women) providing subgroup insights.</p>
-<p><strong>Key findings from full-text analyses:</strong> - MMS reduces
-low birthweight by 14% vs IFA (RR 0.86, 95% CI 0.79-0.93) (PMID:
-21673856, Kawai 2011) - MMS reduces small-for-gestational-age by 15% (RR
-0.85, 95% CI 0.78-0.93) - IPD analysis shows greater benefit for female
-neonates: neonatal mortality RR 0.85 (0.75-0.96) vs males RR 1.06
-(0.95-1.17) (PMID: 29025632) - Maternal vitamin B-12 supplementation
-during pregnancy increases serum cobalamin (SMD 0.39, 95% CI 0.11-0.68)
-and reduces deficiency (OR 0.43, 95% CI 0.19-0.95) (PMID: 40752545,
-2025, 87 papers/76 trials) - 2023 subgroup analysis (PMID: 37002655)
-confirms effects are consistent regardless of gestational age assessment
-method (ultrasound vs. LMP) - MMN supplementation improves child mental
-development: Cohen’s d = 0.076 (95% CI 0.019-0.13) for postnatal
-interventions (PMID: 26607403)</p>
-<p><strong>Mechanism:</strong> Addresses multiple concurrent
-deficiencies (iron, zinc, vitamin A, B-vitamins, calcium) common in LMIC
-pregnancies. Synergistic effects on fetal growth and immune
-development.</p>
-<p><strong>Government scaling pathway:</strong> WHO issued a conditional
-recommendation for MMS in 2020. Can replace IFA in ANC with minimal
-platform change. UNIMMAP formulation (15 micronutrients) available.
-Cost: $3-5 per pregnancy vs $1-2 for IFA.</p>
-<p><strong>Key papers:</strong> PMID 28407219, PMID 29025632, PMID
-21673856, PMID 40752545, PMID 37002655, PMID 32075071</p>
-<hr />
-</div>
-<div id="zinc-supplementation-for-diarrhea-treatment" class="section level3">
-<h3>4. Zinc Supplementation for Diarrhea Treatment</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>The 2016 Cochrane review (PMID: 27996088, cited 377 times) with
-full-text access provides definitive evidence. WHO/UNICEF currently
-recommend zinc with ORS for diarrhea management.</p>
-<p><strong>Key findings:</strong> - Zinc reduces diarrhea duration in
-children over 6 months - Reduces the proportion of episodes lasting
-&gt;7 days - All trials were conducted in Asia in countries at high risk
-of zinc deficiency - Evidence rated moderate certainty for duration
-outcomes</p>
-<p>Preventive zinc supplementation (PMID: 20156999, 10 trials, 49,450
-children) reduces acute lower respiratory infection by 35% (IRR 0.65,
-95% CI 0.52-0.82) when using specific clinical criteria. The
-comprehensive 2014 Cochrane review (PMID: 24905460, cited 180 times) and
-2015 review (PMID: 26370559, cited 371 times) confirm zinc
-supplementation for preventing mortality and morbidity.</p>
-<p><strong>Mechanism:</strong> Zinc supports immune cell function,
-intestinal barrier integrity, and fluid/electrolyte absorption. Corrects
-the depletion caused by diarrheal losses.</p>
-<p><strong>Government scaling pathway:</strong> Part of WHO/UNICEF
-integrated diarrhea treatment protocol (zinc + ORS). Delivered through
-health facilities and community health workers. Already in national
-essential medicine lists. Cost: &lt;$0.50 per treatment course.</p>
-<p><strong>Key papers:</strong> PMID 27996088, PMID 20156999, PMID
-24905460, PMID 26370559, PMID 21501438</p>
-<hr />
-</div>
-<div id="large-scale-food-fortification" class="section level3">
-<h3>5. Large-Scale Food Fortification</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>The full-text of Keats et al. (2019, PMID: 30997493, Am J Clin Nutr,
-cited 215 times) — covering 136 studies with 50 in meta-analysis —
-provides the most comprehensive evidence for large-scale food
-fortification (LSFF) in LMICs:</p>
-<ul>
-<li><strong>Anemia reduction: 34%</strong> (RR 0.66, 95% CI
-0.59-0.74)</li>
-<li><strong>Goiter reduction: 74%</strong> (OR 0.26, 95% CI
-0.16-0.43)</li>
-<li><strong>Neural tube defects reduction: 41%</strong> (OR 0.59, 95% CI
-0.49-0.70)</li>
-<li><strong>Serum retinol increase</strong> (vitamin A fortification,
-SMD 0.31, 95% CI 0.18-0.45)</li>
-<li>Iron fortification improved hemoglobin across all age groups</li>
-</ul>
-<p>Double-fortified salt (DFS) specifically (PMID: 29767699, 14 studies;
-PMID: 30880739, 10 studies): - Hemoglobin increase: SMD 0.28 (95% CI
-0.11-0.44) in efficacy studies - Anemia reduction: RR 0.59 (95% CI
-0.46-0.77) - Iron deficiency anemia reduction: RR 0.37 (95% CI
-0.25-0.54) - All DFS studies conducted in LMICs (10 in India, 2 Morocco,
-1 Cote d’Ivoire, 1 Ghana)</p>
-<p>The 2019 Cochrane review on food fortification with multiple
-micronutrients (PMID: 31849042, cited 87 times) confirms benefits across
-populations.</p>
-<p><strong>Mechanism:</strong> Adds micronutrients to staple foods
-consumed regularly by the general population (wheat flour, maize flour,
-rice, cooking oil, salt), reaching populations that supplementation
-programs miss.</p>
-<p><strong>Government scaling pathway:</strong> Legislative mandate for
-fortification of commercially processed staples. Minimal behavior change
-required. Cost: $0.05-0.20 per person/year. 87 countries have mandatory
-wheat flour fortification. India’s DFS program reaches 100+ million
-school children.</p>
-<p><strong>Key papers:</strong> PMID 30997493, PMID 29767699, PMID
-30880739, PMID 31849042</p>
-<hr />
-</div>
-<div id="breastfeeding-promotion-and-support" class="section level3">
-<h3>6. Breastfeeding Promotion and Support</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>The 2012 Cochrane review on optimal duration of exclusive
-breastfeeding (PMID: 22895934, cited 1,699 times) established the
-6-month EBF recommendation. The 2016 Lancet Breastfeeding Series (PMID:
-27301764, cited 7,924 times) provides the overarching evidence
-framework.</p>
-<p><strong>Key findings from full-text analyses:</strong> - Each 1%
-increase in EBF prevalence reduces under-5 mortality by 3.4 per 1,000
-children (PMID: 33622796, 2021) - A 10% improvement in EBF could reduce
-U5M by 5.6 per 1,000 (same study, meta-analytical approach) - Total
-cumulative non-health GDP loss attributable to U5M in sub-Saharan Africa
-exceeds $29 billion (2018) - Breastfeeding is inversely associated with
-undernutrition: OR 0.82 (95% CI 0.68-0.99) overall, OR 0.73 (95% CI
-0.55-0.95) for stunting specifically (PMID: 35844158, 33 studies) -
-Breastfeeding promotion for preterm/LBW infants increases early
-initiation and EBF at 3 and 6 months in LMIC settings (PMID:
-39591949)</p>
-<p><strong>Mechanism:</strong> Breast milk provides optimal nutrition,
-passive immunity (IgA, lactoferrin), growth factors, and protection
-against infection during the critical first 6 months.</p>
-<p><strong>Government scaling pathway:</strong> Baby-Friendly Hospital
-Initiative (BFHI), workplace lactation policies, community peer
-counseling, mass media campaigns. Low cost per DALY averted. Already
-integrated into MNCH platforms globally.</p>
-<p><strong>Key papers:</strong> PMID 22895934, PMID 27301764, PMID
-33622796, PMID 35844158, PMID 39591949</p>
-<hr />
-</div>
-</div>
-<div id="tier-2-strong-evidence-scalable-with-investment" class="section level2">
-<h2>Tier 2: Strong Evidence + Scalable with Investment</h2>
-<div id="complementary-feeding-education-and-provision" class="section level3">
-<h3>7. Complementary Feeding Education and Provision</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>Full-text analysis of Imdad et al. (2011, PMID: 21501443, BMC Public
-Health, cited 378 times, 17 studies) provides detailed effect sizes:</p>
-<p><strong>Education alone (food-secure populations):</strong> - HAZ
-improvement: 0.21 (95% CI 0.01-0.41) - WAZ improvement: 0.30 (95% CI
-0.05-0.54)</p>
-<p><strong>Food provision with/without education (food-insecure
-populations):</strong> - HAZ improvement: 0.39 (95% CI 0.05-0.73) in
-food-insecure settings - WAZ improvement: 0.26 (95% CI 0.04-0.48)</p>
-<p>The 2017 J Nutrition meta-analysis (PMID: 28904113, cited 127 times)
-found: - LAZ SMD: 0.11 (95% CI 0.01-0.22) for education in food-secure
-populations - WLZ SMD: 0.09 (95% CI 0.02-0.16) for supplementation</p>
-<p>The 2013 companion paper (PMID: 24564534, cited 249 times) with full
-text confirms: education alone is effective when food availability is
-not a constraint; food provision is necessary in food-insecure
-settings.</p>
-<p>Timing matters: introduction of complementary foods at 4 months vs 6
-months shows significantly higher hemoglobin in developing countries (MD
-5.0 g/L, 95% CI 1.5-8.5; PMID: 26328549).</p>
-<p><strong>Mechanism:</strong> Improves nutrient density and diversity
-of diets during the 6-23 month window when growth faltering peaks.
-Education changes feeding behaviors (meal frequency, dietary diversity,
-responsive feeding).</p>
-<p><strong>Government scaling pathway:</strong> Delivered through
-community health workers and ANC/PNC platforms. IYCF counseling
-integrated into routine care. Cost: $50-100 per child for food
-provision; $5-10 for education alone.</p>
-<p><strong>Key papers:</strong> PMID 21501443, PMID 28904113, PMID
-24564534, PMID 26328549</p>
-<hr />
-</div>
-<div id="micronutrient-powders-mnps-for-home-fortification" class="section level3">
-<h3>8. Micronutrient Powders (MNPs) for Home Fortification</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>The 2020 Cochrane update (PMID: 32107773, cited 116 times) and the
-original 2011 Cochrane review (PMID: 21901727, cited 397 times) provide
-the evidence base. The full-text adherence meta-analysis (PMID:
-34658128) adds implementation insights.</p>
-<p><strong>Key findings:</strong> - Anemia reduction: ~18-34% (varies by
-formulation and context) - Iron deficiency reduction confirmed across
-multiple settings - Implementation data shows pooled high adherence rate
-of 63.3% (95% CI 51.1-74.6%) across 10 studies/16,506 caregivers -
-Higher adherence in middle-income (65.2%) vs low-income countries
-(55.2%) - Parental age &gt;30, child age 18-36 months, maternal college
-education, and social norm perception all improve adherence</p>
-<p>The micronutrient supplementation and fortification systematic review
-(PMID: 31973225, 2020, 197 studies, cited 259 times) found from
-full-text that anemia risk was reduced with MNPs across 86 studies in
-Asia, 64 in Africa, and 26 in South America.</p>
-<p><strong>Mechanism:</strong> Single-dose sachets of micronutrient
-powder mixed into semi-solid home-prepared foods. Provides iron
-(encapsulated), zinc, vitamin A, and other micronutrients without
-changing food taste/appearance.</p>
-<p><strong>Government scaling pathway:</strong> Government-procured MNPs
-distributed through health facilities, community health workers, or
-commercial channels. In 2014, implemented in 43 countries reaching 3+
-million children. WHO recommends for children 6-23 months in populations
-with &gt;20% anemia prevalence.</p>
-<p><strong>Key papers:</strong> PMID 32107773, PMID 21901727, PMID
-34658128, PMID 31973225</p>
-<hr />
-</div>
-<div id="management-of-severe-acute-malnutrition-rutfcmam" class="section level3">
-<h3>9. Management of Severe Acute Malnutrition (RUTF/CMAM)</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>The full-text of Defined et al. (2013, PMID: 24564235, BMC Public
-Health, cited 217 times) provides the pivotal evidence alongside the
-comprehensive 2020 review (PMID: 31906272, 42 studies, 35,017 children,
-cited 109 times).</p>
-<p><strong>Key findings from full-text:</strong> - Community-based RUTF
-vs standard care: children given RUTF were <strong>51% more likely to
-achieve nutritional recovery</strong> (2 quasi-experimental trials,
-Malawi) - Inpatient case fatality rates using WHO protocol: 3.4% to 35%
-(reflects implementation quality variation) - The 2020 comprehensive
-review (full text) found: limited evidence of benefit from integrated
-community screening but confirms RUTF effectiveness - For MAM:
-ready-to-use supplementary food (RUSF) shows LNS superior to corn-soy
-blend for recovery (RR 1.05, 95% CI 1.01-1.09) (PMID: 34535798, 13
-trials) - Local food-based approaches and whey RUSF comparable to
-standard RUSF for recovery</p>
-<p><strong>Mechanism:</strong> RUTF (e.g., Plumpy’Nut) is an
-energy-dense, micronutrient-enriched paste that requires no water or
-cooking, reducing infection risk. CMAM decentralizes treatment from
-facilities to communities.</p>
-<p><strong>Government scaling pathway:</strong> CMAM programs integrated
-into primary health care. WHO/UNICEF protocols with community health
-workers for screening (MUAC), referral, and follow-up. Government
-procurement of RUTF. Cost: $150-200 per child treated. Active CMAM
-programs in 70+ countries.</p>
-<p><strong>Key papers:</strong> PMID 24564235, PMID 31906272, PMID
-34535798, PMID 23794237</p>
-<hr />
-</div>
-<div id="small-quantity-lipid-based-nutrient-supplements-sq-lns" class="section level3">
-<h3>10. Small-Quantity Lipid-Based Nutrient Supplements (SQ-LNS)</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>The 2024 IPD meta-analysis (PMID: 39154665, Am J Clin Nutr, cited 19
-times; 4 RCTs, 5,273 participants) with full-text access provides the
-most rigorous evidence for prenatal SQ-LNS:</p>
-<p><strong>Prenatal SQ-LNS vs IFA/standard of care:</strong> - Birth
-weight increase: +49g (95% CI 26-71g) - All birth anthropometric
-z-scores improved (+0.10-0.13 SD) - Low birthweight reduced by 11% -
-Newborn stunting reduced by 17% - Newborn wasting reduced by 11% - Small
-head size reduced by 15%</p>
-<p><strong>Child SQ-LNS (6-24 months):</strong> - All-cause mortality:
-RR 0.73 (95% CI 0.59-0.89; 13 trials, 41,280 children) (PMID: 31697329,
-cited 76 times) - The Cochrane review (PMID: 31046132, cited 115 times)
-confirms benefits on growth and development compared to no
-intervention</p>
-<p><strong>Mechanism:</strong> SQ-LNS provides both macro- and
-micronutrients including essential fatty acids in a small dose (approx.
-120 kcal/day). Unlike MNPs, addresses energy and protein gaps alongside
-micronutrient deficiencies.</p>
-<p><strong>Government scaling pathway:</strong> Gaining traction — WHO
-considering updated guidelines. Can be delivered through health facility
-or community platforms alongside complementary feeding counseling. Cost:
-$40-60 per child for 6 months. Manufacturing increasingly local (Ghana,
-Bangladesh, Malawi).</p>
-<p><strong>Key papers:</strong> PMID 39154665, PMID 31697329, PMID
-31046132, PMID 30168868</p>
-<hr />
-</div>
-<div id="preventive-zinc-supplementation" class="section level3">
-<h3>11. Preventive Zinc Supplementation</h3>
-<p><strong>Evidence Rating: A</strong></p>
-<p>Full-text analysis of multiple Cochrane reviews and
-meta-analyses:</p>
-<ul>
-<li>Preventive zinc reduces ALRI incidence by 35% (IRR 0.65, 95% CI
-0.52-0.82; specific clinical criteria) (PMID: 20156999)</li>
-<li>Preventive zinc reduces mortality and morbidity in children &lt;5
-(PMID: 24905460, PMID: 26370559)</li>
-<li>Zinc supplementation reduces diarrhea incidence in children under 5
-in developing countries (PMID: 21501438)</li>
-</ul>
-<p>The meta-regression (PMID: 20156999, 10 trials, 49,450 children)
-identified that effect varies by baseline zinc status, with greater
-benefit in zinc-deficient populations.</p>
-<p><strong>Mechanism:</strong> Zinc is essential for immune cell
-function, protein synthesis, wound healing, and intestinal epithelial
-integrity. Deficiency is widespread (estimated 17-30% of LMIC
-populations).</p>
-<p><strong>Government scaling pathway:</strong> Can be delivered as
-preventive supplementation (10-20mg/day) or as therapeutic zinc with
-ORS. Platform: community health workers, routine supplementation
-programs. Cost: $2-4 per child per year.</p>
-<p><strong>Key papers:</strong> PMID 20156999, PMID 24905460, PMID
-26370559, PMID 27996088</p>
-<hr />
-</div>
-<div id="double-fortified-salt-iron-iodine" class="section level3">
-<h3>12. Double-Fortified Salt (Iron + Iodine)</h3>
-<p><strong>Evidence Rating: B+</strong></p>
-<p>Full-text from efficacy and effectiveness studies (PMID: 29767699, 14
-studies; PMID: 30880739, 10 comparisons):</p>
-<ul>
-<li>Efficacy: hemoglobin increase SMD 0.28 (95% CI 0.11-0.44), anemia
-reduced 41% (RR 0.59)</li>
-<li>Effectiveness: smaller but still significant (SMD 0.03, 95% CI
-0.01-0.05)</li>
-<li>All studies in LMICs (predominantly India)</li>
-<li>DFS significantly increases mean hemoglobin by 0.44 g/dL (95% CI
-0.16-0.71) and reduces anemia (RD -0.16) and iron deficiency (RD
--0.20)</li>
-</ul>
-<p><strong>Mechanism:</strong> Leverages existing universal salt
-iodization infrastructure to deliver iron (encapsulated to prevent
-iodine-iron interaction) through the same vehicle.</p>
-<p><strong>Government scaling pathway:</strong> Requires only upgrading
-existing iodized salt programs. India has the largest program (ICDS
-school meals). Minimal behavior change needed. Cost premium over iodized
-salt: 30-50%.</p>
-<p><strong>Key papers:</strong> PMID 29767699, PMID 30880739</p>
-<hr />
-</div>
-</div>
-<div id="tier-3-promising-evidence-plausible-scaling-pathway" class="section level2">
-<h2>Tier 3: Promising Evidence + Plausible Scaling Pathway</h2>
-<div id="balanced-protein-energy-supplementation-in-pregnancy" class="section level3">
-<h3>13. Balanced Protein-Energy Supplementation in Pregnancy</h3>
-<p><strong>Evidence Rating: B+</strong></p>
-<p>Full-text of Stevens et al. (2015, PMID: 25857334, 7 RCTs from LMICs
-exclusively):</p>
-<ul>
-<li>Birthweight significantly improved (pooled SMD positive; all 7
-studies report on birthweight)</li>
-<li>Birth length improved (5 studies)</li>
-<li>Studies from Colombia, Gambia, India, Thailand, Indonesia, Burkina
-Faso</li>
-<li>Effect depends on maternal undernutrition status — targeted
-supplementation for undernourished women shows strongest effect</li>
-<li>The 2023 modular review (PMID: 37331760) confirms BPE can reduce
-LBW, SGA, and stillbirth risk</li>
-</ul>
-<p><strong>Mechanism:</strong> Provides balanced macronutrient energy
-(&lt;25% from protein) to offset energy deficits in food-insecure
-pregnant women, supporting fetal growth without excessive protein
-load.</p>
-<p><strong>Government scaling pathway:</strong> Can be delivered through
-ANC platforms targeting underweight pregnant women (BMI &lt;18.5).
-Requires nutritional screening at first ANC visit. Locally produced
-supplements preferred. Cost: $20-40 per pregnancy for targeted
-supplementation.</p>
-<p><strong>Key papers:</strong> PMID 25857334, PMID 37331760</p>
-<hr />
-</div>
-<div id="wash-interventions-combined-with-nutrition" class="section level3">
-<h3>14. WASH Interventions Combined with Nutrition</h3>
-<p><strong>Evidence Rating: B</strong></p>
-<p>The 2013 Cochrane review (PMID: 23904195, cited 377 times) and 2019
-meta-analysis with full-text (PMID: 31272479, 10 studies, 16,473
-children):</p>
-<ul>
-<li>Combined WASH shows modest effects on HAZ and WAZ</li>
-<li>The 2019 meta-analysis found effects expressed as standardized mean
-differences with 95% CI</li>
-<li>Environmental enteric dysfunction (EED) pathway increasingly
-recognized as linking poor WASH to growth faltering</li>
-<li>Individual WASH components (water treatment, handwashing,
-sanitation) show limited independent effects on nutrition outcomes</li>
-<li>The 2013 Cochrane review notes: “WASH interventions had small
-effects on child growth… evidence is of low or very low quality”</li>
-</ul>
-<p>However, the full-text analysis reveals that WASH addresses a key
-determinant: diarrhea was associated with 77% increased risk of overall
-undernutrition (OR 1.77, 95% CI 1.52-2.06) and 92% increased risk of
-wasting (OR 1.92, 95% CI 1.48-2.48) (PMID: 40886100, 2026, 49
-studies).</p>
-<p><strong>Mechanism:</strong> Reduces fecal-oral pathogen exposure that
-causes diarrhea and environmental enteric dysfunction (subclinical
-intestinal inflammation impairing nutrient absorption).</p>
-<p><strong>Government scaling pathway:</strong> National sanitation
-campaigns (e.g., India’s Swachh Bharat), community-led total sanitation
-(CLTS), water treatment infrastructure. Must be combined with
-nutrition-specific interventions for growth impact. Cross-ministerial
-coordination required (health + water/sanitation).</p>
-<p><strong>Key papers:</strong> PMID 23904195, PMID 31272479, PMID
-40886100</p>
-<hr />
-</div>
-<div id="financial-incentives-and-conditional-cash-transfers" class="section level3">
-<h3>15. Financial Incentives and Conditional Cash Transfers</h3>
-<p><strong>Evidence Rating: B</strong></p>
-<p>Full-text from Bassani et al. (2013, PMID: 24564520, BMC Public
-Health, cited 230 times; 25 studies):</p>
-<ul>
-<li>Conditional cash transfers (CCTs) and unconditional cash transfers
-(UCTs) improve uptake of child health interventions</li>
-<li>Conditional microcredit: 22% net increase in newborns receiving
-colostrum (MD 0.22, 95% CI 0.08-0.35)</li>
-<li>User fee removal and voucher schemes increase health service
-utilization</li>
-<li>Studies from South America (52%), Africa (32%), Southeast Asia
-(16%)</li>
-<li>Evidence quality: low, mainly due to limited number of studies per
-intervention type</li>
-</ul>
-<p>The 2019 systematic review (PMID: 31666032, 17 studies; full-text)
-found cash-based interventions can reduce stunting but evidence linking
-to economic development indicators remains limited.</p>
-<p><strong>Mechanism:</strong> Addresses demand-side barriers (cost,
-opportunity cost) to accessing nutrition and health services. Income
-support improves household food security and dietary diversity.</p>
-<p><strong>Government scaling pathway:</strong> Proven at national scale
-(Brazil Bolsa Familia, Mexico Prospera, India MGNREGA). Requires social
-protection infrastructure, targeting systems, and conditionality
-monitoring. Cost: varies by coverage and transfer size.</p>
-<p><strong>Key papers:</strong> PMID 24564520, PMID 31666032</p>
-<hr />
-</div>
-<div id="nutrition-sensitive-agriculture" class="section level3">
-<h3>16. Nutrition-Sensitive Agriculture</h3>
-<p><strong>Evidence Rating: B</strong></p>
-<p>Full-text from Masset et al. (2012, PMID: 22251864, BMJ, cited 396
-times; 23 studies) and the egg supplementation meta-analysis (PMID:
-42137196, 2026, 7 studies, 3,673 children):</p>
-<p><strong>Home gardens (dominant evidence):</strong> 15 of 23 selected
-studies - Strong effects on vitamin A intake and dietary diversity -
-Pooled data limited for growth outcomes - “Rigorous evaluations of the
-effect of dairy, animal husbandry, and fisheries projects are extremely
-rare”</p>
-<p><strong>Egg-based interventions (emerging evidence):</strong> - 7
-RCTs in sub-Saharan Africa (Malawi, Kenya, Ethiopia, South Africa) -
-Assessed effects on HAZ, WAZ, and WHZ - Interventions provided one egg
-per day - Shows promise but heterogeneous results</p>
-<p><strong>Mechanism:</strong> Increases household-level access to
-nutrient-rich foods (eggs, vegetables, fruit, animal-source foods) while
-generating income. Biofortified crops (orange-fleshed sweet potato,
-iron-biofortified beans) provide micronutrients through staple food
-production.</p>
-<p><strong>Government scaling pathway:</strong> Agricultural extension
-services, home garden programs, biofortification crop introduction.
-Requires cross-ministry coordination (agriculture + health). Cost:
-highly variable by intervention type.</p>
-<p><strong>Key papers:</strong> PMID 22251864, PMID 42137196, PMID
-32270495</p>
-<hr />
-</div>
-<div id="school-based-micronutrient-programs" class="section level3">
-<h3>17. School-Based Micronutrient Programs</h3>
-<p><strong>Evidence Rating: B</strong></p>
-<p>Evidence from weekly IFA supplementation in sub-Saharan Africa (PMID:
-38862227, 2024, 10 RCTs; full-text), iron supplementation in school-age
-children (PMID: 22895927, cited 155 times), and fortified beverages
-(PMID: 26007336, 10 RCTs, 4,645 participants; full-text):</p>
-<ul>
-<li>Weekly IFA increases serum ferritin in adolescent girls (Hedge’s
-g=0.53, 95% CI 0.28-0.78)</li>
-<li>Weekly IFA increases hemoglobin in school-age children (Hedge’s
-g=0.37, 95% CI 0.01-0.73)</li>
-<li>Substantial reduction in iron deficiency prevalence among adolescent
-girls (OR 0.48)</li>
-<li>MMN-fortified beverages: hemoglobin +2.76 g/L (95% CI 1.19-4.33),
-anemia RR 0.58 (0.29-0.88), iron deficiency RR 0.34 (0.21-0.55)</li>
-<li>Supplements delivered weekly (60-65mg elemental iron + 0.1-2.8mg
-folic acid)</li>
-</ul>
-<p><strong>Mechanism:</strong> Schools provide a platform to reach
-school-age children and adolescents — groups often missed by health
-facility-based nutrition programs. Weekly dosing reduces side effects
-and improves program sustainability.</p>
-<p><strong>Government scaling pathway:</strong> School health and
-nutrition programs (deworming + micronutrients). Can integrate with
-school feeding programs. Platform: education ministry + health ministry
-collaboration. Cost: $2-5 per child per year.</p>
-<p><strong>Key papers:</strong> PMID 38862227, PMID 22895927, PMID
-26007336</p>
-<hr />
-</div>
-<div id="growth-monitoring-and-promotion" class="section level3">
-<h3>18. Growth Monitoring and Promotion</h3>
-<p><strong>Evidence Rating: C+</strong></p>
-<p>The 2023 systematic review (PMID: 36753300, cited 28 times;
-full-text) found:</p>
-<ul>
-<li>Growth monitoring and promotion (GMP) can improve HAZ, WAZ, and
-WHZ</li>
-<li>Evidence is limited to quasi-experimental and before-after
-studies</li>
-<li>Most programs show benefit when combined with counseling and
-referral</li>
-<li>Standalone GMP without action (just weighing) shows no benefit</li>
-<li>Requires integration with nutrition counseling and timely
-referral</li>
-</ul>
-<p><strong>Mechanism:</strong> Regular anthropometric measurement
-identifies growth faltering early, triggers targeted nutrition
-counseling, supplementation, or referral. Behavior change through
-visualization of growth trajectory.</p>
-<p><strong>Government scaling pathway:</strong> Already embedded in most
-LMIC primary health care systems. Main challenge: quality of counseling
-and follow-up action. Platform: routine under-5 clinic visits.</p>
-<p><strong>Key papers:</strong> PMID 36753300</p>
-<hr />
-</div>
-<div id="nutrition-education-in-pregnancy-including-mhealth" class="section level3">
-<h3>19. Nutrition Education in Pregnancy (including mHealth)</h3>
-<p><strong>Evidence Rating: B</strong></p>
-<p>Full-text from the 2025 meta-analysis (PMID: 39545365, 53 studies,
-13,475 women): - Nutrition education increases IFAS compliance 2.80-fold
-(OR 2.80, 95% CI 2.04-3.83) - Hemoglobin increase: 0.88 g/dL (Cohen’s d
-= 0.88, 95% CI 0.63-1.13) - Most studies from India (22.6%), Indonesia
-(20.8%), Egypt (20.8%) - Health facility-based delivery (77.4%) with RCT
-or quasi-experimental designs - Interventions &lt;12 weeks also
-effective</p>
-<p>mHealth (PMID: 30609297, 4 studies from India, Indonesia, Kenya): -
-Limited but promising evidence for improving dietary intake - Text
-messaging and mobile apps for pregnancy nutrition counseling -
-Challenges: evidence base still small, short study durations</p>
-<p><strong>Mechanism:</strong> Addresses knowledge and behavior barriers
-to optimal dietary practices and supplement adherence. mHealth overcomes
-geographic access barriers.</p>
-<p><strong>Government scaling pathway:</strong> Can be integrated into
-existing ANC platforms at minimal marginal cost. mHealth scalable
-through public health messaging systems. Cost: $1-5 per woman for
-facility-based; $0.50-2 for mHealth.</p>
-<p><strong>Key papers:</strong> PMID 39545365, PMID 30609297</p>
-<hr />
-</div>
-<div id="integrated-management-of-childhood-illness-imci" class="section level3">
-<h3>20. Integrated Management of Childhood Illness (IMCI)</h3>
-<p><strong>Evidence Rating: B</strong></p>
-<p>Full-text from the 2016 Cochrane review (PMID: 27378094, cited 185
-times; 2 CBA studies):</p>
-<ul>
-<li>Bangladesh trial: mortality declined from 43 to 27 per 1,000 live
-births in intervention area (37% reduction) vs 44.8 to 31.2 in control
-(30% reduction)</li>
-<li>Tanzania CBA: RR 0.87 (95% CI 0.72-1.05)</li>
-<li>Nutritional status improvements observed as secondary outcome</li>
-<li>IMCI includes nutrition assessment, counseling, and management
-components</li>
-<li>Requires functioning health system with trained health workers and
-drug supply</li>
-</ul>
-<p><strong>Mechanism:</strong> Algorithmic case management integrating
-nutrition screening and counseling with treatment of common childhood
-illnesses. Addresses the malnutrition-infection cycle at point of
-care.</p>
-<p><strong>Government scaling pathway:</strong> WHO IMCI strategy
-adopted in 100+ countries. Requires health worker training, supportive
-supervision, and supply chain. Can be implemented at all levels of
-primary care.</p>
-<p><strong>Key papers:</strong> PMID 27378094</p>
-<hr />
-</div>
-</div>
-<div id="cross-cutting-findings" class="section level2">
-<h2>Cross-Cutting Findings</h2>
-<div id="the-mms-vs-ifa-policy-transition-is-underway" class="section level3">
-<h3>1. The MMS vs IFA Policy Transition Is Underway</h3>
-<p>The evidence consistently shows MMS outperforms IFA for birth
-outcomes. The 2020 WHO conditional recommendation opened the door.
-Full-text analysis of the latest trials (2023-2025) confirms that
-concerns about gestational age assessment methods do not undermine the
-findings. The policy question is no longer “whether” but “how fast” to
-transition ANC protocols.</p>
-</div>
-<div id="adherence-is-the-binding-constraint-for-supplementation-programs" class="section level3">
-<h3>2. Adherence Is the Binding Constraint for Supplementation
-Programs</h3>
-<p>Across iron-folic acid (39% compliance in SSA), MNPs (63% high
-adherence), and zinc (variable), the consistent finding is that supply
-of supplements is necessary but insufficient. Nutrition education at
-point of contact (ANC, community health worker visits) approximately
-doubles adherence. mHealth shows promise but evidence remains thin.</p>
-</div>
-<div id="full-text-analysis-reveals-stronger-effect-sizes-than-abstracts-suggest" class="section level3">
-<h3>3. Full-Text Analysis Reveals Stronger Effect Sizes Than Abstracts
-Suggest</h3>
-<p>Papers with full-text access provided subgroup analyses and
-context-specific estimates not available from abstracts alone. For
-example, the SQ-LNS IPD analysis showed 17% reduction in newborn
-stunting — a finding that requires parsing the full results tables.
-Similarly, the vitamin A literature shows that recent trials in
-lower-deficiency settings show attenuated effects (RR 0.96 in post-2000
-trials vs RR 0.76 overall), which is critical for programming decisions
-but often absent from abstracts.</p>
-</div>
-<div id="the-nutrition-specific-to-nutrition-sensitive-pipeline" class="section level3">
-<h3>4. The Nutrition-Specific to Nutrition-Sensitive Pipeline</h3>
-<p>Tier 1 interventions (VAS, IFA, fortification, breastfeeding) are
-nutrition-specific — they directly address nutrient deficiency. Tier 2-3
-interventions increasingly require cross-sectoral coordination
-(agriculture, social protection, WASH, education). The evidence base for
-nutrition-sensitive interventions is weaker partly because evaluation
-methodologies are less developed for complex multi-component programs,
-not necessarily because the interventions are less effective.</p>
-</div>
-<div id="sub-saharan-africa-and-south-asia-dominate-the-evidence-base" class="section level3">
-<h3>5. Sub-Saharan Africa and South Asia Dominate the Evidence Base</h3>
-<p>Of papers with regional data in full text: 64 studies in Africa, 86
-in Asia, 26 in South America. Evidence from Pacific islands, Central
-Asia, and the Middle East remains thin. The EMR-specific review (PMID:
-34360137) found only 8 eligible studies (7 from Pakistan). Programming
-should be cautious about generalizing across contexts with different
-dietary patterns and disease burdens.</p>
-</div>
-<div id="the-low-birthweight-prevention-package-is-maturing" class="section level3">
-<h3>6. The Low Birthweight Prevention Package Is Maturing</h3>
-<p>The combination of MMS (or SQ-LNS) + balanced protein-energy
-supplementation for undernourished women + nutrition education
-represents a coherent antenatal package with strong evidence for each
-component. The 2023-2025 literature (multiple new meta-analyses) is
-converging on effect sizes of 10-17% reduction in adverse birth
-outcomes, with greatest benefit in food-insecure, underweight women.</p>
-<hr />
-</div>
-</div>
-<div id="methodology-notes" class="section level2">
-<h2>Methodology Notes</h2>
-<p><strong>Evidence Strength Ratings:</strong> - <strong>A:</strong>
-Multiple high-quality meta-analyses/Cochrane reviews with consistent
-findings, large sample sizes, and narrow confidence intervals -
-<strong>B+:</strong> At least one high-quality meta-analysis with
-significant findings, supported by consistent observational evidence -
-<strong>B:</strong> Limited meta-analytic evidence or inconsistent
-findings across reviews - <strong>C+:</strong> Emerging evidence from
-individual RCTs or systematic reviews without meta-analysis</p>
-<p><strong>Cost-Effectiveness Ratings:</strong> - <strong>Very
-High:</strong> &lt;$100 per DALY averted (Copenhagen Consensus “best
-buys”) - <strong>High:</strong> $100-500 per DALY averted -
-<strong>Moderate:</strong> $500-1,500 per DALY averted</p>
-<p><strong>Scalability Ratings:</strong> - <strong>Proven
-national:</strong> Implemented at national scale in multiple LMICs -
-<strong>Proven subnational:</strong> Effective at district/provincial
-scale with evidence of government adoption - <strong>Growing:</strong>
-Pilot evidence in LMICs with expanding coverage - <strong>Requires
-investment:</strong> Evidence base strong but implementation
-infrastructure not yet in place</p>
-<p><strong>Data Sources:</strong> - 100 papers from PubMed (99) and
-OpenAlex (1), retrieved via automated pipeline - 57 papers with PMC
-full-text (structured XML), 43 abstract-only - Publisher-restricted
-papers (28 Cochrane reviews) fetched from PMC but full text not
-available - Effect sizes reported directly from full-text results
-sections where available - All PMIDs verified against PubMed records</p>
-</div>
 </div>
 
 
