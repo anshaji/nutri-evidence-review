@@ -1,9 +1,9 @@
 # Evidence + Cost-Effectiveness Synthesis: Nutrition Interventions for Children Under 5 and Women of Reproductive Age in LMICs
 
 **Pipeline version:** 3.0 (two-phase: evidence → cost-effectiveness)
-**Phase 1 corpus:** top 200 ranked papers (117 with PMC full text), population-targeted (under-5 / WRA)
-**Phase 2 corpus:** `cea_by_intervention.json` — targeted CEA search per shortlisted intervention
-**Date:** 2026-06-03
+**Phase 1 corpus:** top 200 ranked papers (117 with PMC full text), population-targeted (under-5 / WRA); 1,996 papers ranked after dedup (25 Cochrane versions collapsed)
+**Phase 2 corpus:** `cea_by_intervention.json` — 15 shortlisted interventions, targeted CEA search each
+**Date:** 2026-06-05 (regenerated — full Phase 1 + Phase 2 rerun under the updated prompts)
 
 ## How to read this synthesis
 

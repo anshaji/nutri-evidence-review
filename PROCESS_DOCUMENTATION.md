@@ -169,7 +169,7 @@ yielded full-text bodies.
 
 The top 200 (`top_papers_for_review.json`, with full text where available) are
 reviewed **in-conversation** — no API automation — guided by
-`prompts/synthesis_prompt.md`. The reviewer identifies distinct interventions,
+`prompts/shortlist_prompt.md`. The reviewer identifies distinct interventions,
 each backed by multiple corpus papers, and writes **`shortlist.json`** (from
 `shortlist.template.json`):
 

@@ -53,7 +53,7 @@ fetch_papers.py        Phase 1 entry point (evidence)
 run_cea.py             Phase 2 entry point (cost-effectiveness)
 verify_synthesis.py    Claim verifier — lints a synthesis against the corpus
 pipeline/              The package (see claude.md for module-by-module detail)
-prompts/               synthesis_prompt.md — grounding rules for the manual review
+prompts/               shortlist_prompt.md (Phase 1 → shortlist) + synthesis_prompt.md (final synthesis)
 data/                  Optional local CEA registry CSV (see data/README.md)
 output/                Synthesis deliverables (current + comparison runs)
 shortlist.template.json   Copy → shortlist.json to drive Phase 2
@@ -70,6 +70,9 @@ Generated data (`papers_database.json`, `papers_ranked.csv`,
   two-phase redesign. Start here for how the pipeline works.
 - **[PROCESS_DOCUMENTATION.md](PROCESS_DOCUMENTATION.md)** — detailed
   methodology writeup.
-- **[prompts/synthesis_prompt.md](prompts/synthesis_prompt.md)** — the Stage 4
-  grounding checklist (every numeric claim needs a corpus PMID; no
-  cost-effectiveness rating without a CEA record).
+- **[prompts/shortlist_prompt.md](prompts/shortlist_prompt.md)** — Phase 1
+  review prompt: read the top 200, shortlist evidence-backed interventions, write
+  `shortlist.json` for Phase 2.
+- **[prompts/synthesis_prompt.md](prompts/synthesis_prompt.md)** — final
+  synthesis prompt and grounding checklist (every numeric claim needs a corpus
+  PMID; no cost-effectiveness rating without a CEA record).

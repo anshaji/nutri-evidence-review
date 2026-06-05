@@ -39,7 +39,8 @@ pipeline/
 ├── cea_main.py              # Phase 2 orchestrator (run_phase2)
 └── verify.py                # Post-synthesis claim verification (corpus membership + support)
 prompts/
-└── synthesis_prompt.md      # Stage 4 grounding checklist (hardening rules + CEA-rating guard)
+├── shortlist_prompt.md      # Phase 1 review → shortlist.json (intervention-selection rules)
+└── synthesis_prompt.md      # Final synthesis grounding checklist (hardening rules + CEA-rating guard)
 data/
 └── README.md                # How to add an optional local CEA registry CSV
 ```
@@ -81,7 +82,7 @@ data/
 - Module: `pipeline/fulltext_client.py`
 
 ### Stage 4: Manual Review → shortlist
-- Top 200 papers reviewed **in-conversation** (no API automation), guided by `prompts/synthesis_prompt.md`
+- Top 200 papers reviewed **in-conversation** (no API automation), guided by `prompts/shortlist_prompt.md`
 - Human/LLM shortlists interventions and authors `shortlist.json` (from `shortlist.template.json`)
 
 ## PHASE 2 — Cost-Effectiveness (`python3 run_cea.py [shortlist.json]` → `run_phase2`)
