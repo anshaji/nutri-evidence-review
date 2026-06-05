@@ -1,525 +1,329 @@
-# Automated Evidence Synthesis Pipeline v2.0: Process Documentation
-
-> **⚠️ This document describes the v2.x single-phase methodology.** The pipeline
-> has since been restructured into a **two-phase design (v3.0)** — evidence
-> retrieval (Phase 1, no cost-effectiveness) → manual intervention shortlist →
-> targeted cost-effectiveness search (Phase 2) — with population targeting
-> (under-5 / WRA), Cochrane-version deduplication, an 8th scoring component, and
-> a synthesis claim-verifier. For the current architecture see
-> [claude.md](claude.md) and [README.md](README.md). The Stage 1–3 retrieval and
-> scoring mechanics below remain largely accurate; the track structure (Track B
-> is removed from Phase 1) and the synthesis flow have changed.
+# Automated Evidence Synthesis Pipeline v3.0: Process Documentation
 
 ## Overview
 
-This pipeline automates the identification, ranking, and synthesis of academic evidence on nutrition interventions in low- and middle-income countries (LMICs). It combines multi-source programmatic literature search (PubMed + OpenAlex), structured scoring using authoritative metadata, and LLM-based review and synthesis.
+This pipeline identifies nutrition interventions for **children under 5** and
+**women of reproductive age (WRA)** in low- and middle-income countries (LMICs)
+that are both **well evidence-backed** and **cost-effective**, with realistic
+pathways to government-led scaling.
 
-**Repository:** [github.com/anshaji/nutri-evidence-review](https://github.com/anshaji/nutri-evidence-review)
+It runs in **two phases** separated by a manual review checkpoint, then a manual
+synthesis:
+
+1. **Phase 1 — Evidence.** Retrieve meta-analyses / systematic reviews from
+   PubMed and the economics/development literature from OpenAlex, *population-
+   targeted* and **excluding cost-effectiveness**. Deduplicate, score, rank,
+   take the top 200, and retrieve full text. A human/LLM reviews the result and
+   writes a shortlist of interventions.
+2. **Phase 2 — Cost-effectiveness.** For *each shortlisted intervention*, run a
+   targeted cost-effectiveness search (PubMed + OpenAlex + an optional local CEA
+   registry).
+3. **Synthesis.** A human/LLM combines both datasets in-conversation, under a
+   grounding checklist, and a verifier lints the result.
+
+**Why two phases?** A deep audit of the earlier single-phase pipeline (the
+Vitamin A Supplementation case study, see end of this document) found its broad
+cost-effectiveness track returned **zero usable CEAs for the actual
+interventions**, yet the synthesis still assigned cost-effectiveness ratings
+from background knowledge. Splitting the pipeline means cost-effectiveness is
+only ever searched — and only ever rated — for the interventions that survive
+the evidence screen.
+
+**Implementation:** Python 3.10+ **standard library only** (`urllib`, `json`,
+`csv`, `xml.etree.ElementTree`); no pip dependencies.
+
+```
+                          PHASE 1 (fetch_papers.py)                    PHASE 2 (run_cea.py)         SYNTHESIS
+                ┌──────────────────────────────────────────┐      ┌────────────────────────┐   ┌────────────┐
+ PubMed Track A │ 12 domains × 2 passes (MA, SR)            │      │ per shortlisted        │   │ human/LLM  │
+ OpenAlex Track C│ 4 nutrition-sensitive queries           │ ───► │ intervention:          │   │ combines   │
+                │ + POPULATION filter + LMIC filter        │ rank │  PubMed CEA + OpenAlex  │ ► │ both sets  │
+                │ → dedup → enrich → score (8 comp.)       │ top  │  + optional registry   │   │ → verify   │
+                │ → PMC full text (top 200)                │ 200  │ → filter/rank CEAs      │   │            │
+                └──────────────────────────────────────────┘  │   └────────────────────────┘   └────────────┘
+                  top_papers_for_review.json  ─── manual review ─►  shortlist.json ──►  cea_by_intervention.json
+```
 
 ---
 
-## Stage 1: Literature Retrieval
+# PHASE 1 — Evidence
 
-**Objective:** Retrieve all meta-analyses, systematic reviews, and Cochrane reviews on nutrition interventions in LMICs, plus a parallel track for cost-effectiveness analyses and nutrition-sensitive interventions from the economics literature.
+Entry point: `python3 fetch_papers.py` → `pipeline/main.py:run_phase1()`.
 
-**Sources:**
+## Stage 1: Literature retrieval (two tracks, no cost-effectiveness)
 
-| Source | Role | API | Rate Limit |
+| Source | Role | API | Rate limit |
 |--------|------|-----|-----------|
-| PubMed (E-Utilities) | Primary — biomedical literature | esearch + efetch | 10 req/s (with API key) |
-| OpenAlex | Supplementary — economics/development literature | REST API | 0.3s between requests |
+| PubMed (E-Utilities) | Primary — biomedical evidence | esearch + efetch | 10 req/s with API key |
+| OpenAlex | Supplementary — economics/development literature | REST | ~0.3 s between requests |
 
-### Track A: Meta-Analyses & Systematic Reviews (PubMed)
+### Track A — Meta-analyses & systematic reviews (PubMed)
 
-**Two-pass approach:**
-- **Pass 1 (Primary tier):** Retrieves only confirmed meta-analyses using `meta-analysis[pt]` publication type filter
-- **Pass 2 (Supplementary tier):** Retrieves systematic reviews using `systematic review[pt]` filter
+Twelve intervention-domain queries (`pipeline/queries.py:TRACK_A_QUERIES`), each
+run in **two passes**:
 
-**Query structure:**
-```
-[intervention MeSH/keywords] AND [LMIC filter] AND [publication type filter]
-```
+- **Pass 1 (primary tier):** `meta-analysis[pt] OR "Cochrane Database Syst Rev"[Journal]` — confirmed meta-analyses.
+- **Pass 2 (supplementary tier):** `systematic review[pt] OR "systematic review"[tiab]`.
 
-**LMIC filter (reusable across all queries):**
-```
-("developing countries"[MeSH] OR "low income"[tiab] OR "middle income"[tiab]
- OR "LMIC"[tiab] OR "sub-saharan africa"[tiab] OR "south asia"[tiab]
- OR "southeast asia"[tiab])
-```
+The twelve domains: micronutrient supplementation · food fortification ·
+complementary feeding · breastfeeding promotion · acute malnutrition management ·
+maternal nutrition · WASH + nutrition · school feeding · growth monitoring ·
+deworming · nutrition-sensitive agriculture · integrated/multi-sectoral.
 
-Using `"developing countries"[MeSH]` is key — this is a curated MeSH descriptor that maps to all individual LMIC country names without needing to enumerate them.
-
-**The 12 intervention domain queries:**
-
-| # | Domain | Key MeSH/Keywords |
-|---|--------|-------------------|
-| 1 | Micronutrient supplementation | `"micronutrients"[MeSH]`, `"dietary supplements"[MeSH]`, iron, zinc, vitamin A, folic acid |
-| 2 | Food fortification | `"food, fortified"[MeSH]`, flour fortification, salt iodization, biofortification |
-| 3 | Complementary feeding | `"infant nutritional physiological phenomena"[MeSH]`, complementary feeding, weaning |
-| 4 | Breastfeeding promotion | `"breast feeding"[MeSH]`, `"lactation"[MeSH]`, kangaroo mother care |
-| 5 | Acute malnutrition management | severe acute malnutrition, RUTF, CMAM |
-| 6 | Maternal nutrition | `"prenatal nutritional physiological phenomena"[MeSH]`, maternal nutrition |
-| 7 | WASH + nutrition | `"water purification"[MeSH]`, `"hygiene"[MeSH]`, `"sanitation"[MeSH]` AND nutrition/stunting |
-| 8 | School feeding | school feeding, school meal, school nutrition |
-| 9 | Growth monitoring & promotion | growth monitoring, `"nutrition surveillance"[MeSH]` |
-| 10 | Deworming | `"anthelmintics"[MeSH]`, deworming AND nutrition/growth/anemia |
-| 11 | Nutrition-sensitive agriculture | `"agriculture"[MeSH]`, homestead food production AND nutrition/diet |
-| 12 | Integrated/multi-sectoral | `"nutrition programs and policies"[MeSH]`, nutrition-sensitive, nutrition-specific |
-
-### Track B: Cost-Effectiveness Analyses (PubMed)
-
-Separate track because CEAs are rarely meta-analyses — they come as original research articles.
+Every query is assembled by the single chokepoint `build_pubmed_query()`:
 
 ```
-("cost-benefit analysis"[MeSH] OR "cost-effectiveness"[tiab] OR "cost per DALY"[tiab]
- OR "cost-benefit"[tiab] OR "cost effective"[tiab] OR "incremental cost"[tiab])
-AND ("nutrition"[tiab] OR "malnutrition"[tiab] OR "stunting"[tiab]
-     OR "supplementation"[tiab] OR "fortification"[tiab]
-     OR "breastfeeding"[tiab] OR "complementary feeding"[tiab])
-AND [LMIC filter]
+[intervention terms] AND [POPULATION_FILTER] AND [LMIC_FILTER] AND [type_filter]
 ```
 
-No publication type restriction — CEAs are indexed as regular journal articles.
+**Population filter (new in v3 — the under-5 / WRA target).** A paper on
+*either* population qualifies (OR logic), via MeSH plus title/abstract terms:
 
-### Track C: Supplementary Sweep (OpenAlex)
+```
+("infant"[MeSH] OR "child, preschool"[MeSH]
+ OR "infant nutritional physiological phenomena"[MeSH]
+ OR "pregnant women"[MeSH] OR "pregnancy"[MeSH]
+ OR "maternal nutritional physiological phenomena"[MeSH]
+ OR "reproductive health"[MeSH]
+ OR "under-five"[tiab] OR "under 5"[tiab] OR "preschool"[tiab] OR "infant"[tiab]
+ OR "neonatal"[tiab] OR "young child"[tiab]
+ OR "women of reproductive age"[tiab] OR "reproductive age"[tiab]
+ OR "pregnant"[tiab] OR "pregnancy"[tiab] OR "maternal"[tiab]
+ OR "antenatal"[tiab] OR "prenatal"[tiab])
+```
 
-Retained for intervention domains PubMed covers poorly — the economics and development literature on nutrition-sensitive interventions:
+Because it lives in `build_pubmed_query`, it propagates automatically to all
+24 Track A sub-queries (12 domains × 2 passes).
 
-| # | Query Domain |
-|---|-------------|
-| 1 | Cash transfers + nutrition/food security/dietary diversity |
-| 2 | Social protection + child nutrition/malnutrition |
-| 3 | Food subsidies / public distribution systems |
-| 4 | Conditional cash transfers + nutrition/child health |
+**LMIC filter.** Uses the curated `"developing countries"[MeSH]` descriptor
+(which maps to all individual LMIC country names) plus tiab fallbacks
+(`low income`, `middle income`, `LMIC`, `sub-saharan africa`, `south asia`,
+`southeast asia`).
 
-These queries use OpenAlex's full-text search with Boolean operators and target reviews/evidence syntheses.
+### Track C — Nutrition-sensitive interventions (OpenAlex)
 
-### Retrieval Parameters
+Four free-text queries for literature PubMed indexes poorly: cash transfers,
+social protection, food subsidies / public distribution, conditional cash
+transfers. Each search string is wrapped by `build_openalex_search()`, which
+ANDs in the OpenAlex equivalent of the population clause.
 
-| Parameter | PubMed | OpenAlex |
-|-----------|--------|----------|
-| Max results per query | 500 (via `retmax`) | 500 (5 pages x 100) |
-| Rate limiting | 10/s with API key | 0.3s between pages |
-| Deduplication | PMID across queries | OpenAlex ID, then DOI-match against PubMed set |
-| Abstract retrieval | `efetch` with `rettype=xml` | Inverted index reconstruction |
-| Batch size | 200 PMIDs per efetch request | 100 per page |
+### Cost-effectiveness is **not** searched in Phase 1
 
-### PubMed E-Utilities Method
+The old "Track B" CEA query is removed from Phase 1. Its cost-term skeleton is
+retained in `queries.py` and reused, per-intervention, in Phase 2.
 
-1. **esearch** — submit query string, receive list of PMIDs + total count (JSON response)
-2. **efetch** — submit PMIDs in batches of 200, receive full article records in XML
-3. **Parse XML** — extract title, abstract (structured sections joined), MeSH terms, publication types, DOI, journal, year, authors
-4. **Deduplicate** across all queries by PMID
+### E-Utilities mechanics
 
-### Cross-Source Deduplication
+1. **esearch** — submit the query, receive up to `PUBMED_RETMAX` (500) PMIDs + total count (JSON).
+2. **efetch** — submit PMIDs in batches of `PUBMED_BATCH_SIZE` (200), receive XML.
+3. **Parse** — title, abstract (structured sections joined), publication year, journal, authors (first 5), DOI, publication types, MeSH descriptors, and the **Cochrane accession** (`CDxxxxxx`, extracted from the DOI — new in v3).
+4. Raw XML/JSON saved to `raw_responses/` for reproducibility.
 
-After PubMed + OpenAlex retrieval:
-1. Within PubMed: by PMID (when a paper appears in multiple queries, keep the highest-tier version)
-2. Within OpenAlex: by OpenAlex work ID
-3. Cross-source: by DOI (normalize: strip prefix, lowercase)
-   - When DOI matches, **prefer PubMed record** (richer metadata: MeSH, publication types)
-   - Merge `cited_by_count` and `is_open_access` from OpenAlex into the PubMed record
+## Stage 2: Deduplication
 
-### Output
+Run in order (`pipeline/dedup.py`):
 
-A deduplicated candidate set with full metadata. Fields include:
-- `id`, `title`, `abstract`, `publication_year`, `journal`, `doi`, `pmid`, `openalex_id`
-- `source_db`: "pubmed" or "openalex"
-- `publication_type`: list from PubMed indexing (authoritative, not inferred)
-- `mesh_terms`: list of MeSH descriptor names
-- `study_type`: human-readable classification
-- `tier`: "primary" (meta-analysis), "supplementary" (systematic review), "cea", or "nutrition-sensitive"
-- `query_origin`: which of the 12+1+4 queries found it
-- `cited_by_count`: from OpenAlex cross-reference
-- `is_open_access`: boolean
+1. **Within PubMed by PMID** — when the same paper appears across queries/passes, keep the higher-priority tier (primary > supplementary).
+2. **Cochrane version dedup (new in v3)** — collapse records sharing a `cochrane_id` (e.g. CD008524), keep the newest `publication_year`, and tag the dropped older version `superseded_by`. *A Cochrane review update is the same review, not new evidence* — this prevents the version-double-counting the VAS audit found.
+3. **Within OpenAlex by OpenAlex ID.**
+4. **Cross-source by normalized DOI** — when a paper is in both sources, keep the PubMed record (richer MeSH / publication types) and merge `cited_by_count` + open-access status from OpenAlex.
 
-### Raw Response Archiving
+*Representative run:* PubMed 1,194 → 531 (PMID) → 506 (25 Cochrane versions collapsed); OpenAlex 2,000 → 1,515; merged set ≈ 1,993 papers.
 
-All raw API responses are saved to `raw_responses/` for reproducibility:
-- PubMed: `pubmed_{tier}_{domain}_{timestamp}.xml`
-- OpenAlex: `openalex_{domain}_{timestamp}.json`
+## Stage 3: Citation enrichment + scoring
+
+**Citation enrichment** (`citation_enrichment.py`): for PubMed papers lacking a
+citation count, batch-look-up DOIs in OpenAlex (50 per request) to populate
+`cited_by_count` and `is_open_access`.
+
+**Scoring** (`pipeline/scoring.py`) — 8 components, max ≈ 95:
+
+| # | Component | Max | Source |
+|---|-----------|-----|--------|
+| 1 | Study design authority | 20 | PubMed `publication_type` (keyword fallback for OpenAlex) |
+| 2 | Topic relevance | 25 | MeSH intervention/outcome term sets (keyword fallback) |
+| 3 | Setting relevance | 10 | MeSH geographic terms (keyword fallback) |
+| 4 | Recency | 10 | Step function on publication year |
+| 5 | Citation impact | 12 | `cited_by_count` brackets |
+| 6 | Open access | 3 | `is_open_access` |
+| 7 | Tier bonus | 5 | +5 for confirmed meta-analyses (primary tier) |
+| 8 | **Population relevance (new in v3)** | **10** | under-5 / WRA MeSH set, or keyword fallback |
+
+Component 8 makes the target population a first-class ranking signal, so under-5
+/ WRA evidence rises into the top 200. Papers are sorted by total score
+descending.
+
+## Stage 3.5: Full-text retrieval (PMC open access)
+
+For the **top 200** papers (`TOP_N_FOR_REVIEW = 200`, raised from 100):
+
+1. Convert PMIDs → PMCIDs via the NCBI ID Converter API (batch of 200). *(The converter returns PMIDs as integers — they must be cast to `str()` to match the paper dict keys.)*
+2. `efetch db=pmc` for each PMCID; parse the `<body>` into sections (Introduction/Methods/Results/Discussion) and tables.
+3. Cache raw XML in `raw_responses/pmc/{PMCID}.xml`; subsequent runs reuse it.
+4. Papers without a downloadable body are flagged `fulltext_source: "abstract_only"` (Cochrane/Wiley and some Elsevier journals restrict PMC XML).
+
+*Representative run:* 193 of the top 200 had PMIDs, 160 were PMC-indexed, 117
+yielded full-text bodies.
+
+## Stage 4: Manual review → shortlist
+
+The top 200 (`top_papers_for_review.json`, with full text where available) are
+reviewed **in-conversation** — no API automation — guided by
+`prompts/synthesis_prompt.md`. The reviewer identifies distinct interventions,
+each backed by multiple corpus papers, and writes **`shortlist.json`** (from
+`shortlist.template.json`):
+
+```json
+{
+  "interventions": [
+    {"name": "vitamin A supplementation in children",
+     "synonyms": ["retinol supplementation", "vitamin A capsule"],
+     "mesh": ["Vitamin A", "Vitamin A Deficiency"],
+     "population": "under-5"}
+  ]
+}
+```
+
+`name` is required (used in PubMed `[tiab]`, OpenAlex search, and registry
+matching); `synonyms` and `mesh` broaden the Phase 2 search; `population` is
+informational. Avoid ambiguous short abbreviations (e.g. "VAS" also means Visual
+Analog Scale) — they cause false positives in OpenAlex's free-text search.
 
 ---
 
-## Stage 2: Relevance Scoring
+# PHASE 2 — Cost-effectiveness
 
-**Objective:** Rank all collected papers by a composite relevance score that leverages authoritative metadata (MeSH terms, publication types) for PubMed papers and falls back to keyword heuristics for OpenAlex papers.
+Entry point: `python3 run_cea.py [shortlist.json]` →
+`pipeline/cea_main.py:run_phase2()`. For **each** shortlisted intervention:
 
-**Method:** Each paper receives a numerical score (0-85) computed as the sum of seven components:
+### 1. Targeted retrieval (`pipeline/cea_client.py`)
 
-### Component 1: Study Design Authority (0-20 points)
+- **PubMed** — `build_cea_pubmed_query()` assembles
+  `CEA_TERM_SKELETON AND (name/synonyms[tiab] OR mesh[MeSH]) AND LMIC_FILTER`,
+  where the skeleton is the cost-term half of the old Track B
+  (`cost-benefit analysis[MeSH]`, `cost-effectiveness`, `cost per DALY`,
+  `cost-utility`, `incremental cost`, …). Run via the reused `esearch`
+  (`retmax = CEA_PER_INTERVENTION_RETMAX`, 100) + `efetch` + parser.
+- **OpenAlex** — `build_cea_openalex_search()` (cost terms AND name/synonyms AND
+  low-income/LMIC/developing), run with `max_pages = CEA_OPENALEX_MAX_PAGES` (2).
+- Deduplicate (PMID, then cross-source DOI) and score with the same
+  `score_paper()` used in Phase 1.
 
-**For PubMed papers:** Direct mapping from the authoritative `publication_type` field assigned by NLM indexers.
+### 2. Filter + rank for genuine, on-topic CEAs
 
-| Publication Type | Points | Rationale |
-|-----------------|--------|-----------|
-| Meta-Analysis | 20 | Gold standard for evidence synthesis |
-| Systematic Review | 17 | Structured evidence synthesis |
-| Randomized Controlled Trial | 14 | High internal validity |
-| Review | 10 | May include Cochrane/umbrella reviews |
-| Practice Guideline | 10 | Authoritative clinical guidance |
-| Clinical Trial | 8 | Experimental evidence |
-| Comparative Study | 6 | Structured comparison |
-| Evaluation Study | 6 | Program evaluation |
+The OpenAlex arm is loosely matched, and the general relevance score does not
+reward "CEA-ness", so the raw bucket is filtered and re-ranked:
 
-When a paper has multiple publication types (e.g., both "Meta-Analysis" and "Systematic Review"), the **highest** score is taken.
+- **Keep** a paper if it came from PubMed (a cost term was *required* at query
+  time) **or** if its text/MeSH contains a cost-effectiveness marker
+  (`cea_hits > 0`).
+- **Rank** by `cea_rank_score = relevance_score + min(cea_hits, 5) × 5`, so a
+  genuine, on-topic CEA outranks both a topically-strong-but-weak-CEA paper and
+  an off-topic-but-CEA-heavy paper (e.g. a cochlear-implant CEA that matched an
+  ambiguous synonym).
 
-**For OpenAlex papers (keyword fallback, capped at 15):**
-- `"meta-analysis"` → 15
-- `"umbrella review"` → 15
-- `"cochrane"` → 14
-- `"systematic review"` → 12
-- `"cost-effectiveness"` → 10
-- `"randomized controlled trial"` → 8
+### 3. Optional local CEA registry (`pipeline/ghcea_registry.py`)
 
-### Component 2: Topic Relevance (0-25 points)
+A research spike found neither the Tufts/CEVR Global Health CEA Registry (a
+client-side JavaScript app) nor DCP3 (a PDF supplement) is reachable from
+stdlib `urllib`. So the registry is an **optional local CSV** the user downloads
+once (see `data/README.md`). If present it is matched against each intervention
+(name + synonyms, tolerant column aliases); if absent, Phase 2 prints a notice
+and proceeds on the PubMed/OpenAlex backbone with zero registry matches.
 
-**For PubMed papers:** Based on MeSH term set matching against curated intervention and outcome term sets.
+### 4. CEA-rating guard + output
 
-Scoring logic:
-- Matches against intervention MeSH set (e.g., Micronutrients, Food Fortified, Breast Feeding): +4 per match, max 12
-- Matches against outcome MeSH set (e.g., Nutritional Status, Growth Disorders, Malnutrition): +3 per match, max 9
-- Bonus for having BOTH intervention AND outcome MeSH terms: +4
-- Total capped at 25
-
-**For OpenAlex papers (keyword fallback, capped at 20):**
-- Keyword presence matching: stunting (4), wasting (4), child nutrition (4), micronutrient (4), complementary feeding (4), malnutrition (3), breastfeeding (3), supplementation (3), fortification (3), food security (3)
-
-### Component 3: Setting Relevance (0-10 points)
-
-**For PubMed papers:** MeSH geographic terms.
-
-Relevant MeSH: "Developing Countries", "Africa South of the Sahara", "Asia, Southeastern", "Asia, Southern", "India", "Bangladesh", "Ethiopia", "Nigeria", etc.
-
-Scoring: +4 per matching MeSH term, capped at 10.
-
-**For OpenAlex papers (keyword fallback):**
-- `"lmic"` (5), `"low-income"` (4), `"middle-income"` (4), `"developing countr"` (4), `"sub-saharan africa"` (4), `"south asia"` (4)
-- Capped at 10
-
-### Component 4: Recency (0-10 points)
-
-Step function based on publication year (unchanged from v1):
-
-| Paper Age | Points | Rationale |
-|-----------|--------|-----------|
-| 0-5 years | 10 | Current evidence |
-| 6-10 years | 7 | Still relevant |
-| 11-15 years | 4 | Foundational |
-| 16-20 years | 2 | Historical |
-| 20+ years | 0 | Likely superseded |
-
-### Component 5: Citation Impact (0-12 points)
-
-Step function based on `cited_by_count` (from OpenAlex cross-reference):
-
-| Citations | Points |
-|-----------|--------|
-| 500+ | 12 |
-| 200-499 | 10 |
-| 100-199 | 8 |
-| 50-99 | 6 |
-| 20-49 | 4 |
-| 5-19 | 2 |
-| 0-4 | 0 |
-
-### Component 6: Open Access Bonus (0-3 points)
-
-| Condition | Points |
-|-----------|--------|
-| Open access | 3 |
-
-### Component 7: Tier Bonus (0-5 points)
-
-| Condition | Points | Rationale |
-|-----------|--------|-----------|
-| Paper from Track A Pass 1 (confirmed meta-analysis) | 5 | Prioritizes the purest evidence synthesis |
-| All others | 0 | — |
-
-### What Changed from v1 Scoring
-
-| Issue in v1 | Fix in v2 |
-|-------------|-----------|
-| Binary keyword matching for study type | Authoritative `publication_type` from PubMed NLM indexers |
-| Keyword matching for topic relevance | MeSH term set matching (curated, hierarchical) |
-| No negative signals | MeSH terms are assigned by human indexers — if "Developing Countries" isn't tagged, the paper genuinely isn't focused on LMICs |
-| All study types mixed together | Two-tier system separates meta-analyses from systematic reviews at query time |
-| Citation data only from OpenAlex | Cross-reference enrichment brings citation counts to PubMed papers |
-| Additive keyword stacking | MeSH scoring uses caps per category to prevent gaming |
-
-### Remaining Limitations
-
-- **OpenAlex papers still use keyword fallback** — capped at lower scores but still noisy
-- **Citation bias persists** for older papers (partially offset by recency score)
-- **No full-text access** — scoring is based on metadata and abstracts only
-- **MeSH indexing lag** — very recent papers may not yet have MeSH terms assigned
-- **OpenAlex citation counts may lag** a few months behind reality
+Each intervention record sets
+`cea_rating_allowed = (has CEA papers) OR (has registry matches)`. When false,
+the synthesis **must** record cost-effectiveness as `Unknown` rather than invent
+one. Output is written to **`cea_by_intervention.json`** with, per intervention:
+`cea_papers` (filtered, ranked), `registry_matches`, `registry_available`,
+`num_cea_papers`, and `cea_rating_allowed`.
 
 ---
 
-## Stage 3: Database Export
+# Synthesis (in-conversation) + verification
 
-**Objective:** Save scored papers in multiple formats for review and reuse.
+The reviewer combines `top_papers_for_review.json` (Phase 1) and
+`cea_by_intervention.json` (Phase 2) into the tiered intervention writeup
+(`output/FULL_INTERVENTION_SYNTH.md`), following the hard grounding rules in
+`prompts/synthesis_prompt.md`:
 
-**Outputs:**
+- State study type **verbatim** from `journal` + `publication_type` (never infer "Cochrane" unless the journal is *The Cochrane Database of Systematic Reviews*).
+- Attach a **corpus PMID to every numeric claim** (else write `not in corpus`); never import figures from background knowledge.
+- Keep **all-cause vs cause-specific** outcomes separate; flag underpowered pathways.
+- Report both fixed/random estimates and name any dominant trial the review identifies.
+- **Version ≠ evidence** — Cochrane updates sharing one accession are counted once.
+- **CEA-rating guard** — assign a cost-effectiveness rating only where `cea_rating_allowed` is true; otherwise `Unknown`.
 
-| File | Format | Contents |
-|------|--------|----------|
-| `papers_database.json` | JSON | All papers with full metadata, abstracts, and scores |
-| `papers_ranked.csv` | CSV | All papers in tabular format, sorted by score descending |
-| `top_papers_for_review.json` | JSON | Top 100 papers (input for Stage 4) |
-
-**Fields per paper:**
-
-| Field | Type | Source |
-|-------|------|--------|
-| `id` | string | Canonical ID (pmid:XXXXX or OpenAlex URL) |
-| `title` | string | Paper title |
-| `abstract` | string | Full abstract text |
-| `publication_year` | int/null | Year of publication |
-| `journal` | string | Journal name |
-| `doi` | string/null | DOI (normalized) |
-| `pmid` | string/null | PubMed ID |
-| `openalex_id` | string/null | OpenAlex work ID |
-| `source_db` | string | "pubmed" or "openalex" |
-| `study_type` | string | Classified type (see below) |
-| `publication_type` | list[string] | Raw from PubMed indexing |
-| `mesh_terms` | list[string] | MeSH descriptor names |
-| `cited_by_count` | int | From OpenAlex cross-reference |
-| `is_open_access` | boolean | Open access status |
-| `query_origin` | string | Which query found this paper |
-| `tier` | string | "primary", "supplementary", "cea", or "nutrition-sensitive" |
-| `relevance_score` | float | Composite score (0-85) |
-
-**Study type classification:**
-- Systematic Review & Meta-Analysis
-- Meta-Analysis
-- Systematic Review
-- Cochrane Review
-- Umbrella Review
-- Cost-Effectiveness Analysis
-- RCT
-- Practice Guideline
-- Review
-- Article
+**Claim verifier** (`verify_synthesis.py` → `pipeline/verify.py`): parses every
+`{value, PMID}` claim from the finished synthesis and checks (a) the PMID is in
+the corpus (`papers_database.json` / `cea_by_intervention.json`) and (b) the
+cited paper's text contains the claimed number. It reports `NOT_IN_CORPUS`
+(misattribution / external-knowledge leak), `NEEDS_REVIEW` (in corpus but number
+not found — semantic check left to the reviewer), and unsourced numeric claims.
 
 ---
 
-## Stage 3.5: Full-Text Retrieval (PMC Open Access)
+## Configuration (`pipeline/config.py`)
 
-**Objective:** Retrieve structured full-text content from PubMed Central for top-scored papers that have open-access PMC versions, enabling deeper LLM synthesis with effect sizes, subgroup analyses, and implementation details not present in abstracts.
+| Knob | Default | Purpose |
+|------|---------|---------|
+| `TOP_N_FOR_REVIEW` | 200 | Phase 1 top-N + full-text breadth |
+| `POPULATION_SCORE_MAX` | 10 | Scoring component 8 cap |
+| `PUBMED_RETMAX` / `PUBMED_BATCH_SIZE` | 500 / 200 | esearch cap / efetch batch |
+| `CEA_PER_INTERVENTION_RETMAX` | 100 | Phase 2 PubMed cap per intervention |
+| `CEA_OPENALEX_MAX_PAGES` | 2 | Phase 2 OpenAlex page cap |
+| `SHORTLIST_PATH` / `CEA_OUTPUT_PATH` | `./shortlist.json` / `./cea_by_intervention.json` | Phase 1→2 handoff / Phase 2 output |
+| `GHCEA_LOCAL_PATH` / `DCP3_LOCAL_PATH` | `./data/*.csv` | Optional CEA registry files |
 
-**Method:**
+API key: put `NCBI_API_KEY=...` in a gitignored `.env`; auto-loaded by
+`config.py` (10 req/s with key vs 3 without).
 
-1. **PMID to PMCID conversion** — Batch API call to NCBI ID Converter (`https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/`) with up to 200 PMIDs per request
-2. **PMC full-text fetch** — E-Utilities efetch with `db=pmc` for each PMCID
-3. **XML parsing** — Extract structured sections (Introduction, Methods, Results, Discussion), tables (labels, captions, content), and concatenate into readable text
-4. **Caching** — Raw XML saved to `raw_responses/pmc/{PMCID}.xml` for reproducibility and to avoid re-fetching
+## Outputs
 
-**Coverage:**
-- Typically 85/99 PubMed papers have a PMCID (PMC-indexed)
-- Of those, ~57 have downloadable full-text XML (body element present)
-- ~28 are publisher-restricted (Cochrane reviews and some Elsevier journals block XML download despite PMC indexing)
-- Final coverage: ~57% of top 100 papers have structured full text
+**Phase 1:** `papers_database.json` (full DB) · `papers_ranked.csv` (ranked
+table) · `top_papers_for_review.json` (top 200 with full text) ·
+`raw_responses/` (PubMed XML, OpenAlex JSON, PMC XML).
+**Phase 2:** `shortlist.json` (human-authored) · `cea_by_intervention.json` ·
+`raw_responses/cea/`.
+**Synthesis:** `output/FULL_INTERVENTION_SYNTH.md`. All data outputs are
+gitignored (regenerated/authored).
 
-**Output fields added to papers:**
-- `fulltext_source`: "pmc" or "abstract_only"
-- `fulltext`: dict with `sections` (list of {title, text}), `tables` (list of {label, caption, content}), and `full_text` (concatenated plain text)
-- `pmcid`: PMC identifier (if available)
-
-**Module:** `pipeline/fulltext_client.py`
-
-**Known limitations:**
-- NCBI ID Converter returns PMIDs as integers — must cast to str() for matching
-- Some publishers (Cochrane/Wiley, Elsevier) restrict PMC XML body access
-- No PDF parsing fallback (would require non-stdlib libraries)
-
----
-
-## Stage 4: LLM Review and Synthesis
-
-**Objective:** Review the top-ranked papers and produce a structured list of nutrition interventions ranked by evidence strength, cost-effectiveness, and scalability through government-led programs in LMIC settings.
-
-**Input:** The top 100 papers from Stage 3.5 (titles, abstracts, metadata, MeSH terms, tiers, scores, AND structured full text for ~57 papers).
-
-**Two synthesis modes:**
-
-### Mode A: Abstract-Only Synthesis (lighter)
-
-Uses only abstracts and metadata. Produces `INTERVENTION_SYNTHESIS.md`.
-
-### Mode B: Full-Text-Enhanced Synthesis (deeper)
-
-Uses full text (Results sections, tables, subgroup analyses) where available, with abstracts as fallback. Produces `FULL_INTERVENTION_SYNTH.md`.
-
-**LLM prompt (task framing):**
-
-> You are reviewing the top 100 papers from a multi-source systematic search of the nutrition intervention literature in LMICs. Papers were retrieved from PubMed (using MeSH terms and publication type filters) and OpenAlex (for nutrition-sensitive literature). They are ranked by a composite score weighting study design authority, MeSH-based topic relevance, setting relevance, recency, citation impact, and tier assignment.
->
-> For 57 papers, you have access to structured full text (Results sections, tables, discussion) from PubMed Central. For the remaining 43 papers, you have abstracts and metadata only. Full-text papers are marked with `fulltext_source: "pmc"`.
->
-> Papers are organized into tiers:
-> - **Primary tier:** Confirmed meta-analyses (highest evidence quality)
-> - **Supplementary tier:** Systematic reviews
-> - **CEA tier:** Cost-effectiveness analyses
-> - **Nutrition-sensitive tier:** Cash transfers, social protection, food subsidies (from economics literature)
->
-> Your task:
->
-> 1. **Identify distinct interventions.** Read across all papers and extract every discrete nutrition intervention. Group closely related variants under a single heading.
->
-> 2. **Rate each intervention on three dimensions:**
->    - **Evidence strength** (A/B/C): Based on number and quality of meta-analyses, consistency of findings, study type hierarchy
->    - **Cost-effectiveness**: From CEA tier papers + general knowledge (Very High / High / Moderate / Low / Unknown)
->    - **Scalability**: Evidence of national implementation, platform compatibility, infrastructure needs (Proven national / Proven subnational / Growing / Requires investment)
->
-> 3. **Rank interventions into tiers:**
->    - Tier 1: Strong evidence (A) + proven scalability + high cost-effectiveness
->    - Tier 2: Strong evidence (A or B+) + scalable with investment
->    - Tier 3: Promising evidence (B or C+) + plausible scaling pathway
->
-> 4. **For each intervention, document:**
->    - Evidence rating with justification (cite specific papers by PMID, year, journal, citations)
->    - **Specific effect sizes with confidence intervals** (from full-text Results sections where available)
->    - Mechanism of action
->    - Government scaling pathway
->    - Key supporting papers from the database
->
-> 5. **Synthesize cross-cutting findings** (4-6 patterns across the evidence base)
->
-> 6. **Produce a summary table** (Rank, Intervention, Evidence, Cost-Effectiveness, Scalability, Target)
->
-> **Constraints:**
-> - Base synthesis on information in provided full text, abstracts, and metadata
-> - For full-text papers: extract and report actual effect sizes (RR, OR, SMD, MD with 95% CIs)
-> - For abstract-only papers: report only what is stated in the abstract
-> - Do not fabricate effect sizes not present in the source material
-> - Use MeSH terms and publication types to validate classification
-> - Flag papers where full text was not available for key claims
-> - Distinguish nutrition-specific from nutrition-sensitive interventions
-> - Note where subgroup analyses (from full text) modify the headline finding
-
-**LLM review process:**
-- Papers are read in batches (top 40, then 41-100) due to context window constraints
-- For each paper, the LLM reads: title, abstract, publication year, study type, publication types, MeSH terms, tier, citation count, journal, score
-- For full-text papers: additionally reads the Results section text and table data
-- MeSH terms help the LLM verify what intervention and population each paper actually studies
-- Tier assignment helps the LLM weight evidence appropriately (primary > supplementary)
-- Full-text access enables extraction of: pooled effect estimates, forest plot data, subgroup analyses, implementation context, and study heterogeneity metrics
-
-**Outputs:**
-- `INTERVENTION_SYNTHESIS.md` — Abstract-only synthesis (lighter, 18 interventions)
-- `FULL_INTERVENTION_SYNTH.md` — Full-text-enhanced synthesis (deeper, 20 interventions with effect sizes)
-
----
-
-## Reproducibility
-
-To rerun the pipeline:
+## Running
 
 ```bash
-cd nutri-evidence-review/
-# Option A: use .env file (auto-loaded by config.py)
-echo "NCBI_API_KEY=your_key_here" > .env
-python3 fetch_papers.py
-
-# Option B: export environment variable
-export NCBI_API_KEY=your_key_here
-python3 fetch_papers.py
+python3 fetch_papers.py                       # Phase 1 (~3–4 min)
+cp shortlist.template.json shortlist.json     # review top_papers_for_review.json, then edit
+python3 run_cea.py                            # Phase 2
+python3 verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md   # lint the synthesis
 ```
 
-**Dependencies:** Python 3.10+ standard library only (`urllib`, `json`, `csv`, `xml.etree.ElementTree`). No external packages required.
-
-**Runtime:** ~3-4 minutes with NCBI API key (includes PMC full-text retrieval), ~7 minutes without key.
-
-- Stage 1 (retrieval): ~50s PubMed + ~12s OpenAlex
-- Stage 2 (dedup + enrich + score): ~35s
-- Stage 3.5 (PMC full text): ~60-90s (cached on subsequent runs: instant)
-- Export: ~5s
-
-**Caching:** PMC full-text XML is cached in `raw_responses/pmc/`. Subsequent runs skip already-downloaded articles, making repeat runs much faster.
-
-**To modify:**
-- **Search queries:** Edit `pipeline/queries.py` (TRACK_A_QUERIES, TRACK_B_QUERY, TRACK_C_QUERIES)
-- **Scoring weights:** Edit `pipeline/scoring.py` (PUBTYPE_SCORES, MeSH term sets, component functions)
-- **Number of papers for review:** Edit `TOP_N_FOR_REVIEW` in `pipeline/config.py` (default: 100)
-- **API configuration:** Edit `pipeline/config.py` or create `.env` file with `NCBI_API_KEY=your_key`
-- **Full-text retrieval:** Edit `pipeline/fulltext_client.py` (batch sizes, parsing logic)
+Caching: PMC full-text and per-intervention CEA XML are cached under
+`raw_responses/`, so repeat runs are much faster.
 
 ---
 
-## Pipeline Architecture Diagram
+## Validation findings — Vitamin A Supplementation (VAS) case study
 
-```
-                    STAGE 1: RETRIEVAL                     STAGE 2      STAGE 3     STAGE 3.5       STAGE 4
-                                                          SCORING      EXPORT      FULL TEXT        LLM REVIEW
+The two-phase redesign was driven by a manual audit of a VAS synthesis produced
+by the earlier single-phase pipeline. The audit surfaced recurring failures and
+each is now addressed structurally:
 
-Track A Pass 1 ──► PubMed: 12 queries x meta-analysis[pt] ─┐
-(meta-analyses)     484 papers                               │
-                                                             │
-Track A Pass 2 ──► PubMed: 12 queries x systematic review[pt]│
-(syst. reviews)     945 papers                               ├──► Dedup ──► Enrich ──► Score ──► PMC Full Text ──► Export
-                                                             │    (PMID)    (citations   (7        (top 100)        │
-Track B ─────────► PubMed: CEA query (no [pt] filter)  ─────┤    (DOI)     via OpenAlex) components) ~57 papers     │
-(cost-effect.)      490 papers                               │                                     with body       │
-                                                             │                                                      │
-Track C ─────────► OpenAlex: 4 queries (econ/dev lit) ──────┘                                                      │
-(nutrition-         2000 papers                                                                                     │
- sensitive)                                                                              papers_database.json       │
-                                                                                         papers_ranked.csv          │
-                    Final deduplicated set: 2,700 papers                                  top_papers_for_review.json │
-                    (1,158 PubMed + 1,542 OpenAlex)                                      (with full text)           │
-                                                                                                                    ▼
-                                                                                                  LLM reviews top 100
-                                                                                                  full text + abstracts
-                                                                                                          │
-                                                                                          ┌─────────��─────┴──────────────┐
-                                                                                          ▼                              ▼
-                                                                              INTERVENTION_SYNTHESIS.md    FULL_INTERVENTION_SYNTH.md
-                                                                              (abstract-only, lighter)     (full-text-enhanced, deeper)
-```
+| Failure in the old pipeline | Fix in v3 |
+|-----------------------------|-----------|
+| **CEA blind spot** — VAS rated "Very High" cost-effectiveness with zero usable CEAs in the corpus (PubMed isn't where CEAs live). | Two-phase split: CEA searched per shortlisted intervention; `cea_rating_allowed` guard forces `Unknown` without a CEA record. |
+| **Version vs. evidence confusion** — the 2017 and 2022 Cochrane reviews (same accession CD008524) counted as independent evidence. | Cochrane-version dedup collapses shared accessions, keeping the newest. |
+| **External-knowledge leak / misattribution** — figures like "823,000 deaths" (actually the Lancet *Breastfeeding* series) imported from training data. | Grounding prompt (corpus PMID per claim) + `verify_synthesis.py` flags `NOT_IN_CORPUS`. |
+| **Study-type misclassification** — a *BMC Public Health* meta-analysis labelled "Cochrane". | Grounding rule: study type stated verbatim from `journal` + `publication_type`. |
+| **No population targeting** — only LMIC geography was filtered. | Population filter in every query + scoring component 8. |
+| **No entity model of evidence** (trial overlap / dominant-trial effects). | *Deferred* — a trial-level evidence graph (parse included-studies + forest-plot weights) is the next milestone. |
 
----
-
-## File Structure
-
-```
-nutri-evidence-review/
-├── fetch_papers.py              # Entry point: python3 fetch_papers.py
-├── pipeline/
-│   ├── __init__.py
-│   ├── config.py                # API keys, .env loader, rate limits, output paths
-│   ├── queries.py               # All query definitions (12 + 1 + 4)
-│   ├── models.py                # Paper TypedDict (unified schema)
-│   ├── pubmed_client.py         # E-Utilities: esearch, efetch, XML parsing
-│   ├── openalex_client.py       # Track C: OpenAlex fetcher
-│   ├── citation_enrichment.py   # DOI-based cross-reference for citation counts
-│   ├── dedup.py                 # 3-phase deduplication logic
-│   ├── scoring.py               # 7-component scoring algorithm
-│   ├── fulltext_client.py       # PMC full-text retrieval (Stage 3.5)
-│   └── main.py                  # Orchestrator: runs all stages
-├── .env                         # API key (gitignored)
-├── raw_responses/               # Saved API responses (gitignored)
-│   ├── pubmed_*.xml             # PubMed efetch responses
-│   ├── openalex_*.json          # OpenAlex API responses
-│   └── pmc/                     # PMC full-text XML (one file per PMCID)
-│       ├── PMC6572871.xml
-│       └── ...
-├── papers_database.json         # Full output (gitignored)
-├── papers_ranked.csv            # CSV output (gitignored)
-├── top_papers_for_review.json   # Top 100 with full text (gitignored)
-├── PROCESS_DOCUMENTATION.md     # This file
-├── INTERVENTION_SYNTHESIS.md    # Abstract-only synthesis (Mode A)
-└── FULL_INTERVENTION_SYNTH.md   # Full-text-enhanced synthesis (Mode B)
-```
-
----
-
-## Version History
+## Version history
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1.0 | 2026-05-22 | Initial pipeline: OpenAlex only, 16 keyword queries, binary keyword scoring |
-| v2.0 | 2026-05-24 | Multi-source (PubMed + OpenAlex), MeSH-based scoring, two-tier MA/SR separation, citation enrichment, modular architecture |
-| v2.1 | 2026-05-24 | Added Stage 3.5: PMC full-text retrieval for top papers. Full-text-enhanced synthesis (FULL_INTERVENTION_SYNTH.md). .env auto-loading. API key masked from source. |
-| v3.0 | 2026-06-03 | **Two-phase restructure.** Phase 1 (evidence, no CEA) + Phase 2 (targeted per-intervention cost-effectiveness). Population targeting (under-5 / WRA) as query filter + scoring component (8th component). Cochrane-version dedup. Top-N raised to 200. Synthesis claim-verifier (`verify_synthesis.py`) and grounding prompt (`prompts/synthesis_prompt.md`). See [claude.md](claude.md). |
+| v1.0 | 2026-05-22 | OpenAlex only, 16 keyword queries, binary keyword scoring. |
+| v2.0 | 2026-05-24 | Multi-source (PubMed + OpenAlex), MeSH-based scoring, two-tier MA/SR separation, citation enrichment, modular architecture. |
+| v2.1 | 2026-05-24 | Stage 3.5 PMC full-text retrieval; full-text-enhanced synthesis; `.env` auto-loading. |
+| v3.0 | 2026-06-03 | **Two-phase restructure** (evidence → cost-effectiveness) with manual shortlist checkpoint. Population targeting (filter + scoring component 8). Cochrane-version dedup. Top-N → 200. Per-intervention CEA search + optional local registry + `cea_rating_allowed` guard. Grounding prompt and `verify_synthesis.py` claim verifier. |
