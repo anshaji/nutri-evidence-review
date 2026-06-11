@@ -25,5 +25,11 @@ __pycache__/
 # Harness / editor
 .claude/scheduled_tasks.lock
 
+# CEGA brand source assets — logos are embedded (base64) in the slide deck,
+# so the source folder isn't needed in-repo. Heavy binaries especially.
+CEGA Logos/*.mov
+CEGA Logos/*.ai
+CEGA Logos/EPS/
+
 # OS
 .DS_Store
