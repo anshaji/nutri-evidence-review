@@ -36,8 +36,8 @@ OPENALEX_MAILTO = "anshaji06@gmail.com"
 OPENALEX_DELAY = 0.3
 
 # ── Output ──────────────────────────────────────────────────────────────────
-OUTPUT_DIR = "."
-RAW_RESPONSE_DIR = "./raw_responses"
+OUTPUT_DIR = "./data"
+RAW_RESPONSE_DIR = "./data/raw_responses"
 TOP_N_FOR_REVIEW = 200  # Number of top papers saved for LLM review (Phase 1)
 
 # ── PubMed retrieval ────────────────────────────────────────────────────────
@@ -50,7 +50,7 @@ POPULATION_SCORE_MAX = 10  # Component 8: under-5 / women-of-reproductive-age re
 # ── Phase 2: Cost-Effectiveness (per shortlisted intervention) ──────────────
 CEA_PER_INTERVENTION_RETMAX = 100  # Max PubMed results per intervention CEA search
 CEA_OPENALEX_MAX_PAGES = 2  # Keep Phase 2 OpenAlex targeted/small
-SHORTLIST_PATH = "./shortlist.json"  # Phase 1 → Phase 2 handoff (human-authored)
-CEA_OUTPUT_PATH = "./cea_by_intervention.json"  # Phase 2 output
+SHORTLIST_PATH = "./data/shortlist.json"  # Phase 1 → Phase 2 handoff (human-authored)
+CEA_OUTPUT_PATH = "./data/cea_by_intervention.json"  # Phase 2 output
 GHCEA_LOCAL_PATH = "./data/ghcea_registry.csv"  # Manual one-time CEA registry download
 DCP3_LOCAL_PATH = "./data/dcp3_annex7a.csv"  # Optional DCP3 Annex 7A extract

@@ -41,7 +41,7 @@ the evidence screen.
                 │ → dedup → enrich → score (8 comp.)       │ top  │  + optional registry   │   │ → verify   │
                 │ → PMC full text (top 200)                │ 200  │ → filter/rank CEAs      │   │            │
                 └──────────────────────────────────────────┘  │   └────────────────────────┘   └────────────┘
-                  top_papers_for_review.json  ─── manual review ─►  shortlist.json ──►  cea_by_intervention.json
+              data/top_papers_for_review.json ─── manual review ─► data/shortlist.json ─► data/cea_by_intervention.json
 ```
 
 ---
@@ -117,7 +117,7 @@ retained in `queries.py` and reused, per-intervention, in Phase 2.
 1. **esearch** — submit the query, receive up to `PUBMED_RETMAX` (500) PMIDs + total count (JSON).
 2. **efetch** — submit PMIDs in batches of `PUBMED_BATCH_SIZE` (200), receive XML.
 3. **Parse** — title, abstract (structured sections joined), publication year, journal, authors (first 5), DOI, publication types, MeSH descriptors, and the **Cochrane accession** (`CDxxxxxx`, extracted from the DOI — new in v3).
-4. Raw XML/JSON saved to `raw_responses/` for reproducibility.
+4. Raw XML/JSON saved to `data/raw_responses/` for reproducibility.
 
 ## Stage 2: Deduplication
 
@@ -159,7 +159,7 @@ For the **top 200** papers (`TOP_N_FOR_REVIEW = 200`, raised from 100):
 
 1. Convert PMIDs → PMCIDs via the NCBI ID Converter API (batch of 200). *(The converter returns PMIDs as integers — they must be cast to `str()` to match the paper dict keys.)*
 2. `efetch db=pmc` for each PMCID; parse the `<body>` into sections (Introduction/Methods/Results/Discussion) and tables.
-3. Cache raw XML in `raw_responses/pmc/{PMCID}.xml`; subsequent runs reuse it.
+3. Cache raw XML in `data/raw_responses/pmc/{PMCID}.xml`; subsequent runs reuse it.
 4. Papers without a downloadable body are flagged `fulltext_source: "abstract_only"` (Cochrane/Wiley and some Elsevier journals restrict PMC XML).
 
 *Representative run:* 193 of the top 200 had PMIDs, 160 were PMC-indexed, 117
@@ -167,11 +167,11 @@ yielded full-text bodies.
 
 ## Stage 4: Manual review → shortlist
 
-The top 200 (`top_papers_for_review.json`, with full text where available) are
-reviewed **in-conversation** — no API automation — guided by
+The top 200 (`data/top_papers_for_review.json`, with full text where available)
+are reviewed **in-conversation** — no API automation — guided by
 `prompts/shortlist_prompt.md`. The reviewer identifies distinct interventions,
-each backed by multiple corpus papers, and writes **`shortlist.json`** (from
-`shortlist.template.json`):
+each backed by multiple corpus papers, and writes **`data/shortlist.json`** (from
+`data/shortlist.template.json`):
 
 ```json
 {
@@ -193,7 +193,7 @@ Analog Scale) — they cause false positives in OpenAlex's free-text search.
 
 # PHASE 2 — Cost-effectiveness
 
-Entry point: `python3 code/15_run_cea.py [shortlist.json]` →
+Entry point: `python3 code/15_run_cea.py [data/shortlist.json]` →
 `code/14_cea_main.py:run_phase2()`. For **each** shortlisted intervention:
 
 ### 1. Targeted retrieval (`code/12_cea_client.py`)
@@ -236,7 +236,7 @@ and proceeds on the PubMed/OpenAlex backbone with zero registry matches.
 Each intervention record sets
 `cea_rating_allowed = (has CEA papers) OR (has registry matches)`. When false,
 the synthesis **must** record cost-effectiveness as `Unknown` rather than invent
-one. Output is written to **`cea_by_intervention.json`** with, per intervention:
+one. Output is written to **`data/cea_by_intervention.json`** with, per intervention:
 `cea_papers` (filtered, ranked), `registry_matches`, `registry_available`,
 `num_cea_papers`, and `cea_rating_allowed`.
 
@@ -244,8 +244,8 @@ one. Output is written to **`cea_by_intervention.json`** with, per intervention:
 
 # Synthesis (in-conversation) + verification
 
-The reviewer combines `top_papers_for_review.json` (Phase 1) and
-`cea_by_intervention.json` (Phase 2) into the tiered intervention writeup
+The reviewer combines `data/top_papers_for_review.json` (Phase 1) and
+`data/cea_by_intervention.json` (Phase 2) into the tiered intervention writeup
 (`output/FULL_INTERVENTION_SYNTH.md`), following the hard grounding rules in
 `prompts/synthesis_prompt.md`:
 
@@ -258,7 +258,7 @@ The reviewer combines `top_papers_for_review.json` (Phase 1) and
 
 **Claim verifier** (`code/17_verify_synthesis.py` → `code/16_verify.py`): parses every
 `{value, PMID}` claim from the finished synthesis and checks (a) the PMID is in
-the corpus (`papers_database.json` / `cea_by_intervention.json`) and (b) the
+the corpus (`data/papers_database.json` / `data/cea_by_intervention.json`) and (b) the
 cited paper's text contains the claimed number. It reports `NOT_IN_CORPUS`
 (misattribution / external-knowledge leak), `NEEDS_REVIEW` (in corpus but number
 not found — semantic check left to the reviewer), and unsourced numeric claims.
@@ -274,7 +274,7 @@ not found — semantic check left to the reviewer), and unsourced numeric claims
 | `PUBMED_RETMAX` / `PUBMED_BATCH_SIZE` | 500 / 200 | esearch cap / efetch batch |
 | `CEA_PER_INTERVENTION_RETMAX` | 100 | Phase 2 PubMed cap per intervention |
 | `CEA_OPENALEX_MAX_PAGES` | 2 | Phase 2 OpenAlex page cap |
-| `SHORTLIST_PATH` / `CEA_OUTPUT_PATH` | `./shortlist.json` / `./cea_by_intervention.json` | Phase 1→2 handoff / Phase 2 output |
+| `SHORTLIST_PATH` / `CEA_OUTPUT_PATH` | `./data/shortlist.json` / `./data/cea_by_intervention.json` | Phase 1→2 handoff / Phase 2 output |
 | `GHCEA_LOCAL_PATH` / `DCP3_LOCAL_PATH` | `./data/*.csv` | Optional CEA registry files |
 
 API key: put `NCBI_API_KEY=...` in a gitignored `.env`; auto-loaded by
@@ -282,25 +282,27 @@ API key: put `NCBI_API_KEY=...` in a gitignored `.env`; auto-loaded by
 
 ## Outputs
 
-**Phase 1:** `papers_database.json` (full DB) · `papers_ranked.csv` (ranked
-table) · `top_papers_for_review.json` (top 200 with full text) ·
-`raw_responses/` (PubMed XML, OpenAlex JSON, PMC XML).
-**Phase 2:** `shortlist.json` (human-authored) · `cea_by_intervention.json` ·
-`raw_responses/cea/`.
+All data lives in `data/`:
+
+**Phase 1:** `data/papers_database.json` (full DB) · `data/papers_ranked.csv`
+(ranked table) · `data/top_papers_for_review.json` (top 200 with full text) ·
+`data/raw_responses/` (PubMed XML, OpenAlex JSON, PMC XML).
+**Phase 2:** `data/shortlist.json` (human-authored) ·
+`data/cea_by_intervention.json` · `data/raw_responses/cea/`.
 **Synthesis:** `output/FULL_INTERVENTION_SYNTH.md`. All data outputs are
 gitignored (regenerated/authored).
 
 ## Running
 
 ```bash
-python3 fetch_papers.py                       # Phase 1 (~3–4 min)
-cp shortlist.template.json shortlist.json     # review top_papers_for_review.json, then edit
-python3 run_cea.py                            # Phase 2
-python3 verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md   # lint the synthesis
+python3 code/11_fetch_papers.py                             # Phase 1 (~3–4 min)
+cp data/shortlist.template.json data/shortlist.json         # review data/top_papers_for_review.json, then edit
+python3 code/15_run_cea.py                                  # Phase 2
+python3 code/17_verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md   # lint the synthesis
 ```
 
 Caching: PMC full-text and per-intervention CEA XML are cached under
-`raw_responses/`, so repeat runs are much faster.
+`data/raw_responses/`, so repeat runs are much faster.
 
 ---
 

@@ -42,7 +42,7 @@ def _fetch_cea_pubmed(intervention: dict) -> list[Paper]:
     time.sleep(PUBMED_DELAY)
     xml_text = efetch_batch(pmids)
 
-    # Cache raw response under raw_responses/cea/
+    # Cache raw response under data/raw_responses/cea/
     cea_dir = os.path.join(RAW_RESPONSE_DIR, "cea")
     os.makedirs(cea_dir, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")

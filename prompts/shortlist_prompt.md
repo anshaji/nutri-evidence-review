@@ -1,8 +1,8 @@
 # Phase 1 → Intervention Shortlist Prompt
 
 **Stage:** between Phase 1 (evidence) and Phase 2 (cost-effectiveness).
-**Input:** `top_papers_for_review.json`
-**Your single deliverable:** `shortlist.json`
+**Input:** `data/top_papers_for_review.json`
+**Your single deliverable:** `data/shortlist.json`
 
 You are an evidence-synthesis reviewer. You are handed the **top 200 ranked
 papers** from a population-targeted literature search for nutrition
@@ -17,7 +17,7 @@ cost-effectiveness search.
 
 ---
 
-## Input: `top_papers_for_review.json`
+## Input: `data/top_papers_for_review.json`
 
 A JSON array of up to 200 paper objects, already ranked by `relevance_score`
 (descending). Read these fields per paper:
@@ -45,7 +45,7 @@ A JSON array of up to 200 paper objects, already ranked by `relevance_score`
    its representative supporting PMIDs from the corpus.
 4. For each selected intervention define: `name`, `synonyms`, `mesh`,
    `population`, and `_evidence` (the supporting PMIDs).
-5. **Write `shortlist.json`** in the schema below.
+5. **Write `data/shortlist.json`** in the schema below.
 
 ---
 
@@ -85,17 +85,17 @@ A JSON array of up to 200 paper objects, already ranked by `relevance_score`
 
 > **Rule 7 — Stay in corpus.**
 > Every PMID in `_evidence` **must** be a paper present in
-> `top_papers_for_review.json`. Do not add PMIDs from memory.
+> `data/top_papers_for_review.json`. Do not add PMIDs from memory.
 
 ---
 
-## Output: `shortlist.json`
+## Output: `data/shortlist.json`
 
-Copy `shortlist.template.json` and fill it. Schema:
+Copy `data/shortlist.template.json` and fill it. Schema:
 
 ```json
 {
-  "generated_from": "top_papers_for_review.json",
+  "generated_from": "data/top_papers_for_review.json",
   "review_date": "YYYY-MM-DD",
   "interventions": [
     {
@@ -126,8 +126,8 @@ Field contract (consumed by Phase 2 / `code/12_cea_client.py`):
 - [ ] No Cochrane **version** double-counted toward the ≥ 2 threshold.
 - [ ] Every intervention targets **under-5 or WRA**.
 - [ ] Synonyms are **unambiguous** for free-text search.
-- [ ] Every `_evidence` PMID exists in `top_papers_for_review.json`.
+- [ ] Every `_evidence` PMID exists in `data/top_papers_for_review.json`.
 - [ ] You listed, in your message, the interventions you **considered but excluded** and why (too thin, off-population, duplicate).
 
-Then: `cp shortlist.template.json shortlist.json`, write your shortlist into it,
-and run Phase 2 with `python3 run_cea.py`.
+Then: `cp data/shortlist.template.json data/shortlist.json`, write your shortlist
+into it, and run Phase 2 with `python3 code/15_run_cea.py`.

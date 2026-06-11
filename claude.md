@@ -77,26 +77,26 @@ data/
 - Converts PMIDs → PMCIDs via NCBI ID Converter API (batch of 200)
 - Fetches structured full-text XML from PMC for open-access papers
 - Parses into sections (Introduction, Methods, Results, Discussion) + tables
-- Caches raw XML in `raw_responses/pmc/` for reproducibility
+- Caches raw XML in `data/raw_responses/pmc/` for reproducibility
 - Papers without PMC availability are flagged as "abstract_only"
 - Runs over **all top 200** papers (was top 100)
 - Module: `code/09_fulltext_client.py`
 
 ### Stage 4: Manual Review → shortlist
 - Top 200 papers reviewed **in-conversation** (no API automation), guided by `prompts/shortlist_prompt.md`
-- Human/LLM shortlists interventions and authors `shortlist.json` (from `shortlist.template.json`)
+- Human/LLM shortlists interventions and authors `data/shortlist.json` (from `data/shortlist.template.json`)
 
-## PHASE 2 — Cost-Effectiveness (`python3 code/15_run_cea.py [shortlist.json]` → `run_phase2`)
+## PHASE 2 — Cost-Effectiveness (`python3 code/15_run_cea.py [data/shortlist.json]` → `run_phase2`)
 
-- Reads `shortlist.json`; for **each** shortlisted intervention runs a targeted CEA search:
+- Reads `data/shortlist.json`; for **each** shortlisted intervention runs a targeted CEA search:
   - PubMed: `CEA_TERM_SKELETON` AND (name/synonyms[tiab] OR mesh[MeSH]) AND LMIC (`build_cea_pubmed_query`)
   - OpenAlex: cost terms AND (name OR synonyms) AND LMIC (`build_cea_openalex_search`)
   - Optional local registry match (`ghcea_registry.py`) — see Phase 2 CEA registry note
-- Dedups + scores, writes `cea_by_intervention.json` (per-intervention `cea_papers`, `registry_matches`, `cea_rating_allowed`)
+- Dedups + scores, writes `data/cea_by_intervention.json` (per-intervention `cea_papers`, `registry_matches`, `cea_rating_allowed`)
 - **CEA-rating guard (#2b):** `cea_rating_allowed` is false when an intervention has no CEA papers and no registry match → the synthesis must record cost-effectiveness as `Unknown`, never invent one
 
 ## Final Synthesis (in-conversation)
-- Human/LLM uses **both** `top_papers_for_review.json` (Phase 1) and `cea_by_intervention.json` (Phase 2), following `prompts/synthesis_prompt.md`
+- Human/LLM uses **both** `data/top_papers_for_review.json` (Phase 1) and `data/cea_by_intervention.json` (Phase 2), following `prompts/synthesis_prompt.md`
 - Outputs `INTERVENTION_SYNTHESIS.md` (abstract-only) and `FULL_INTERVENTION_SYNTH.md` (full-text-enhanced, effect sizes/subgroups)
 - Run `python3 verify_synthesis.py <synthesis.md>` afterward to lint every numeric claim against the corpus
 
@@ -109,7 +109,7 @@ data/
 - **Citation enrichment** — batch DOI lookup in OpenAlex (50 DOIs per request) to get cited_by_count for PubMed papers
 - **PMC full-text** — NCBI ID Converter API (batch 200) to get PMCIDs, then efetch db=pmc for XML; ~57/100 top papers have full text (28 Cochrane reviews are publisher-restricted)
 - **PMID type normalization** — ID Converter returns PMIDs as integers; must str() them to match paper dict keys
-- **Raw responses saved** to `raw_responses/` for reproducibility (PubMed XML, OpenAlex JSON, PMC XML)
+- **Raw responses saved** to `data/raw_responses/` for reproducibility (PubMed XML, OpenAlex JSON, PMC XML)
 
 ## Configuration
 
@@ -119,22 +119,24 @@ data/
 
 ## Outputs
 
+All data lives in `data/`:
+
 **Phase 1:**
-- `papers_database.json` — full database (all fields)
-- `papers_ranked.csv` — ranked spreadsheet view
-- `top_papers_for_review.json` — top 200 for review (includes full text where available)
-- `raw_responses/` — raw XML/JSON from APIs (PubMed, OpenAlex, PMC); `raw_responses/pmc/` cached full-text XML
+- `data/papers_database.json` — full database (all fields)
+- `data/papers_ranked.csv` — ranked spreadsheet view
+- `data/top_papers_for_review.json` — top 200 for review (includes full text where available)
+- `data/raw_responses/` — raw XML/JSON from APIs (PubMed, OpenAlex, PMC); `data/raw_responses/pmc/` cached full-text XML
 
 **Phase 2:**
-- `shortlist.json` — human-authored intervention shortlist (from `shortlist.template.json`)
-- `cea_by_intervention.json` — per-intervention CEA evidence + registry matches
-- `raw_responses/cea/` — cached per-intervention CEA XML
+- `data/shortlist.json` — human-authored intervention shortlist (from `data/shortlist.template.json`)
+- `data/cea_by_intervention.json` — per-intervention CEA evidence + registry matches
+- `data/raw_responses/cea/` — cached per-intervention CEA XML
 
 **Synthesis:**
 - `INTERVENTION_SYNTHESIS.md` / `FULL_INTERVENTION_SYNTH.md` — the two synthesis modes
 - `PROCESS_DOCUMENTATION.md` — full methodology documentation
 
-All data outputs (incl. `shortlist.json`, `cea_by_intervention.json`, `data/*.csv`) are gitignored (regenerated/authored).
+All data outputs (incl. `data/shortlist.json`, `data/cea_by_intervention.json`, `data/*.csv`) are gitignored (regenerated/authored).
 
 ## Running the Pipeline
 
@@ -144,11 +146,11 @@ cd /Users/akashshaji/Documents/GitHub/nutri-evidence-review
 # Phase 1 — evidence (~3-4 min)
 python3 code/11_fetch_papers.py
 
-# → review top_papers_for_review.json in-conversation, then:
-cp shortlist.template.json shortlist.json   # and edit it with the shortlisted interventions
+# → review data/top_papers_for_review.json in-conversation, then:
+cp data/shortlist.template.json data/shortlist.json   # and edit it with the shortlisted interventions
 
 # Phase 2 — cost-effectiveness (scales with #interventions)
-python3 code/15_run_cea.py                  # or: python3 code/15_run_cea.py path/to/shortlist.json
+python3 code/15_run_cea.py                  # or: python3 code/15_run_cea.py data/shortlist.json
 
 # → produce synthesis in-conversation (prompts/synthesis_prompt.md), then lint:
 python3 code/17_verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md

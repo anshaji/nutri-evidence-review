@@ -103,7 +103,7 @@ def fetch_pmc_batch(pmcids: list[str], save_raw: bool = True) -> dict[str, str]:
     """Fetch full-text XML for multiple PMCIDs.
 
     Returns dict mapping PMCID → raw XML string.
-    Saves raw XML to raw_responses/pmc/ for reproducibility.
+    Saves raw XML to data/raw_responses/pmc/ for reproducibility.
     """
     if save_raw:
         pmc_dir = os.path.join(RAW_RESPONSE_DIR, "pmc")

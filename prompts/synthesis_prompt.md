@@ -1,9 +1,9 @@
 # Final Intervention Synthesis Prompt
 
 **Stage:** after Phase 2. This is the **main intervention synthesis** step.
-**Inputs:** `top_papers_for_review.json` (Phase 1 evidence) + `cea_by_intervention.json` (Phase 2 CEA)
+**Inputs:** `data/top_papers_for_review.json` (Phase 1 evidence) + `data/cea_by_intervention.json` (Phase 2 CEA)
 **Deliverable:** `output/FULL_INTERVENTION_SYNTH.md`
-**Then verify:** `python3 verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md`
+**Then verify:** `python3 code/17_verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md`
 
 You are an evidence-synthesis reviewer. Combine the evidence corpus and the
 per-intervention cost-effectiveness corpus into a tiered writeup of nutrition
@@ -18,11 +18,11 @@ in LMICs, rated on evidence, cost-effectiveness, and scalability.
 
 ## Inputs
 
-- **`top_papers_for_review.json`** — Phase 1 top 200: `title`, `abstract`,
+- **`data/top_papers_for_review.json`** — Phase 1 top 200: `title`, `abstract`,
   `fulltext` (where `fulltext_source == "pmc"`), `mesh_terms`,
   `publication_type`, `journal`, `pmid`, `publication_year`, `cited_by_count`,
   `study_type`, `cochrane_id`. Use full-text Results/tables for effect sizes.
-- **`cea_by_intervention.json`** — Phase 2, one record per shortlisted
+- **`data/cea_by_intervention.json`** — Phase 2, one record per shortlisted
   intervention: `cea_papers` (ranked), `registry_matches`, `registry_available`,
   and **`cea_rating_allowed`** (the gate for any cost-effectiveness rating).
 
@@ -81,7 +81,7 @@ in LMICs, rated on evidence, cost-effectiveness, and scalability.
 
 > **No cost-effectiveness rating without a CEA record.**
 > Assign a cost-effectiveness rating **only** when the intervention's record in
-> `cea_by_intervention.json` has **`cea_rating_allowed == true`** (≥ 1
+> `data/cea_by_intervention.json` has **`cea_rating_allowed == true`** (≥ 1
 > `cea_papers` **or** ≥ 1 `registry_matches`). Otherwise the rating is
 > **`Unknown`** — state it explicitly.
 >
