@@ -33,7 +33,7 @@ the evidence screen.
 `csv`, `xml.etree.ElementTree`); no pip dependencies.
 
 ```
-                          PHASE 1 (fetch_papers.py)                    PHASE 2 (run_cea.py)         SYNTHESIS
+                     PHASE 1 (code/11_fetch_papers.py)            PHASE 2 (code/15_run_cea.py)     SYNTHESIS
                 ┌──────────────────────────────────────────┐      ┌────────────────────────┐   ┌────────────┐
  PubMed Track A │ 12 domains × 2 passes (MA, SR)            │      │ per shortlisted        │   │ human/LLM  │
  OpenAlex Track C│ 4 nutrition-sensitive queries           │ ───► │ intervention:          │   │ combines   │
@@ -48,7 +48,7 @@ the evidence screen.
 
 # PHASE 1 — Evidence
 
-Entry point: `python3 fetch_papers.py` → `pipeline/main.py:run_phase1()`.
+Entry point: `python3 code/11_fetch_papers.py` → `code/10_main.py:run_phase1()`.
 
 ## Stage 1: Literature retrieval (two tracks, no cost-effectiveness)
 
@@ -59,7 +59,7 @@ Entry point: `python3 fetch_papers.py` → `pipeline/main.py:run_phase1()`.
 
 ### Track A — Meta-analyses & systematic reviews (PubMed)
 
-Twelve intervention-domain queries (`pipeline/queries.py:TRACK_A_QUERIES`), each
+Twelve intervention-domain queries (`code/03_queries.py:TRACK_A_QUERIES`), each
 run in **two passes**:
 
 - **Pass 1 (primary tier):** `meta-analysis[pt] OR "Cochrane Database Syst Rev"[Journal]` — confirmed meta-analyses.
@@ -121,7 +121,7 @@ retained in `queries.py` and reused, per-intervention, in Phase 2.
 
 ## Stage 2: Deduplication
 
-Run in order (`pipeline/dedup.py`):
+Run in order (`code/06_dedup.py`):
 
 1. **Within PubMed by PMID** — when the same paper appears across queries/passes, keep the higher-priority tier (primary > supplementary).
 2. **Cochrane version dedup (new in v3)** — collapse records sharing a `cochrane_id` (e.g. CD008524), keep the newest `publication_year`, and tag the dropped older version `superseded_by`. *A Cochrane review update is the same review, not new evidence* — this prevents the version-double-counting the VAS audit found.
@@ -136,7 +136,7 @@ Run in order (`pipeline/dedup.py`):
 citation count, batch-look-up DOIs in OpenAlex (50 per request) to populate
 `cited_by_count` and `is_open_access`.
 
-**Scoring** (`pipeline/scoring.py`) — 8 components, max ≈ 95:
+**Scoring** (`code/08_scoring.py`) — 8 components, max ≈ 95:
 
 | # | Component | Max | Source |
 |---|-----------|-----|--------|
@@ -193,10 +193,10 @@ Analog Scale) — they cause false positives in OpenAlex's free-text search.
 
 # PHASE 2 — Cost-effectiveness
 
-Entry point: `python3 run_cea.py [shortlist.json]` →
-`pipeline/cea_main.py:run_phase2()`. For **each** shortlisted intervention:
+Entry point: `python3 code/15_run_cea.py [shortlist.json]` →
+`code/14_cea_main.py:run_phase2()`. For **each** shortlisted intervention:
 
-### 1. Targeted retrieval (`pipeline/cea_client.py`)
+### 1. Targeted retrieval (`code/12_cea_client.py`)
 
 - **PubMed** — `build_cea_pubmed_query()` assembles
   `CEA_TERM_SKELETON AND (name/synonyms[tiab] OR mesh[MeSH]) AND LMIC_FILTER`,
@@ -222,7 +222,7 @@ reward "CEA-ness", so the raw bucket is filtered and re-ranked:
   an off-topic-but-CEA-heavy paper (e.g. a cochlear-implant CEA that matched an
   ambiguous synonym).
 
-### 3. Optional local CEA registry (`pipeline/ghcea_registry.py`)
+### 3. Optional local CEA registry (`code/13_ghcea_registry.py`)
 
 A research spike found neither the Tufts/CEVR Global Health CEA Registry (a
 client-side JavaScript app) nor DCP3 (a PDF supplement) is reachable from
@@ -256,7 +256,7 @@ The reviewer combines `top_papers_for_review.json` (Phase 1) and
 - **Version ≠ evidence** — Cochrane updates sharing one accession are counted once.
 - **CEA-rating guard** — assign a cost-effectiveness rating only where `cea_rating_allowed` is true; otherwise `Unknown`.
 
-**Claim verifier** (`verify_synthesis.py` → `pipeline/verify.py`): parses every
+**Claim verifier** (`code/17_verify_synthesis.py` → `code/16_verify.py`): parses every
 `{value, PMID}` claim from the finished synthesis and checks (a) the PMID is in
 the corpus (`papers_database.json` / `cea_by_intervention.json`) and (b) the
 cited paper's text contains the claimed number. It reports `NOT_IN_CORPUS`
@@ -265,7 +265,7 @@ not found — semantic check left to the reviewer), and unsourced numeric claims
 
 ---
 
-## Configuration (`pipeline/config.py`)
+## Configuration (`code/01_config.py`)
 
 | Knob | Default | Purpose |
 |------|---------|---------|

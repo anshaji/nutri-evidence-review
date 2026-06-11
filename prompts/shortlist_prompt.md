@@ -109,7 +109,7 @@ Copy `shortlist.template.json` and fill it. Schema:
 }
 ```
 
-Field contract (consumed by Phase 2 / `pipeline/cea_client.py`):
+Field contract (consumed by Phase 2 / `code/12_cea_client.py`):
 
 - **`name`** *(required)* — the primary intervention phrase. Used in PubMed `[tiab]`, OpenAlex search, and registry matching.
 - **`synonyms`** *(optional)* — additional `[tiab]` / free-text terms OR-ed into the search. Keep unambiguous (Rule 6).

@@ -31,7 +31,7 @@ def run_phase1():
     Phase 1 finds strong evidence for nutrition interventions in children under
     5 and women of reproductive age (PubMed Track A + OpenAlex Track C). Cost-
     effectiveness is deliberately excluded here — it is handled per shortlisted
-    intervention in Phase 2 (see pipeline/cea_main.py).
+    intervention in Phase 2 (see code/14_cea_main.py).
     """
     print("=" * 70)
     print("NUTRITION EVIDENCE SYNTHESIS PIPELINE v3.0 — PHASE 1 (EVIDENCE)")

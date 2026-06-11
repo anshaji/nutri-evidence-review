@@ -15,7 +15,7 @@ import urllib.parse
 import xml.etree.ElementTree as ET
 from typing import Any
 
-from pipeline.config import (
+from .config import (
     NCBI_API_KEY,
     NCBI_BASE,
     NCBI_EMAIL,

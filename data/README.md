@@ -36,7 +36,7 @@ So the registry is a one-time human download, not a live fetch.
 
 ## Expected columns
 
-The loader (`pipeline/ghcea_registry.py`) is tolerant of column-name variation
+The loader (`code/13_ghcea_registry.py`) is tolerant of column-name variation
 via an alias map. It recognizes (case-insensitive):
 
 | Canonical field | Accepted column headers |

@@ -17,9 +17,9 @@ With no corpus paths it defaults to papers_database.json + cea_by_intervention.j
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipeline.verify import verify_file
+from code.verify import verify_file
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

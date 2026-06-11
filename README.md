@@ -31,28 +31,28 @@ screen, instead of being rated off a corpus that contains no relevant CEAs.
 
 ```bash
 # Phase 1 — evidence (~3–4 min, hits live NCBI/OpenAlex APIs)
-python3 fetch_papers.py
+python3 code/11_fetch_papers.py
 
 # Review top_papers_for_review.json, then author the shortlist:
 cp shortlist.template.json shortlist.json     # edit with shortlisted interventions
 
 # Phase 2 — cost-effectiveness (scales with number of interventions)
-python3 run_cea.py                            # or: python3 run_cea.py <shortlist.json>
+python3 code/15_run_cea.py                    # or: python3 code/15_run_cea.py <shortlist.json>
 
 # Produce the synthesis in-conversation following prompts/synthesis_prompt.md, then lint it:
-python3 verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md
+python3 code/17_verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md
 ```
 
 An NCBI API key (free) speeds Phase 1 up. Put it in a gitignored `.env`:
-`NCBI_API_KEY=your_key_here` — auto-loaded by `pipeline/config.py`.
+`NCBI_API_KEY=your_key_here` — auto-loaded by `code/01_config.py`.
 
 ## Layout
 
 ```
-fetch_papers.py        Phase 1 entry point (evidence)
-run_cea.py             Phase 2 entry point (cost-effectiveness)
-verify_synthesis.py    Claim verifier — lints a synthesis against the corpus
-pipeline/              The package (see claude.md for module-by-module detail)
+code/                  Pipeline package — numbered by execution order (see claude.md for detail)
+  11_fetch_papers.py     Phase 1 entry point (evidence)
+  15_run_cea.py          Phase 2 entry point (cost-effectiveness)
+  17_verify_synthesis.py Claim verifier — lints a synthesis against the corpus
 prompts/               shortlist_prompt.md (Phase 1 → shortlist) + synthesis_prompt.md (final synthesis)
 data/                  Optional local CEA registry CSV (see data/README.md)
 output/                Synthesis deliverables (current + comparison runs)

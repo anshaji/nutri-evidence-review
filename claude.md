@@ -19,25 +19,26 @@ This split is the structural fix for the VAS audit's CEA blind spot: cost-effect
 Modular Python pipeline (stdlib-only, no pip dependencies):
 
 ```
-fetch_papers.py              # Phase 1 entry point (evidence)
-run_cea.py                   # Phase 2 entry point (cost-effectiveness, takes shortlist.json)
-verify_synthesis.py          # Claim-verification lint for a finished synthesis
-pipeline/
-├── __init__.py
-├── config.py                # Constants, .env loader, API keys, paths, Phase 2 knobs
-├── queries.py               # Track A (12) + Track C (4) + population filter + CEA builders
-├── models.py                # Paper TypedDict (+ cochrane_id, superseded_by), extract_cochrane_id
-├── pubmed_client.py         # PubMed E-Utilities esearch/efetch + XML parsing
-├── openalex_client.py       # Track C fetcher (economics/development literature)
-├── citation_enrichment.py   # Batch DOI lookup in OpenAlex for citation counts
-├── dedup.py                 # PMID + Cochrane-version + OpenAlex + cross-source dedup
-├── scoring.py               # 8-component scoring (adds Population Relevance)
-├── fulltext_client.py       # PMC full-text retrieval for top papers (Stage 3.5)
-├── main.py                  # Phase 1 orchestrator (run_phase1)
-├── cea_client.py            # Phase 2: targeted CEA retrieval per intervention
-├── ghcea_registry.py        # Phase 2: optional local CEA-registry CSV lookup
-├── cea_main.py              # Phase 2 orchestrator (run_phase2)
-└── verify.py                # Post-synthesis claim verification (corpus membership + support)
+code/
+├── __init__.py              # Package init — importlib aliases for numbered modules
+├── 01_config.py             # Constants, .env loader, API keys, paths, Phase 2 knobs
+├── 02_models.py             # Paper TypedDict (+ cochrane_id, superseded_by), extract_cochrane_id
+├── 03_queries.py            # Track A (12) + Track C (4) + population filter + CEA builders
+├── 04_pubmed_client.py      # PubMed E-Utilities esearch/efetch + XML parsing
+├── 05_openalex_client.py    # Track C fetcher (economics/development literature)
+├── 06_dedup.py              # PMID + Cochrane-version + OpenAlex + cross-source dedup
+├── 07_citation_enrichment.py # Batch DOI lookup in OpenAlex for citation counts
+├── 08_scoring.py            # 8-component scoring (adds Population Relevance)
+├── 09_fulltext_client.py    # PMC full-text retrieval for top papers (Stage 3.5)
+├── 10_main.py               # Phase 1 orchestrator (run_phase1)
+├── 11_fetch_papers.py       # Phase 1 entry point (evidence)
+├── 12_cea_client.py         # Phase 2: targeted CEA retrieval per intervention
+├── 13_ghcea_registry.py     # Phase 2: optional local CEA-registry CSV lookup
+├── 14_cea_main.py           # Phase 2 orchestrator (run_phase2)
+├── 15_run_cea.py            # Phase 2 entry point (cost-effectiveness, takes shortlist.json)
+├── 16_verify.py             # Post-synthesis claim verification (corpus membership + support)
+├── 17_verify_synthesis.py   # Claim-verification lint entry point
+└── 18_notes.R               # R analysis notes
 prompts/
 ├── shortlist_prompt.md      # Phase 1 review → shortlist.json (intervention-selection rules)
 └── synthesis_prompt.md      # Final synthesis grounding checklist (hardening rules + CEA-rating guard)
@@ -47,7 +48,7 @@ data/
 
 ## Pipeline Stages
 
-## PHASE 1 — Evidence (`python3 fetch_papers.py` → `run_phase1`)
+## PHASE 1 — Evidence (`python3 code/11_fetch_papers.py` → `run_phase1`)
 
 ### Stage 1: Retrieval (2 tracks — NO cost-effectiveness)
 - **Track A (PubMed):** 12 intervention domains x 2 passes (meta-analysis primary tier, systematic review supplementary tier)
@@ -79,13 +80,13 @@ data/
 - Caches raw XML in `raw_responses/pmc/` for reproducibility
 - Papers without PMC availability are flagged as "abstract_only"
 - Runs over **all top 200** papers (was top 100)
-- Module: `pipeline/fulltext_client.py`
+- Module: `code/09_fulltext_client.py`
 
 ### Stage 4: Manual Review → shortlist
 - Top 200 papers reviewed **in-conversation** (no API automation), guided by `prompts/shortlist_prompt.md`
 - Human/LLM shortlists interventions and authors `shortlist.json` (from `shortlist.template.json`)
 
-## PHASE 2 — Cost-Effectiveness (`python3 run_cea.py [shortlist.json]` → `run_phase2`)
+## PHASE 2 — Cost-Effectiveness (`python3 code/15_run_cea.py [shortlist.json]` → `run_phase2`)
 
 - Reads `shortlist.json`; for **each** shortlisted intervention runs a targeted CEA search:
   - PubMed: `CEA_TERM_SKELETON` AND (name/synonyms[tiab] OR mesh[MeSH]) AND LMIC (`build_cea_pubmed_query`)
@@ -112,7 +113,7 @@ data/
 
 ## Configuration
 
-- API key stored in `.env` (gitignored), auto-loaded by `pipeline/config.py`
+- API key stored in `.env` (gitignored), auto-loaded by `code/01_config.py`
 - No need to manually export — just `python3 fetch_papers.py`
 - NCBI rate limit: 10 req/s with key (0.11s delay)
 
@@ -141,16 +142,16 @@ All data outputs (incl. `shortlist.json`, `cea_by_intervention.json`, `data/*.cs
 cd /Users/akashshaji/Documents/GitHub/nutri-evidence-review
 
 # Phase 1 — evidence (~3-4 min)
-python3 fetch_papers.py
+python3 code/11_fetch_papers.py
 
 # → review top_papers_for_review.json in-conversation, then:
 cp shortlist.template.json shortlist.json   # and edit it with the shortlisted interventions
 
 # Phase 2 — cost-effectiveness (scales with #interventions)
-python3 run_cea.py                          # or: python3 run_cea.py path/to/shortlist.json
+python3 code/15_run_cea.py                  # or: python3 code/15_run_cea.py path/to/shortlist.json
 
 # → produce synthesis in-conversation (prompts/synthesis_prompt.md), then lint:
-python3 verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md
+python3 code/17_verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md
 ```
 
 Phase 1 expected yield: somewhat lower than the pre-population-filter pipeline (the under-5/WRA clause tightens Track A). PMC full text retrieved for ~50%+ of the top 200.
@@ -187,7 +188,7 @@ A deep manual audit of the VAS synthesis surfaced a set of recurring LLM-reasoni
 ### Pipeline reliability fixes (from the VAS audit)
 1. **✅ DONE — Prompt hardening (Stage 4).** Grounding checklist committed at `prompts/synthesis_prompt.md` (verbatim study type, corpus PMID on every number, all-cause vs cause-specific split, fixed/random + dominant trial, version≠evidence).
 2. **✅ DONE — Cochrane-ID dedup + CEA-rating guard.** `deduplicate_cochrane` in `dedup.py` collapses records sharing a `cochrane_id`; the two-phase split + `cea_rating_allowed` flag (`cea_main.py`) + prompt rule enforce `Unknown` cost-effectiveness when no CEA record exists.
-3. **✅ DONE — Claim-verification pass.** `pipeline/verify.py` + `verify_synthesis.py`: corpus-membership + numeric-support checks (automated); semantic support flagged for in-conversation review.
+3. **✅ DONE — Claim-verification pass.** `code/16_verify.py` + `code/17_verify_synthesis.py`: corpus-membership + numeric-support checks (automated); semantic support flagged for in-conversation review.
 4. **⏳ DEFERRED (next milestone) — Trial-level extraction / evidence graph (large effort).** Parse included-studies lists and forest-plot weights from full text; match trials by registry ID (NCT/ISRCTN) or author+year; build `Review → trials → weights`. Enables overlap/double-counting detection and DEVTA-class insights. **This is the remaining big piece.**
 5. **✅ PARTIAL — Dedicated CEA data source.** Phase 2 supports an optional local CEA registry CSV (`ghcea_registry.py`) since neither GHCEA nor DCP3 is API-reachable (see Phase 2 CEA registry note). Targeted PubMed/OpenAlex CEA search is the always-on backbone.
 

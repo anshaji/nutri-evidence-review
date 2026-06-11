@@ -22,10 +22,10 @@ author shortlist.json, then run Phase 2 with `python3 run_cea.py`.
 import sys
 import os
 
-# Add parent directory to path for package imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add project root to path so the 'code' package is importable
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipeline.main import run_phase1
+from code.main import run_phase1
 
 if __name__ == "__main__":
     run_phase1()

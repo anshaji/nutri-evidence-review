@@ -19,11 +19,11 @@ Prereqs:
 import sys
 import os
 
-# Add parent directory to path for package imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add project root to path so the 'code' package is importable
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from pipeline.cea_main import run_phase2
-from pipeline.config import SHORTLIST_PATH
+from code.cea_main import run_phase2
+from code.config import SHORTLIST_PATH
 
 if __name__ == "__main__":
     shortlist = sys.argv[1] if len(sys.argv) > 1 else SHORTLIST_PATH
