@@ -3,6 +3,11 @@
 # README and the shortlist template are tracked (see negations at the end).
 data/*
 
+# The CARE deep-dive keeps its working data alongside its deliverables so the
+# workstream is self-contained. It is still generated data — never commit it.
+# (~66M: corpus, extraction cards, evidence DB, digests, synthesis sections.)
+CARE_review/data/
+
 # ─── Separate project ─────────────────────────────────────────────────────────
 # TRACE is its own project; it lives in a sibling repo, not here.
 trace/

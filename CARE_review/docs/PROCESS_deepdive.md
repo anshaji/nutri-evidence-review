@@ -9,7 +9,7 @@ for CARE and IA partners (Save the Children, Mercy Corps).
 documented in `docs/PROCESS_main_pipeline.md`, not a replacement. It reuses the same
 clients, dedup, citation enrichment, full-text retrieval, and verifier. Only the
 **query layer**, the **ranking**, and the **extraction schema** are new. All
-deep-dive outputs are namespaced under `data/deepdive/` so the original pipeline's
+deep-dive outputs are namespaced under `CARE_review/data/` so the original pipeline's
 data is never touched; `data/fulltext/` and `data/raw_responses/` are deliberately
 **shared** so network caching is reused across both.
 
@@ -55,12 +55,12 @@ Three design consequences follow, and they drive every stage below:
 ## Pipeline at a glance
 
 ```
-PICOS spec (human)                       docs/PICOS_specification.md
+PICOS spec (human)                       CARE_review/docs/PICOS_specification.md
    │
    ▼
 Stage 1  PICOS-targeted retrieval        code/28_run_deepdive.py
          3 blocks × (MA + SR + IMPL) + OpenAlex
-   │                                      → data/deepdive/{block}.json  (1,671 papers)
+   │                                      → CARE_review/data/{block}.json  (1,671 papers)
    ▼
 Stage 2  Relevance validation (human-in-loop)   → title-anchor fix, BF re-scope
    │
@@ -80,7 +80,7 @@ Stage 6  Multi-agent extraction          Workflow, 1 Sonnet agent/batch
 Stage 7  Merge + validate                …pipeline.py merge    → evidence_db.json (648 on-topic)
    │
    ▼
-Stage 8  Per-intervention synthesis      prompts/deepdive_synthesis_prompt.md
+Stage 8  Per-intervention synthesis      CARE_review/prompts/deepdive_synthesis_prompt.md
    │                                      → synthesis_sections/{cat}.md
    ▼
 Stage 9  Verification (lint every number) code/17_verify_synthesis.py
@@ -93,7 +93,7 @@ Stage 10 Assembly                        …pipeline.py assemble → CARE_DEEPDI
 
 ## Stage 0 — PICOS specification (human-authored, reviewed)
 
-**Output:** `docs/PICOS_specification.md`
+**Output:** `CARE_review/docs/PICOS_specification.md`
 
 Written *before* any retrieval, from the partner feedback document plus the existing
 full-corpus synthesis. Four blocks were specified (CMAM, BF-facility, BF-community,
@@ -119,7 +119,7 @@ reading could be *targeted* at gaps rather than open-ended.
 
 **Code:** `code/03_queries.py` (`DEEPDIVE_BLOCKS`), `code/27_deepdive.py`
 **Run:** `python3 code/28_run_deepdive.py [block …]`
-**Output:** `data/deepdive/{cmam,breastfeeding,mms}.json` + `deepdive_combined.csv`
+**Output:** `CARE_review/data/{cmam,breastfeeding,mms}.json` + `deepdive_combined.csv`
 
 Each block runs **three PubMed passes plus an OpenAlex arm**, all routed through the
 existing `build_pubmed_query` chokepoint so the population and LMIC filters are
@@ -216,7 +216,7 @@ genuinely breastfeeding-specific.
 ## Stage 3 — Corpus assembly
 
 **Run:** `python3 code/30_run_deepdive_pipeline.py corpus`
-**Output:** `data/deepdive/deepdive_corpus.json`
+**Output:** `CARE_review/CARE_review/data_corpus.json`
 
 Union of the three blocks, deduped by `paper_key` (PMID > OpenAlex ID > DOI). Papers
 appearing in more than one block keep a **list** in `deepdive_blocks` and the higher
@@ -249,7 +249,7 @@ OA PDFs are usually closed too. Those papers are extracted from abstract + metad
 ## Stage 5 — Extraction cards + token-balanced batching
 
 **Run:** `python3 code/30_run_deepdive_pipeline.py cards`
-**Output:** `data/deepdive/extraction_inputs/{key}.json` + `batches.json`
+**Output:** `CARE_review/data/extraction_inputs/{key}.json` + `batches.json`
 
 One self-contained **card** per paper (metadata + abstract + a Methods/Results-biased
 full-text excerpt capped at 9,000 words), so an extraction agent needs exactly one
@@ -263,9 +263,9 @@ papers/batch; large full-text papers get small or singleton batches).
 
 ## Stage 6 — Multi-agent extraction
 
-**Prompt:** `prompts/deepdive_extraction_prompt.md`
+**Prompt:** `CARE_review/prompts/deepdive_extraction_prompt.md`
 **Mechanism:** `Workflow` — one Sonnet agent per batch, ~16 concurrent
-**Output:** `data/deepdive/evidence_db/batch_XXXX.json`
+**Output:** `CARE_review/data/evidence_db/batch_XXXX.json`
 
 Each agent reads the manifest, finds its own batch index, reads the prompt, reads its
 cards, and writes one record per card. It returns only a one-line summary — records go
@@ -314,7 +314,7 @@ cost-per-DALY even where present.
 ## Stage 7 — Merge + validation
 
 **Run:** `python3 code/30_run_deepdive_pipeline.py merge`
-**Output:** `data/deepdive/evidence_db.json`, `evidence_by_intervention.json`
+**Output:** `CARE_review/data/evidence_db.json`, `evidence_by_intervention.json`
 
 Validates each record against required fields, normalises stray keys, cross-checks
 coverage against the corpus, and writes any still-missing keys to
@@ -336,8 +336,8 @@ Breastfeeding 193 (30 MA, 29 SR, 12 RCT), MMS 203 (33 MA, 16 SR, 30 RCT).
 
 ## Stage 8 — Per-intervention synthesis
 
-**Prompt:** `prompts/deepdive_synthesis_prompt.md`
-**Output:** `data/deepdive/synthesis_sections/{cmam_sam_mam,breastfeeding,anc_mmn}.md`
+**Prompt:** `CARE_review/prompts/deepdive_synthesis_prompt.md`
+**Output:** `CARE_review/data/synthesis_sections/{cmam_sam_mam,breastfeeding,anc_mmn}.md`
 
 One section per intervention, written against the evidence DB with full-text cards
 available for tracing exact effect sizes. Structure: evidence base → clinical effect
@@ -366,7 +366,7 @@ inputs, same prompt, same grounding rules.
 
 **Run:**
 ```bash
-python3 code/17_verify_synthesis.py CARE_review/CARE_DEEPDIVE_REVIEW.md data/deepdive/deepdive_corpus.json data/deepdive/evidence_db.json
+python3 code/17_verify_synthesis.py CARE_review/CARE_DEEPDIVE_REVIEW.md CARE_review/CARE_review/data_corpus.json CARE_review/data/evidence_db.json
 ```
 
 The verifier lints **every numeric claim** against the corpus + extracted outcomes +
@@ -439,12 +439,12 @@ python3 code/30_run_deepdive_pipeline.py fulltext
 python3 code/30_run_deepdive_pipeline.py cards
 
 # Stage 6 — multi-agent extraction (Workflow; one Sonnet agent per batch,
-#           reading prompts/deepdive_extraction_prompt.md). Idempotent + resumable.
+#           reading CARE_review/prompts/deepdive_extraction_prompt.md). Idempotent + resumable.
 
 # Stages 7, 9, 10
 python3 code/30_run_deepdive_pipeline.py merge
 python3 code/17_verify_synthesis.py CARE_review/CARE_DEEPDIVE_REVIEW.md \
-        data/deepdive/deepdive_corpus.json data/deepdive/evidence_db.json
+        CARE_review/CARE_review/data_corpus.json CARE_review/data/evidence_db.json
 python3 code/30_run_deepdive_pipeline.py assemble
 ```
 
@@ -453,7 +453,7 @@ python3 code/30_run_deepdive_pipeline.py assemble
 `code/27_deepdive.py`, `code/28_run_deepdive.py`, `code/29_deepdive_pipeline.py`,
 `code/30_run_deepdive_pipeline.py`; parameterised `code/19_fulltext_all.py`,
 `code/21_build_extraction_inputs.py`, `code/22_merge_evidence_db.py`.
-**Prompts:** `prompts/deepdive_extraction_prompt.md`, `prompts/deepdive_synthesis_prompt.md`.
+**Prompts:** `CARE_review/prompts/deepdive_extraction_prompt.md`, `CARE_review/prompts/deepdive_synthesis_prompt.md`.
 
 ---
 

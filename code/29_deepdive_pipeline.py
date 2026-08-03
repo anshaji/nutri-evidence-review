@@ -1,10 +1,10 @@
 """CARE deep-dive pipeline: corpus assembly + full-text (Stage 3.5→3.6 prep).
 
-Bridges the deep-dive retrieval (data/deepdive/{block}.json) into the existing
+Bridges the deep-dive retrieval (CARE_review/data/{block}.json) into the existing
 full-corpus machinery (full text → extraction → synthesis), but namespaced so it
 never clobbers the main pipeline's data:
 
-  - deep-dive corpus DB  → data/deepdive/deepdive_corpus.json
+  - deep-dive corpus DB  → CARE_review/CARE_review/data_corpus.json
   - per-paper full text   → data/fulltext/{key}.json   (SHARED — cached/reused)
   - network caches        → data/raw_responses/         (SHARED)
 
@@ -93,7 +93,7 @@ def run_fulltext(limit: int | None = None):
 
 def build_cards():
     """Build per-paper extraction cards + batches for the deep-dive corpus,
-    namespaced under data/deepdive/extraction_inputs/."""
+    namespaced under CARE_review/data/extraction_inputs/."""
     build_cards_main(db_path=CORPUS_PATH, input_dir=EXTRACTION_INPUT_DIR)
 
 
@@ -112,7 +112,7 @@ def assemble():
     """Stitch the per-intervention synthesis sections into the deliverable.
 
     Evidence-only (cost = Phase 2, deferred). Reads
-    data/deepdive/synthesis_sections/{category}.md and writes the CARE deep-dive
+    CARE_review/data/synthesis_sections/{category}.md and writes the CARE deep-dive
     review to CARE_review/CARE_DEEPDIVE_REVIEW.md.
     """
     os.makedirs(os.path.dirname(REVIEW_OUT), exist_ok=True)
@@ -137,7 +137,7 @@ def assemble():
         "Unclear)** — the latter reflects coverage, adherence, delivery-platform "
         "fit, and barriers, because partners identified adherence/coverage (not "
         "efficacy) as the binding constraint. PICOS spec: "
-        "`docs/PICOS_specification.md`.",
+        "`CARE_review/docs/PICOS_specification.md`.",
         "",
         "---",
         "",

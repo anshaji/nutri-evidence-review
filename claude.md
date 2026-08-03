@@ -126,14 +126,14 @@ CARE and IA partners (Save the Children, Mercy Corps) reviewed the initial 15-in
 **Timeline:** see `task.md` for detailed tracking. ~4 weeks: background study + PICOS design (wk 1-2) → model runs (wk 2-3) → review with Liz + share with CARE (wk 4).
 
 **Deep-dive pipeline (evidence-only; cost = Phase 2, deferred):** PICOS spec in
-`docs/PICOS_specification.md`. Retrieval is a separate layer over the
+`CARE_review/docs/PICOS_specification.md`. Retrieval is a separate layer over the
 main pipeline — `DEEPDIVE_BLOCKS` in `code/03_queries.py` (3 blocks: `cmam`,
 `breastfeeding`, `mms`), each run through MA + SR + **implementation** passes
 (`IMPL_OUTCOME_FILTER` coverage/adherence/delivery/barriers — *no cost terms* —
 × `IMPL_TYPE_FILTER` program-evaluation/trial/cohort designs). Ranking adds
 `score_implementation_relevance` (0–12) via `deepdive_score` (leaves
 `score_paper` untouched). Orchestrator `code/27_deepdive.py`, entry
-`code/28_run_deepdive.py [block ...]`. Output: ranked `data/deepdive/{block}.json`
+`code/28_run_deepdive.py [block ...]`. Output: ranked `CARE_review/data/{block}.json`
 + `deepdive_combined.csv`. **Breastfeeding is one title-anchored retrieval**
 (`[Majr]`/`[ti]`, OpenAlex title-gated) — facility vs community is tagged per
 study at **extraction**, not retrieval (broad BF reviews cover both). Latest run

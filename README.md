@@ -73,7 +73,7 @@ regenerable. The only tracked exceptions are `data/README.md` and
   two-phase redesign.
 - **[docs/PROCESS_main_pipeline.md](docs/PROCESS_main_pipeline.md)** — detailed
   methodology writeup for the core pipeline.
-- **[docs/PROCESS_deepdive.md](docs/PROCESS_deepdive.md)** — the CARE deep-dive
+- **[CARE_review/docs/PROCESS_deepdive.md](CARE_review/docs/PROCESS_deepdive.md)** — the CARE deep-dive
   layer: PICOS-targeted retrieval, the implementation pass, extended extraction
   schema, and stage funnel.
 - **[prompts/shortlist_prompt.md](prompts/shortlist_prompt.md)** — Phase 1

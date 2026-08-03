@@ -1,27 +1,32 @@
 # Documentation index
 
-Read in this order depending on what you need.
-
-## Understand the method
+## Core pipeline
 
 | Document | What it covers |
 |---|---|
-| [PROCESS_main_pipeline.md](PROCESS_main_pipeline.md) | The core two-phase pipeline (v3) — retrieval, dedup, scoring, full text, Phase-2 cost-effectiveness, synthesis, verification. Includes the VAS validation audit that motivated the design. |
-| [PROCESS_deepdive.md](PROCESS_deepdive.md) | The CARE/ScaleWorks deep-dive layer — PICOS-targeted retrieval, the implementation pass, the extended extraction schema, and the stage-by-stage funnel. Read the main pipeline doc first. |
-| [PICOS_specification.md](PICOS_specification.md) | The PICOS framework for the three deep-dive interventions (CMAM, breastfeeding, MMS), the dual clinical + implementation outcome axis, and the scoping decisions on record. |
+| [PROCESS_main_pipeline.md](PROCESS_main_pipeline.md) | The two-phase pipeline (v3) — retrieval, dedup, scoring, full text, Phase-2 cost-effectiveness, synthesis, verification. Includes the VAS validation audit that motivated the design. |
+| [../claude.md](../claude.md) | Architecture, module map, scoring components, known gotchas. |
 
-## Find the deliverables
+## CARE / ScaleWorks deep-dive
+
+That workstream is **self-contained in [`../CARE_review/`](../CARE_review/)** —
+deliverables, method docs, prompts, and its working dataset all live together.
+
+| Document | What it covers |
+|---|---|
+| [../CARE_review/README.md](../CARE_review/README.md) | **Start here** — index for the whole CARE workstream. |
+| [../CARE_review/docs/PICOS_specification.md](../CARE_review/docs/PICOS_specification.md) | PICOS per intervention, dual clinical + implementation outcome axis, scoping decisions. |
+| [../CARE_review/docs/PROCESS_deepdive.md](../CARE_review/docs/PROCESS_deepdive.md) | The deep-dive method end to end. Read the main pipeline doc above first. |
+
+## Where things live
 
 | Location | Contents |
 |---|---|
-| `../CARE_review/` | Partner-facing outputs — the deep-dive review and the workplan. |
-| `../output/` | Synthesis documents from the main pipeline (current), with superseded renders under `output/archive/`. |
-
-## Run it
-
-Commands live in the root [README.md](../README.md) and in each process document's
-"Running" / "Reproducing the run" section. Repo conventions and architecture notes
-are in [claude.md](../claude.md); live task state is in [task.md](../task.md).
+| `../code/` | Pipeline package, numbered by execution order |
+| `../prompts/` | Core pipeline prompts (shortlist, synthesis, extraction) |
+| `../CARE_review/` | The CARE workstream — everything, including its data |
+| `../data/` | Core pipeline data + `fulltext/` (shared with the deep-dive) |
+| `../output/` | Main-pipeline synthesis documents; superseded renders in `output/archive/` |
 
 ## A note on the numbering
 

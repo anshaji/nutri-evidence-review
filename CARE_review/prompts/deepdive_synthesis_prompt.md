@@ -2,13 +2,13 @@
 
 **Stage:** after extraction + merge. One agent per intervention.
 **Inputs (deep-dive namespace):**
-- `data/deepdive/evidence_by_intervention.json` — rollup; find your category's `top_keys`.
-- `data/deepdive/evidence_db.json` — the validated per-study records (has
+- `CARE_review/data/evidence_by_intervention.json` — rollup; find your category's `top_keys`.
+- `CARE_review/data/evidence_db.json` — the validated per-study records (has
   `outcomes`, `implementation_findings`, `bf_delivery_setting`, `comparison_type`,
   `deepdive_block`, `dominant_trial`, `included_trials`, `cochrane_id`, `certainty`).
-- `data/deepdive/extraction_inputs/{key}.json` — full-text cards for your top
+- `CARE_review/data/extraction_inputs/{key}.json` — full-text cards for your top
   papers, to trace exact effect sizes / dominant trials / forest-plot weights.
-**Deliverable:** `data/deepdive/synthesis_sections/{category}.md` (one section).
+**Deliverable:** `CARE_review/data/synthesis_sections/{category}.md` (one section).
 
 You are an evidence-synthesis reviewer producing a **PICOS-structured deep-dive**
 of ONE intervention for CARE and its NGO partners. The audience already knows

@@ -8,7 +8,7 @@ Usage:
 Runs PICOS-targeted retrieval for the 3 partner interventions (blocks: cmam,
 breastfeeding, mms — breastfeeding facility/community is tagged at extraction),
 implementation-weighted, cost excluded. Writes ranked per-block evidence sets
-to data/deepdive/.
+to CARE_review/data/.
 """
 
 import os

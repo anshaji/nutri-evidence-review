@@ -8,7 +8,7 @@ carry coverage/adherence/delivery/barrier signal) — plus an OpenAlex arm.
 
 This is EVIDENCE ONLY. Cost is not searched here; cost is Phase 2
 (code/15_run_cea.py), run later per the partners' "evidence now, cost later"
-steer. Output is a ranked per-block evidence set under data/deepdive/ that we
+steer. Output is a ranked per-block evidence set under CARE_review/data/ that we
 validate for relevance before committing to full-text + extraction + synthesis.
 
 Reuses the main pipeline's clients, dedup, enrichment, and scoring unchanged —

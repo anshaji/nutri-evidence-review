@@ -1,12 +1,12 @@
 # CARE Deep-Dive — Per-Study Evidence Extraction Prompt
 
 **Stage:** deep-dive Stage 3.6 (between full-text retrieval and synthesis).
-**Input:** one extraction card per paper — `data/deepdive/extraction_inputs/{key}.json`
+**Input:** one extraction card per paper — `CARE_review/data/extraction_inputs/{key}.json`
 (meta + abstract + full-text excerpt where available). Each card carries a
 `deepdive_blocks` field (subset of `cmam` / `breastfeeding` / `mms`) telling you
 which intervention(s) the paper was retrieved for.
 **Your deliverable (per batch):** a JSON array of evidence records written to
-`data/deepdive/evidence_db/batch_XXXX.json`, one record per card, schema below.
+`CARE_review/data/evidence_db/batch_XXXX.json`, one record per card, schema below.
 
 You are an evidence-extraction analyst for a targeted PICOS review of **three
 interventions** — CMAM, breastfeeding support, and antenatal MMS — for CARE and
@@ -137,7 +137,7 @@ disease that matched by keyword, methods paper). Still emit the full record.
 ## Output
 
 Write the JSON array (one record per card, same order) to
-`data/deepdive/evidence_db/batch_XXXX.json` using the batch index you were given.
+`CARE_review/data/evidence_db/batch_XXXX.json` using the batch index you were given.
 Then return a one-line JSON summary: `{"batch": XXXX, "n": <count>, "on_topic":
 <count>, "impl": <count with ≥1 implementation_finding>, "path": "..."}`. Do not
 print the records themselves back.
