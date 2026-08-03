@@ -26,6 +26,7 @@ Phase 2 and is deliberately excluded here.
 |---|---|
 | **[docs/PICOS_specification.md](docs/PICOS_specification.md)** | PICOS per intervention, the dual clinical + implementation outcome axis, and the four scoping decisions on record. |
 | **[docs/PROCESS_deepdive.md](docs/PROCESS_deepdive.md)** | End-to-end method: the stage funnel, operational lessons, and known limitations. Read `../docs/PROCESS_main_pipeline.md` first for the underlying pipeline. |
+| **[docs/METHODS_PAPER_PLAN.md](docs/METHODS_PAPER_PLAN.md)** | Plan for writing this up as a methods paper — the argument, what's novel, the traditional-vs-this comparison, and the validation studies still needed. |
 
 ## 🧩 Prompts — `prompts/`
 
