@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  XML Schema (XSD) for the nutrition evidence-extraction record.
+
+  This is the XML rendering of schema/evidence_record.schema.json (the canonical
+  JSON Schema). The pipeline's data is JSON (data/evidence_db.json is an array of
+  records); this XSD is provided for XML-based tooling / documentation. Element
+  names follow the JSON keys, except each item of the JSON "outcomes" array is an
+  <outcomeEstimate> element (to avoid colliding with its own <outcome> name field).
+  Nullable JSON fields are modelled with nillable="true".
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+  <!-- ============ root: an array of records ============ -->
+  <xs:element name="evidenceRecords">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="evidenceRecord" type="EvidenceRecord" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- ============ the record ============ -->
+  <xs:complexType name="EvidenceRecord">
+    <xs:sequence>
+      <xs:element name="key"    type="xs:string"/>
+      <xs:element name="pmid"   type="xs:string" nillable="true" minOccurs="0"/>
+      <xs:element name="doi"    type="xs:string" nillable="true" minOccurs="0"/>
+      <xs:element name="title"  type="xs:string" minOccurs="0"/>
+      <xs:element name="year"   type="xs:integer" nillable="true" minOccurs="0"/>
+      <xs:element name="journal" type="xs:string" minOccurs="0"/>
+      <xs:element name="study_design" type="xs:string"/>
+      <xs:element name="evidence_tier" type="EvidenceTier"/>
+      <xs:element name="population" type="Population"/>
+      <xs:element name="intervention_label" type="xs:string" minOccurs="0"/>
+      <xs:element name="intervention_category" type="InterventionCategory"/>
+      <xs:element name="comparator" type="xs:string" minOccurs="0"/>
+      <xs:element name="lmic" type="xs:boolean" minOccurs="0"/>
+      <xs:element name="countries" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="country" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="outcomes" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="outcomeEstimate" type="Outcome" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="dominant_trial" type="xs:string" minOccurs="0"/>
+      <xs:element name="included_trials" minOccurs="0">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="trial" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="cochrane_id" type="CochraneId" nillable="true" minOccurs="0"/>
+      <xs:element name="certainty" type="xs:string" minOccurs="0"/>
+      <xs:element name="key_finding" type="xs:string"/>
+      <xs:element name="on_topic" type="xs:boolean"/>
+      <xs:element name="off_topic_reason" type="xs:string" minOccurs="0"/>
+      <xs:element name="fulltext_used" type="xs:boolean" minOccurs="0"/>
+      <xs:element name="notes" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============ population ============ -->
+  <xs:complexType name="Population">
+    <xs:sequence>
+      <xs:element name="group">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="under-5"/>
+            <xs:enumeration value="WRA"/>
+            <xs:enumeration value="both"/>
+            <xs:enumeration value="other"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="detail" type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============ one effect estimate (JSON: outcomes[] item) ============ -->
+  <xs:complexType name="Outcome">
+    <xs:sequence>
+      <xs:element name="outcome" type="xs:string"/>
+      <xs:element name="measure" type="Measure"/>
+      <xs:element name="value"   type="xs:decimal" nillable="true" minOccurs="0"/>
+      <xs:element name="ci_low"  type="xs:decimal" nillable="true" minOccurs="0"/>
+      <xs:element name="ci_high" type="xs:decimal" nillable="true" minOccurs="0"/>
+      <xs:element name="unit"    type="xs:string" minOccurs="0"/>
+      <xs:element name="n_studies"      type="xs:integer" nillable="true" minOccurs="0"/>
+      <xs:element name="n_participants" type="xs:integer" nillable="true" minOccurs="0"/>
+      <xs:element name="subgroup"  type="xs:string" minOccurs="0"/>
+      <xs:element name="direction" type="Direction" nillable="true" minOccurs="0"/>
+      <xs:element name="source"    type="Source"/>
+      <xs:element name="note"      type="xs:string" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ============ controlled vocabularies ============ -->
+  <xs:simpleType name="EvidenceTier">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="meta_analysis"/>
+      <xs:enumeration value="systematic_review"/>
+      <xs:enumeration value="rct"/>
+      <xs:enumeration value="observational"/>
+      <xs:enumeration value="modeling"/>
+      <xs:enumeration value="review_other"/>
+      <xs:enumeration value="other"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Measure">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="RR"/>
+      <xs:enumeration value="OR"/>
+      <xs:enumeration value="MD"/>
+      <xs:enumeration value="SMD"/>
+      <xs:enumeration value="HR"/>
+      <xs:enumeration value="IRR"/>
+      <xs:enumeration value="prevalence"/>
+      <xs:enumeration value="other"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Direction">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="benefit"/>
+      <xs:enumeration value="harm"/>
+      <xs:enumeration value="null"/>
+      <xs:enumeration value="mixed"/>
+      <xs:enumeration value=""/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="Source">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="abstract"/>
+      <xs:enumeration value="fulltext"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Controlled tag or 'other:<label>'. -->
+  <xs:simpleType name="InterventionCategory">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-z0-9_]+(:.+)?"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="CochraneId">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="CD[0-9]{6,}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>
