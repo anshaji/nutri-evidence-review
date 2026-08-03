@@ -6,7 +6,7 @@ evidence review of three interventions (CMAM, Breastfeeding support, Antenatal M
 for CARE and IA partners (Save the Children, Mercy Corps).
 
 **Relationship to the main pipeline:** this is a *layer over* the v3/v4 pipeline
-documented in `PROCESS_DOCUMENTATION.md`, not a replacement. It reuses the same
+documented in `docs/PROCESS_main_pipeline.md`, not a replacement. It reuses the same
 clients, dedup, citation enrichment, full-text retrieval, and verifier. Only the
 **query layer**, the **ranking**, and the **extraction schema** are new. All
 deep-dive outputs are namespaced under `data/deepdive/` so the original pipeline's
@@ -55,7 +55,7 @@ Three design consequences follow, and they drive every stage below:
 ## Pipeline at a glance
 
 ```
-PICOS spec (human)                       CARE_review/PICOS_specification.md
+PICOS spec (human)                       docs/PICOS_specification.md
    │
    ▼
 Stage 1  PICOS-targeted retrieval        code/28_run_deepdive.py
@@ -93,7 +93,7 @@ Stage 10 Assembly                        …pipeline.py assemble → CARE_DEEPDI
 
 ## Stage 0 — PICOS specification (human-authored, reviewed)
 
-**Output:** `CARE_review/PICOS_specification.md`
+**Output:** `docs/PICOS_specification.md`
 
 Written *before* any retrieval, from the partner feedback document plus the existing
 full-corpus synthesis. Four blocks were specified (CMAM, BF-facility, BF-community,

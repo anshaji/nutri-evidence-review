@@ -137,7 +137,7 @@ def assemble():
         "Unclear)** — the latter reflects coverage, adherence, delivery-platform "
         "fit, and barriers, because partners identified adherence/coverage (not "
         "efficacy) as the binding constraint. PICOS spec: "
-        "`CARE_review/PICOS_specification.md`.",
+        "`docs/PICOS_specification.md`.",
         "",
         "---",
         "",

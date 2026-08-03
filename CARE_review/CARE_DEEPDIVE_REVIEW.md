@@ -2,9 +2,9 @@
 
 *PICOS-structured review of three partner-selected interventions — **CMAM**, **Breastfeeding support** (facility + community), and **Antenatal MMS** — for CARE and IA partners (Save the Children, Mercy Corps).*
 
-**Generated:** 2026-08-01  ·  **Evidence records:** 984  ·  **Scope:** evidence only — cost / cost-effectiveness is a separate later phase and is deliberately excluded here.
+**Generated:** 2026-08-03  ·  **Evidence records:** 984  ·  **Scope:** evidence only — cost / cost-effectiveness is a separate later phase and is deliberately excluded here.
 
-> **How to read.** Each intervention is rated on two axes: **Evidence strength (A/B/C)** and **Implementation readiness (High/Moderate/Low/Unclear)** — the latter reflects coverage, adherence, delivery-platform fit, and barriers, because partners identified adherence/coverage (not efficacy) as the binding constraint. PICOS spec: `CARE_review/PICOS_specification.md`.
+> **How to read.** Each intervention is rated on two axes: **Evidence strength (A/B/C)** and **Implementation readiness (High/Moderate/Low/Unclear)** — the latter reflects coverage, adherence, delivery-platform fit, and barriers, because partners identified adherence/coverage (not efficacy) as the binding constraint. PICOS spec: `docs/PICOS_specification.md`.
 
 ---
 

@@ -11,8 +11,8 @@ Dependency-free: implements the small subset of JSON Schema the schema uses
 anyOf), so it needs neither pip nor the `jsonschema` package.
 
 Usage:
-    python3 code/27_validate_evidence_db.py
-    python3 code/27_validate_evidence_db.py [data/evidence_db.json] [schema.json]
+    python3 code/31_validate_evidence_db.py
+    python3 code/31_validate_evidence_db.py [data/evidence_db.json] [schema.json]
 """
 
 import json

@@ -23,12 +23,12 @@
 - [x] Define Comparisons (simplified vs standard protocols for CMAM; MMS vs IFA; facility vs community for BF)
 - [x] Define Outcomes: clinical (mortality, anthropometry, micronutrient status) + implementation (coverage, adherence, cost-per-beneficiary, delivery platform, institutional barriers)
 - [x] Define Study types: include implementation science, cost-effectiveness, program evaluations alongside MAs/SRs
-- [x] Document PICOS in a shared format for Liz review → `CARE_review/PICOS_specification.md` (v0 draft 2026-07-22)
+- [x] Document PICOS in a shared format for Liz review → `docs/PICOS_specification.md` (v0 draft 2026-07-22)
 - [ ] Liz + CARE review of PICOS v0; resolve 4 open decisions (emergency/dev split; cash+ breadth; SQ-LNS shadow arm; country pre-commitment)
 
 ### Outputs
 - [ ] Background brief per intervention (short, 2-3 pages each)
-- [x] PICOS specification document → `CARE_review/PICOS_specification.md` (v0)
+- [x] PICOS specification document → `docs/PICOS_specification.md` (v0)
 - [ ] Country shortlist (3-5 candidates with rationale)
 - [x] Workplan shared with CARE and org → `CARE_review/workplan_care_deep_dive.docx`
 
@@ -89,7 +89,7 @@
 | 2026-06-05 | Initial 15-intervention synthesis (Phase 1+2) | `output/FULL_INTERVENTION_SYNTH.md` |
 | 2026-06-09 | Full-corpus 23-intervention synthesis (v4) | `output/FULL_INTERVENTION_SYNTH_FULLCORPUS.md` |
 | 2026-07-10 | Workplan for CARE deep-dive | `CARE_review/workplan_care_deep_dive.docx` |
-| 2026-07-22 | PICOS specification (3 interventions, dual-axis) | `CARE_review/PICOS_specification.md` |
+| 2026-07-22 | PICOS specification (3 interventions, dual-axis) | `docs/PICOS_specification.md` |
 | 2026-07-23 | **Interim** deep-dive review (CMAM/BF/MMS, 175 on-topic records) | `CARE_review/CARE_DEEPDIVE_REVIEW.md` |
 
 ---

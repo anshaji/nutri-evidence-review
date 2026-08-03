@@ -126,7 +126,7 @@ CARE and IA partners (Save the Children, Mercy Corps) reviewed the initial 15-in
 **Timeline:** see `task.md` for detailed tracking. ~4 weeks: background study + PICOS design (wk 1-2) → model runs (wk 2-3) → review with Liz + share with CARE (wk 4).
 
 **Deep-dive pipeline (evidence-only; cost = Phase 2, deferred):** PICOS spec in
-`CARE_review/PICOS_specification.md`. Retrieval is a separate layer over the
+`docs/PICOS_specification.md`. Retrieval is a separate layer over the
 main pipeline — `DEEPDIVE_BLOCKS` in `code/03_queries.py` (3 blocks: `cmam`,
 `breastfeeding`, `mms`), each run through MA + SR + **implementation** passes
 (`IMPL_OUTCOME_FILTER` coverage/adherence/delivery/barriers — *no cost terms* —
