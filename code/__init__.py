@@ -26,8 +26,6 @@ _ALIASES = {
     "fulltext_all":         "19_fulltext_all",
     "build_extraction_inputs": "21_build_extraction_inputs",
     "merge_evidence_db":    "22_merge_evidence_db",
-    "deepdive":             "27_deepdive",
-    "deepdive_pipeline":    "29_deepdive_pipeline",
 }
 
 for _clean, _numbered in _ALIASES.items():

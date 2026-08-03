@@ -58,7 +58,7 @@ Three design consequences follow, and they drive every stage below:
 PICOS spec (human)                       CARE_review/docs/PICOS_specification.md
    │
    ▼
-Stage 1  PICOS-targeted retrieval        code/28_run_deepdive.py
+Stage 1  PICOS-targeted retrieval        CARE_review/code/run_retrieval.py
          3 blocks × (MA + SR + IMPL) + OpenAlex
    │                                      → CARE_review/data/{block}.json  (1,671 papers)
    ▼
@@ -117,8 +117,8 @@ reading could be *targeted* at gaps rather than open-ended.
 
 ## Stage 1 — PICOS-targeted retrieval
 
-**Code:** `code/03_queries.py` (`DEEPDIVE_BLOCKS`), `code/27_deepdive.py`
-**Run:** `python3 code/28_run_deepdive.py [block …]`
+**Code:** `code/03_queries.py` (`DEEPDIVE_BLOCKS`), `CARE_review/code/retrieval.py`
+**Run:** `python3 CARE_review/code/run_retrieval.py [block …]`
 **Output:** `CARE_review/data/{cmam,breastfeeding,mms}.json` + `deepdive_combined.csv`
 
 Each block runs **three PubMed passes plus an OpenAlex arm**, all routed through the
@@ -215,7 +215,7 @@ genuinely breastfeeding-specific.
 
 ## Stage 3 — Corpus assembly
 
-**Run:** `python3 code/30_run_deepdive_pipeline.py corpus`
+**Run:** `python3 CARE_review/code/run_pipeline.py corpus`
 **Output:** `CARE_review/CARE_review/data_corpus.json`
 
 Union of the three blocks, deduped by `paper_key` (PMID > OpenAlex ID > DOI). Papers
@@ -228,7 +228,7 @@ relevance score — a paper on MMS for breastfeeding women legitimately belongs 
 
 ## Stage 4 — Full-text retrieval
 
-**Run:** `python3 code/30_run_deepdive_pipeline.py fulltext`
+**Run:** `python3 CARE_review/code/run_pipeline.py fulltext`
 **Output:** `data/fulltext/{key}.json` (**shared** with the main pipeline)
 
 Reuses `code/19_fulltext_all.py` unchanged apart from a `db_path` parameter, so the
@@ -248,7 +248,7 @@ OA PDFs are usually closed too. Those papers are extracted from abstract + metad
 
 ## Stage 5 — Extraction cards + token-balanced batching
 
-**Run:** `python3 code/30_run_deepdive_pipeline.py cards`
+**Run:** `python3 CARE_review/code/run_pipeline.py cards`
 **Output:** `CARE_review/data/extraction_inputs/{key}.json` + `batches.json`
 
 One self-contained **card** per paper (metadata + abstract + a Methods/Results-biased
@@ -313,7 +313,7 @@ cost-per-DALY even where present.
 
 ## Stage 7 — Merge + validation
 
-**Run:** `python3 code/30_run_deepdive_pipeline.py merge`
+**Run:** `python3 CARE_review/code/run_pipeline.py merge`
 **Output:** `CARE_review/data/evidence_db.json`, `evidence_by_intervention.json`
 
 Validates each record against required fields, normalises stray keys, cross-checks
@@ -402,7 +402,7 @@ caveat now shows its basis (identical estimates across three outcomes).
 
 ## Stage 10 — Assembly
 
-**Run:** `python3 code/30_run_deepdive_pipeline.py assemble`
+**Run:** `python3 CARE_review/code/run_pipeline.py assemble`
 **Output:** `CARE_review/CARE_DEEPDIVE_REVIEW.md`
 
 Stitches the three sections in a fixed display order with a header stating record
@@ -430,28 +430,28 @@ count, generation date, and the explicit scope caveat that cost is excluded.
 
 ```bash
 # Stage 1 — retrieval (all blocks, or one)
-python3 code/28_run_deepdive.py
-python3 code/28_run_deepdive.py breastfeeding
+python3 CARE_review/code/run_retrieval.py
+python3 CARE_review/code/run_retrieval.py breastfeeding
 
 # Stages 3-5
-python3 code/30_run_deepdive_pipeline.py corpus
-python3 code/30_run_deepdive_pipeline.py fulltext
-python3 code/30_run_deepdive_pipeline.py cards
+python3 CARE_review/code/run_pipeline.py corpus
+python3 CARE_review/code/run_pipeline.py fulltext
+python3 CARE_review/code/run_pipeline.py cards
 
 # Stage 6 — multi-agent extraction (Workflow; one Sonnet agent per batch,
 #           reading CARE_review/prompts/deepdive_extraction_prompt.md). Idempotent + resumable.
 
 # Stages 7, 9, 10
-python3 code/30_run_deepdive_pipeline.py merge
+python3 CARE_review/code/run_pipeline.py merge
 python3 code/17_verify_synthesis.py CARE_review/CARE_DEEPDIVE_REVIEW.md \
         CARE_review/CARE_review/data_corpus.json CARE_review/data/evidence_db.json
-python3 code/30_run_deepdive_pipeline.py assemble
+python3 CARE_review/code/run_pipeline.py assemble
 ```
 
 **New/changed code:** `code/03_queries.py` (`DEEPDIVE_BLOCKS`, `IMPL_*`),
 `code/08_scoring.py` (`score_implementation_relevance`, `deepdive_score`),
-`code/27_deepdive.py`, `code/28_run_deepdive.py`, `code/29_deepdive_pipeline.py`,
-`code/30_run_deepdive_pipeline.py`; parameterised `code/19_fulltext_all.py`,
+`CARE_review/code/retrieval.py`, `CARE_review/code/run_retrieval.py`, `CARE_review/code/pipeline.py`,
+`CARE_review/code/run_pipeline.py`; parameterised `code/19_fulltext_all.py`,
 `code/21_build_extraction_inputs.py`, `code/22_merge_evidence_db.py`.
 **Prompts:** `CARE_review/prompts/deepdive_extraction_prompt.md`, `CARE_review/prompts/deepdive_synthesis_prompt.md`.
 

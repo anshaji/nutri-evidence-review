@@ -132,8 +132,8 @@ main pipeline — `DEEPDIVE_BLOCKS` in `code/03_queries.py` (3 blocks: `cmam`,
 (`IMPL_OUTCOME_FILTER` coverage/adherence/delivery/barriers — *no cost terms* —
 × `IMPL_TYPE_FILTER` program-evaluation/trial/cohort designs). Ranking adds
 `score_implementation_relevance` (0–12) via `deepdive_score` (leaves
-`score_paper` untouched). Orchestrator `code/27_deepdive.py`, entry
-`code/28_run_deepdive.py [block ...]`. Output: ranked `CARE_review/data/{block}.json`
+`score_paper` untouched). Orchestrator `CARE_review/code/retrieval.py`, entry
+`CARE_review/code/run_retrieval.py [block ...]`. Output: ranked `CARE_review/data/{block}.json`
 + `deepdive_combined.csv`. **Breastfeeding is one title-anchored retrieval**
 (`[Majr]`/`[ti]`, OpenAlex title-gated) — facility vs community is tagged per
 study at **extraction**, not retrieval (broad BF reviews cover both). Latest run

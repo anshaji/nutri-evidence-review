@@ -42,7 +42,7 @@
 - [ ] Add country-specific filters or queries for shortlisted countries (deferred — country-agnostic retrieval per §7 decision 4)
 - [x] Adjust scoring to weight implementation/scaling outcomes → `score_implementation_relevance` (0–12) + `deepdive_score` (leaves `score_paper` untouched)
 - [x] Test queries on small runs, validate retrieval relevance → esearch counts sane (CMAM 27/41/74, BF-fac 57/109/353, BF-com 46/84/321, MMS 46/61/85)
-- [x] Deep-dive orchestrator + entry point → `code/27_deepdive.py`, `code/28_run_deepdive.py`
+- [x] Deep-dive orchestrator + entry point → `CARE_review/code/retrieval.py`, `CARE_review/code/run_retrieval.py`
 
 ### Model runs (EVIDENCE ONLY — cost deferred to Phase 2)
 - [x] Run deep-dive Phase 1 → `CARE_review/data/{block}.json`. **Blocks: cmam, breastfeeding, mms** (BF collapsed from 2→1; facility/community now tagged at extraction, not retrieval — see PICOS §3 note)

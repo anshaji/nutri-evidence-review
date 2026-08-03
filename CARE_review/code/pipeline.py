@@ -18,10 +18,10 @@ import os
 import re
 from datetime import datetime
 
-from .config import DEEPDIVE_DIR
-from .fulltext_all import paper_key, run as run_fulltext_core
-from .build_extraction_inputs import main as build_cards_main
-from .merge_evidence_db import main as merge_main
+from code.config import DEEPDIVE_DIR
+from code.fulltext_all import paper_key, run as run_fulltext_core
+from code.build_extraction_inputs import main as build_cards_main
+from code.merge_evidence_db import main as merge_main
 
 BLOCK_KEYS = ["cmam", "breastfeeding", "mms"]
 CORPUS_PATH = os.path.join(DEEPDIVE_DIR, "deepdive_corpus.json")

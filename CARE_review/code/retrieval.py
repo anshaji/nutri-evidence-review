@@ -23,21 +23,21 @@ import json
 import csv
 from datetime import datetime
 
-from .config import (
+from code.config import (
     DEEPDIVE_DIR, DEEPDIVE_OPENALEX_MAX_PAGES, RAW_RESPONSE_DIR, NCBI_API_KEY,
 )
 from .queries import (
     DEEPDIVE_BLOCKS, MA_FILTER, SR_FILTER, IMPL_TYPE_FILTER,
     build_deepdive_terms, build_deepdive_openalex, build_openalex_search,
-)
-from .pubmed_client import fetch_pubmed_track
-from .openalex_client import fetch_openalex_query
-from .citation_enrichment import enrich_citations
-from .dedup import (
+)  # deep-dive query layer (local)
+from code.pubmed_client import fetch_pubmed_track
+from code.openalex_client import fetch_openalex_query
+from code.citation_enrichment import enrich_citations
+from code.dedup import (
     deduplicate_pubmed, deduplicate_cochrane,
     deduplicate_openalex, deduplicate_cross_source,
 )
-from .scoring import deepdive_score, score_implementation_relevance
+from .scoring import deepdive_score, score_implementation_relevance  # local
 
 
 def _run_block(block: dict) -> list[dict]:
