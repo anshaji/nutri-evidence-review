@@ -23,6 +23,9 @@ _ALIASES = {
     "ghcea_registry":       "13_ghcea_registry",
     "cea_main":             "14_cea_main",
     "verify":               "16_verify",
+    "fulltext_all":         "19_fulltext_all",
+    "build_extraction_inputs": "21_build_extraction_inputs",
+    "merge_evidence_db":    "22_merge_evidence_db",
 }
 
 for _clean, _numbered in _ALIASES.items():

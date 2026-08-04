@@ -47,6 +47,12 @@ PUBMED_BATCH_SIZE = 200  # PMIDs per efetch request
 # ── Scoring ─────────────────────────────────────────────────────────────────
 POPULATION_SCORE_MAX = 10  # Component 8: under-5 / women-of-reproductive-age relevance
 
+# ── CARE Deep-Dive (PICOS-targeted, evidence-only) ──────────────────────────
+DEEPDIVE_DIR = "./CARE_review/data"   # Deep-dive working data, kept beside its
+                                      # deliverables so the CARE workstream is
+                                      # self-contained (gitignored — generated).
+DEEPDIVE_OPENALEX_MAX_PAGES = 3       # Keep per-block OpenAlex retrieval bounded
+
 # ── Phase 2: Cost-Effectiveness (per shortlisted intervention) ──────────────
 CEA_PER_INTERVENTION_RETMAX = 100  # Max PubMed results per intervention CEA search
 CEA_OPENALEX_MAX_PAGES = 2  # Keep Phase 2 OpenAlex targeted/small

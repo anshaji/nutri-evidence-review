@@ -11,7 +11,7 @@
 
 
 
-<title>PROCESS_DOCUMENTATION</title>
+<title>PROCESS_deepdive</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -352,604 +352,794 @@ display: none;
 </div>
 
 
-<div id="automated-evidence-synthesis-pipeline-v3.0-process-documentation" class="section level1">
-<h1>Automated Evidence Synthesis Pipeline v3.0: Process
-Documentation</h1>
-<div id="overview" class="section level2">
-<h2>Overview</h2>
-<p>This pipeline identifies nutrition interventions for <strong>children
-under 5</strong> and <strong>women of reproductive age (WRA)</strong> in
-low- and middle-income countries (LMICs) that are both <strong>well
-evidence-backed</strong> and <strong>cost-effective</strong>, with
-realistic pathways to government-led scaling.</p>
-<p>It runs in <strong>two phases</strong> separated by a manual review
-checkpoint, then a manual synthesis:</p>
+<div id="carescaleworks-deep-dive-process-documentation" class="section level1">
+<h1>CARE/ScaleWorks Deep-Dive: Process Documentation</h1>
+<p><strong>What this documents:</strong> the end-to-end method used to
+produce <code>CARE_review/CARE_DEEPDIVE_REVIEW.md</code> — a
+PICOS-structured, implementation-weighted evidence review of three
+interventions (CMAM, Breastfeeding support, Antenatal MMS) for CARE and
+IA partners (Save the Children, Mercy Corps).</p>
+<p><strong>Relationship to the main pipeline:</strong> this is a
+<em>layer over</em> the v3/v4 pipeline documented in
+<code>docs/PROCESS_main_pipeline.md</code>, not a replacement. It reuses
+the same clients, dedup, citation enrichment, full-text retrieval, and
+verifier. Only the <strong>query layer</strong>, the
+<strong>ranking</strong>, and the <strong>extraction schema</strong> are
+new. All deep-dive outputs are namespaced under
+<code>CARE_review/data/</code> so the original pipeline’s data is never
+touched; <code>data/fulltext/</code> and
+<code>data/raw_responses/</code> are deliberately
+<strong>shared</strong> so network caching is reused across both.</p>
+<p><strong>Run date:</strong> 2026-07-22 → 2026-07-30 ·
+<strong>Status:</strong> full-text evidence complete (981/981 full-text
+papers extracted); 652 abstract-only papers outstanding.</p>
+<hr />
+<div id="why-this-review-is-shaped-differently" class="section level2">
+<h2>0. Why this review is shaped differently</h2>
+<p>The initial 15-intervention synthesis answered <em>“does it
+work?”</em>. Partner technical experts said that was the wrong binding
+question. The steer, in their words:</p>
+<blockquote>
+<p><strong>Save the Children:</strong> “Adherence/coverage — not
+efficacy — is the binding constraint… we’ve known these are the High
+Impact Nutrition Interventions yet we still aren’t achieving the WHA
+Targets because gov’ts/NGOs/donors haven’t cracked this nut of
+(sustainable) operationalization.”</p>
+</blockquote>
+<blockquote>
+<p><strong>CARE (TE#2):</strong> breastfeeding must be disaggregated —
+“strong facility-based support around delivery” vs “targeted
+counselling… through CHWs with repeated contacts.”</p>
+</blockquote>
+<blockquote>
+<p><strong>Save the Children:</strong> the three interventions were
+chosen to “test the model… from three different positions” —
+commodity-based (MMS), behavioural/SBCC (breastfeeding), health-system
+treatment (CMAM).</p>
+</blockquote>
+<p>Three design consequences follow, and they drive every stage
+below:</p>
 <ol style="list-style-type: decimal">
-<li><strong>Phase 1 — Evidence.</strong> Retrieve meta-analyses /
-systematic reviews from PubMed and the economics/development literature
-from OpenAlex, <em>population- targeted</em> and <strong>excluding
-cost-effectiveness</strong>. Deduplicate, score, rank, take the top 200,
-and retrieve full text. A human/LLM reviews the result and writes a
-shortlist of interventions.</li>
-<li><strong>Phase 2 — Cost-effectiveness.</strong> For <em>each
-shortlisted intervention</em>, run a targeted cost-effectiveness search
-(PubMed + OpenAlex + an optional local CEA registry).</li>
-<li><strong>Synthesis.</strong> A human/LLM combines both datasets
-in-conversation, under a grounding checklist, and a verifier lints the
-result.</li>
+<li><strong>A dual outcome axis.</strong> Every intervention is assessed
+on clinical outcomes <em>and</em> implementation outcomes (coverage,
+adherence, delivery platform, barriers, scalability, equity).
+Implementation is not a footnote — it is a first-class retrieval target,
+a first-class ranking signal, and a first-class schema field.</li>
+<li><strong>Cost is out of scope for this pass.</strong> Per the user’s
+“evidence first, cost later” instruction, cost/CEA is deferred to the
+pipeline’s existing Phase 2 (<code>code/15_run_cea.py</code>). Cost
+terms are excluded from queries, extraction, and synthesis. The usual
+“cost-effectiveness” rating is replaced by an <strong>Implementation
+readiness</strong> rating.</li>
+<li><strong>Breastfeeding is disaggregated</strong> — but see §2.2:
+<em>where</em> the split happens turned out to be a methodological
+finding.</li>
 </ol>
-<p><strong>Why two phases?</strong> A deep audit of the earlier
-single-phase pipeline (the Vitamin A Supplementation case study, see end
-of this document) found its broad cost-effectiveness track returned
-<strong>zero usable CEAs for the actual interventions</strong>, yet the
-synthesis still assigned cost-effectiveness ratings from background
-knowledge. Splitting the pipeline means cost-effectiveness is only ever
-searched — and only ever rated — for the interventions that survive the
-evidence screen.</p>
-<p><strong>Implementation:</strong> Python 3.10+ <strong>standard
-library only</strong> (<code>urllib</code>, <code>json</code>,
-<code>csv</code>, <code>xml.etree.ElementTree</code>); no pip
-dependencies.</p>
-<pre><code>                     PHASE 1 (code/11_fetch_papers.py)            PHASE 2 (code/15_run_cea.py)     SYNTHESIS
-                ┌──────────────────────────────────────────┐      ┌────────────────────────┐   ┌────────────┐
- PubMed Track A │ 12 domains × 2 passes (MA, SR)            │      │ per shortlisted        │   │ human/LLM  │
- OpenAlex Track C│ 4 nutrition-sensitive queries           │ ───► │ intervention:          │   │ combines   │
-                │ + POPULATION filter + LMIC filter        │ rank │  PubMed CEA + OpenAlex  │ ► │ both sets  │
-                │ → dedup → enrich → score (8 comp.)       │ top  │  + optional registry   │   │ → verify   │
-                │ → PMC full text (top 200)                │ 200  │ → filter/rank CEAs      │   │            │
-                └──────────────────────────────────────────┘  │   └────────────────────────┘   └────────────┘
-              data/top_papers_for_review.json ─── manual review ─► data/shortlist.json ─► data/cea_by_intervention.json</code></pre>
 <hr />
 </div>
+<div id="pipeline-at-a-glance" class="section level2">
+<h2>Pipeline at a glance</h2>
+<pre><code>PICOS spec (human)                       CARE_review/docs/PICOS_specification.md
+   │
+   ▼
+Stage 1  PICOS-targeted retrieval        CARE_review/code/run_retrieval.py
+         3 blocks × (MA + SR + IMPL) + OpenAlex
+   │                                      → CARE_review/data/{block}.json  (1,671 papers)
+   ▼
+Stage 2  Relevance validation (human-in-loop)   → title-anchor fix, BF re-scope
+   │
+   ▼
+Stage 3  Corpus assembly                 …pipeline.py corpus   → deepdive_corpus.json (1,636)
+   │
+   ▼
+Stage 4  Full-text retrieval             …pipeline.py fulltext → data/fulltext/  (981, 60%)
+   │
+   ▼
+Stage 5  Cards + token-balanced batches  …pipeline.py cards    → extraction_inputs/ (156 batches)
+   │
+   ▼
+Stage 6  Multi-agent extraction          Workflow, 1 Sonnet agent/batch
+   │                                      → evidence_db/batch_*.json  (984 records)
+   ▼
+Stage 7  Merge + validate                …pipeline.py merge    → evidence_db.json (648 on-topic)
+   │
+   ▼
+Stage 8  Per-intervention synthesis      CARE_review/prompts/deepdive_synthesis_prompt.md
+   │                                      → synthesis_sections/{cat}.md
+   ▼
+Stage 9  Verification (lint every number) code/17_verify_synthesis.py
+   │
+   ▼
+Stage 10 Assembly                        …pipeline.py assemble → CARE_DEEPDIVE_REVIEW.md</code></pre>
+<hr />
 </div>
-<div id="phase-1-evidence" class="section level1">
-<h1>PHASE 1 — Evidence</h1>
-<p>Entry point: <code>python3 code/11_fetch_papers.py</code> →
-<code>code/10_main.py:run_phase1()</code>.</p>
-<div id="stage-1-literature-retrieval-two-tracks-no-cost-effectiveness" class="section level2">
-<h2>Stage 1: Literature retrieval (two tracks, no
-cost-effectiveness)</h2>
+<div id="stage-0-picos-specification-human-authored-reviewed" class="section level2">
+<h2>Stage 0 — PICOS specification (human-authored, reviewed)</h2>
+<p><strong>Output:</strong>
+<code>CARE_review/docs/PICOS_specification.md</code></p>
+<p>Written <em>before</em> any retrieval, from the partner feedback
+document plus the existing full-corpus synthesis. Four blocks were
+specified (CMAM, BF-facility, BF-community, MMS), each with Population /
+Intervention / Comparison / Outcomes / Study-types, plus cross-cutting
+parameters and four explicitly-flagged open decisions.</p>
+<p><strong>Why first:</strong> the PICOS is what the query layer, the
+scoring weights, and the extraction schema are all derived from.
+Drafting it first meant the background reading could be
+<em>targeted</em> at gaps rather than open-ended.</p>
+<p><strong>Open decisions and how they were resolved</strong> (recorded
+in the spec, §7):</p>
 <table>
 <colgroup>
-<col width="26%" />
-<col width="20%" />
-<col width="16%" />
-<col width="36%" />
+<col width="50%" />
+<col width="50%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th>Source</th>
-<th>Role</th>
-<th>API</th>
-<th>Rate limit</th>
+<th>Decision</th>
+<th>Resolution</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>PubMed (E-Utilities)</td>
-<td>Primary — biomedical evidence</td>
-<td>esearch + efetch</td>
-<td>10 req/s with API key</td>
+<td>Emergency vs development scope</td>
+<td>Development-primary; emergency as tagged sub-analysis</td>
 </tr>
 <tr class="even">
-<td>OpenAlex</td>
-<td>Supplementary — economics/development literature</td>
-<td>REST</td>
-<td>~0.3 s between requests</td>
+<td>Cash+/SBCC breadth for BF</td>
+<td>Include cash+SBCC-for-BF; exclude general complementary feeding</td>
+</tr>
+<tr class="odd">
+<td>SQ-LNS as an MMS shadow arm</td>
+<td>Light comparative reference only, not a full block</td>
+</tr>
+<tr class="even">
+<td>Country pre-commitment</td>
+<td><strong>Country-agnostic retrieval</strong>, country-fit at
+synthesis — avoids biasing the evidence base toward pre-selected
+countries</td>
 </tr>
 </tbody>
 </table>
-<div id="track-a-meta-analyses-systematic-reviews-pubmed" class="section level3">
-<h3>Track A — Meta-analyses &amp; systematic reviews (PubMed)</h3>
-<p>Twelve intervention-domain queries
-(<code>code/03_queries.py:TRACK_A_QUERIES</code>), each run in
-<strong>two passes</strong>:</p>
-<ul>
-<li><strong>Pass 1 (primary tier):</strong>
-<code>meta-analysis[pt] OR &quot;Cochrane Database Syst Rev&quot;[Journal]</code>
-— confirmed meta-analyses.</li>
-<li><strong>Pass 2 (supplementary tier):</strong>
-<code>systematic review[pt] OR &quot;systematic review&quot;[tiab]</code>.</li>
-</ul>
-<p>The twelve domains: micronutrient supplementation · food
-fortification · complementary feeding · breastfeeding promotion · acute
-malnutrition management · maternal nutrition · WASH + nutrition · school
-feeding · growth monitoring · deworming · nutrition-sensitive
-agriculture · integrated/multi-sectoral.</p>
-<p>Every query is assembled by the single chokepoint
-<code>build_pubmed_query()</code>:</p>
-<pre><code>[intervention terms] AND [POPULATION_FILTER] AND [LMIC_FILTER] AND [type_filter]</code></pre>
-<p><strong>Population filter (new in v3 — the under-5 / WRA
-target).</strong> A paper on <em>either</em> population qualifies (OR
-logic), via MeSH plus title/abstract terms:</p>
-<pre><code>(&quot;infant&quot;[MeSH] OR &quot;child, preschool&quot;[MeSH]
- OR &quot;infant nutritional physiological phenomena&quot;[MeSH]
- OR &quot;pregnant women&quot;[MeSH] OR &quot;pregnancy&quot;[MeSH]
- OR &quot;maternal nutritional physiological phenomena&quot;[MeSH]
- OR &quot;reproductive health&quot;[MeSH]
- OR &quot;under-five&quot;[tiab] OR &quot;under 5&quot;[tiab] OR &quot;preschool&quot;[tiab] OR &quot;infant&quot;[tiab]
- OR &quot;neonatal&quot;[tiab] OR &quot;young child&quot;[tiab]
- OR &quot;women of reproductive age&quot;[tiab] OR &quot;reproductive age&quot;[tiab]
- OR &quot;pregnant&quot;[tiab] OR &quot;pregnancy&quot;[tiab] OR &quot;maternal&quot;[tiab]
- OR &quot;antenatal&quot;[tiab] OR &quot;prenatal&quot;[tiab])</code></pre>
-<p>Because it lives in <code>build_pubmed_query</code>, it propagates
-automatically to all 24 Track A sub-queries (12 domains × 2 passes).</p>
-<p><strong>LMIC filter.</strong> Uses the curated
-<code>&quot;developing countries&quot;[MeSH]</code> descriptor (which maps to all
-individual LMIC country names) plus tiab fallbacks
-(<code>low income</code>, <code>middle income</code>, <code>LMIC</code>,
-<code>sub-saharan africa</code>, <code>south asia</code>,
-<code>southeast asia</code>).</p>
-</div>
-<div id="track-c-nutrition-sensitive-interventions-openalex" class="section level3">
-<h3>Track C — Nutrition-sensitive interventions (OpenAlex)</h3>
-<p>Four free-text queries for literature PubMed indexes poorly: cash
-transfers, social protection, food subsidies / public distribution,
-conditional cash transfers. Each search string is wrapped by
-<code>build_openalex_search()</code>, which ANDs in the OpenAlex
-equivalent of the population clause.</p>
-</div>
-<div id="cost-effectiveness-is-not-searched-in-phase-1" class="section level3">
-<h3>Cost-effectiveness is <strong>not</strong> searched in Phase 1</h3>
-<p>The old “Track B” CEA query is removed from Phase 1. Its cost-term
-skeleton is retained in <code>queries.py</code> and reused,
-per-intervention, in Phase 2.</p>
-</div>
-<div id="e-utilities-mechanics" class="section level3">
-<h3>E-Utilities mechanics</h3>
-<ol style="list-style-type: decimal">
-<li><strong>esearch</strong> — submit the query, receive up to
-<code>PUBMED_RETMAX</code> (500) PMIDs + total count (JSON).</li>
-<li><strong>efetch</strong> — submit PMIDs in batches of
-<code>PUBMED_BATCH_SIZE</code> (200), receive XML.</li>
-<li><strong>Parse</strong> — title, abstract (structured sections
-joined), publication year, journal, authors (first 5), DOI, publication
-types, MeSH descriptors, and the <strong>Cochrane accession</strong>
-(<code>CDxxxxxx</code>, extracted from the DOI — new in v3).</li>
-<li>Raw XML/JSON saved to <code>data/raw_responses/</code> for
-reproducibility.</li>
-</ol>
-</div>
-</div>
-<div id="stage-2-deduplication" class="section level2">
-<h2>Stage 2: Deduplication</h2>
-<p>Run in order (<code>code/06_dedup.py</code>):</p>
-<ol style="list-style-type: decimal">
-<li><strong>Within PubMed by PMID</strong> — when the same paper appears
-across queries/passes, keep the higher-priority tier (primary &gt;
-supplementary).</li>
-<li><strong>Cochrane version dedup (new in v3)</strong> — collapse
-records sharing a <code>cochrane_id</code> (e.g. CD008524), keep the
-newest <code>publication_year</code>, and tag the dropped older version
-<code>superseded_by</code>. <em>A Cochrane review update is the same
-review, not new evidence</em> — this prevents the
-version-double-counting the VAS audit found.</li>
-<li><strong>Within OpenAlex by OpenAlex ID.</strong></li>
-<li><strong>Cross-source by normalized DOI</strong> — when a paper is in
-both sources, keep the PubMed record (richer MeSH / publication types)
-and merge <code>cited_by_count</code> + open-access status from
-OpenAlex.</li>
-</ol>
-<p><em>Representative run:</em> PubMed 1,194 → 531 (PMID) → 506 (25
-Cochrane versions collapsed); OpenAlex 2,000 → 1,515; merged set ≈ 1,993
-papers.</p>
-</div>
-<div id="stage-3-citation-enrichment-scoring" class="section level2">
-<h2>Stage 3: Citation enrichment + scoring</h2>
-<p><strong>Citation enrichment</strong>
-(<code>citation_enrichment.py</code>): for PubMed papers lacking a
-citation count, batch-look-up DOIs in OpenAlex (50 per request) to
-populate <code>cited_by_count</code> and
-<code>is_open_access</code>.</p>
-<p><strong>Scoring</strong> (<code>code/08_scoring.py</code>) — 8
-components, max ≈ 95:</p>
-<table>
-<colgroup>
-<col width="11%" />
-<col width="40%" />
-<col width="18%" />
-<col width="29%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>#</th>
-<th>Component</th>
-<th>Max</th>
-<th>Source</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>1</td>
-<td>Study design authority</td>
-<td>20</td>
-<td>PubMed <code>publication_type</code> (keyword fallback for
-OpenAlex)</td>
-</tr>
-<tr class="even">
-<td>2</td>
-<td>Topic relevance</td>
-<td>25</td>
-<td>MeSH intervention/outcome term sets (keyword fallback)</td>
-</tr>
-<tr class="odd">
-<td>3</td>
-<td>Setting relevance</td>
-<td>10</td>
-<td>MeSH geographic terms (keyword fallback)</td>
-</tr>
-<tr class="even">
-<td>4</td>
-<td>Recency</td>
-<td>10</td>
-<td>Step function on publication year</td>
-</tr>
-<tr class="odd">
-<td>5</td>
-<td>Citation impact</td>
-<td>12</td>
-<td><code>cited_by_count</code> brackets</td>
-</tr>
-<tr class="even">
-<td>6</td>
-<td>Open access</td>
-<td>3</td>
-<td><code>is_open_access</code></td>
-</tr>
-<tr class="odd">
-<td>7</td>
-<td>Tier bonus</td>
-<td>5</td>
-<td>+5 for confirmed meta-analyses (primary tier)</td>
-</tr>
-<tr class="even">
-<td>8</td>
-<td><strong>Population relevance (new in v3)</strong></td>
-<td><strong>10</strong></td>
-<td>under-5 / WRA MeSH set, or keyword fallback</td>
-</tr>
-</tbody>
-</table>
-<p>Component 8 makes the target population a first-class ranking signal,
-so under-5 / WRA evidence rises into the top 200. Papers are sorted by
-total score descending.</p>
-</div>
-<div id="stage-3.5-full-text-retrieval-pmc-open-access" class="section level2">
-<h2>Stage 3.5: Full-text retrieval (PMC open access)</h2>
-<p>For the <strong>top 200</strong> papers
-(<code>TOP_N_FOR_REVIEW = 200</code>, raised from 100):</p>
-<ol style="list-style-type: decimal">
-<li>Convert PMIDs → PMCIDs via the NCBI ID Converter API (batch of 200).
-<em>(The converter returns PMIDs as integers — they must be cast to
-<code>str()</code> to match the paper dict keys.)</em></li>
-<li><code>efetch db=pmc</code> for each PMCID; parse the
-<code>&lt;body&gt;</code> into sections
-(Introduction/Methods/Results/Discussion) and tables.</li>
-<li>Cache raw XML in <code>data/raw_responses/pmc/{PMCID}.xml</code>;
-subsequent runs reuse it.</li>
-<li>Papers without a downloadable body are flagged
-<code>fulltext_source: &quot;abstract_only&quot;</code> (Cochrane/Wiley and some
-Elsevier journals restrict PMC XML).</li>
-</ol>
-<p><em>Representative run:</em> 193 of the top 200 had PMIDs, 160 were
-PMC-indexed, 117 yielded full-text bodies.</p>
-</div>
-<div id="stage-4-manual-review-shortlist" class="section level2">
-<h2>Stage 4: Manual review → shortlist</h2>
-<p>The top 200 (<code>data/top_papers_for_review.json</code>, with full
-text where available) are reviewed <strong>in-conversation</strong> — no
-API automation — guided by <code>prompts/shortlist_prompt.md</code>. The
-reviewer identifies distinct interventions, each backed by multiple
-corpus papers, and writes
-<strong><code>data/shortlist.json</code></strong> (from
-<code>data/shortlist.template.json</code>):</p>
-<pre class="json"><code>{
-  &quot;interventions&quot;: [
-    {&quot;name&quot;: &quot;vitamin A supplementation in children&quot;,
-     &quot;synonyms&quot;: [&quot;retinol supplementation&quot;, &quot;vitamin A capsule&quot;],
-     &quot;mesh&quot;: [&quot;Vitamin A&quot;, &quot;Vitamin A Deficiency&quot;],
-     &quot;population&quot;: &quot;under-5&quot;}
-  ]
-}</code></pre>
-<p><code>name</code> is required (used in PubMed <code>[tiab]</code>,
-OpenAlex search, and registry matching); <code>synonyms</code> and
-<code>mesh</code> broaden the Phase 2 search; <code>population</code> is
-informational. Avoid ambiguous short abbreviations (e.g. “VAS” also
-means Visual Analog Scale) — they cause false positives in OpenAlex’s
-free-text search.</p>
 <hr />
 </div>
-</div>
-<div id="phase-2-cost-effectiveness" class="section level1">
-<h1>PHASE 2 — Cost-effectiveness</h1>
-<p>Entry point:
-<code>python3 code/15_run_cea.py [data/shortlist.json]</code> →
-<code>code/14_cea_main.py:run_phase2()</code>. For <strong>each</strong>
-shortlisted intervention:</p>
-<div id="targeted-retrieval-code12_cea_client.py" class="section level3">
-<h3>1. Targeted retrieval (<code>code/12_cea_client.py</code>)</h3>
-<ul>
-<li><strong>PubMed</strong> — <code>build_cea_pubmed_query()</code>
-assembles
-<code>CEA_TERM_SKELETON AND (name/synonyms[tiab] OR mesh[MeSH]) AND LMIC_FILTER</code>,
-where the skeleton is the cost-term half of the old Track B
-(<code>cost-benefit analysis[MeSH]</code>,
-<code>cost-effectiveness</code>, <code>cost per DALY</code>,
-<code>cost-utility</code>, <code>incremental cost</code>, …). Run via
-the reused <code>esearch</code>
-(<code>retmax = CEA_PER_INTERVENTION_RETMAX</code>, 100) +
-<code>efetch</code> + parser.</li>
-<li><strong>OpenAlex</strong> — <code>build_cea_openalex_search()</code>
-(cost terms AND name/synonyms AND low-income/LMIC/developing), run with
-<code>max_pages = CEA_OPENALEX_MAX_PAGES</code> (2).</li>
-<li>Deduplicate (PMID, then cross-source DOI) and score with the same
-<code>score_paper()</code> used in Phase 1.</li>
-</ul>
-</div>
-<div id="filter-rank-for-genuine-on-topic-ceas" class="section level3">
-<h3>2. Filter + rank for genuine, on-topic CEAs</h3>
-<p>The OpenAlex arm is loosely matched, and the general relevance score
-does not reward “CEA-ness”, so the raw bucket is filtered and
-re-ranked:</p>
-<ul>
-<li><strong>Keep</strong> a paper if it came from PubMed (a cost term
-was <em>required</em> at query time) <strong>or</strong> if its
-text/MeSH contains a cost-effectiveness marker
-(<code>cea_hits &gt; 0</code>).</li>
-<li><strong>Rank</strong> by
-<code>cea_rank_score = relevance_score + min(cea_hits, 5) × 5</code>, so
-a genuine, on-topic CEA outranks both a topically-strong-but-weak-CEA
-paper and an off-topic-but-CEA-heavy paper (e.g. a cochlear-implant CEA
-that matched an ambiguous synonym).</li>
-</ul>
-</div>
-<div id="optional-local-cea-registry-code13_ghcea_registry.py" class="section level3">
-<h3>3. Optional local CEA registry
-(<code>code/13_ghcea_registry.py</code>)</h3>
-<p>A research spike found neither the Tufts/CEVR Global Health CEA
-Registry (a client-side JavaScript app) nor DCP3 (a PDF supplement) is
-reachable from stdlib <code>urllib</code>. So the registry is an
-<strong>optional local CSV</strong> the user downloads once (see
-<code>data/README.md</code>). If present it is matched against each
-intervention (name + synonyms, tolerant column aliases); if absent,
-Phase 2 prints a notice and proceeds on the PubMed/OpenAlex backbone
-with zero registry matches.</p>
-</div>
-<div id="cea-rating-guard-output" class="section level3">
-<h3>4. CEA-rating guard + output</h3>
-<p>Each intervention record sets
-<code>cea_rating_allowed = (has CEA papers) OR (has registry matches)</code>.
-When false, the synthesis <strong>must</strong> record
-cost-effectiveness as <code>Unknown</code> rather than invent one.
-Output is written to
-<strong><code>data/cea_by_intervention.json</code></strong> with, per
-intervention: <code>cea_papers</code> (filtered, ranked),
-<code>registry_matches</code>, <code>registry_available</code>,
-<code>num_cea_papers</code>, and <code>cea_rating_allowed</code>.</p>
-<hr />
-</div>
-</div>
-<div id="synthesis-in-conversation-verification" class="section level1">
-<h1>Synthesis (in-conversation) + verification</h1>
-<p>The reviewer combines <code>data/top_papers_for_review.json</code>
-(Phase 1) and <code>data/cea_by_intervention.json</code> (Phase 2) into
-the tiered intervention writeup
-(<code>output/FULL_INTERVENTION_SYNTH.md</code>), following the hard
-grounding rules in <code>prompts/synthesis_prompt.md</code>:</p>
-<ul>
-<li>State study type <strong>verbatim</strong> from <code>journal</code>
-+ <code>publication_type</code> (never infer “Cochrane” unless the
-journal is <em>The Cochrane Database of Systematic Reviews</em>).</li>
-<li>Attach a <strong>corpus PMID to every numeric claim</strong> (else
-write <code>not in corpus</code>); never import figures from background
-knowledge.</li>
-<li>Keep <strong>all-cause vs cause-specific</strong> outcomes separate;
-flag underpowered pathways.</li>
-<li>Report both fixed/random estimates and name any dominant trial the
-review identifies.</li>
-<li><strong>Version ≠ evidence</strong> — Cochrane updates sharing one
-accession are counted once.</li>
-<li><strong>CEA-rating guard</strong> — assign a cost-effectiveness
-rating only where <code>cea_rating_allowed</code> is true; otherwise
-<code>Unknown</code>.</li>
-</ul>
-<p><strong>Claim verifier</strong>
-(<code>code/17_verify_synthesis.py</code> →
-<code>code/16_verify.py</code>): parses every <code>{value, PMID}</code>
-claim from the finished synthesis and checks (a) the PMID is in the
-corpus (<code>data/papers_database.json</code> /
-<code>data/cea_by_intervention.json</code>) and (b) the cited paper’s
-text contains the claimed number. It reports <code>NOT_IN_CORPUS</code>
-(misattribution / external-knowledge leak), <code>NEEDS_REVIEW</code>
-(in corpus but number not found — semantic check left to the reviewer),
-and unsourced numeric claims.</p>
-<hr />
-<div id="configuration-code01_config.py" class="section level2">
-<h2>Configuration (<code>code/01_config.py</code>)</h2>
+<div id="stage-1-picos-targeted-retrieval" class="section level2">
+<h2>Stage 1 — PICOS-targeted retrieval</h2>
+<p><strong>Code:</strong> <code>code/03_queries.py</code>
+(<code>DEEPDIVE_BLOCKS</code>),
+<code>CARE_review/code/retrieval.py</code> <strong>Run:</strong>
+<code>python3 CARE_review/code/run_retrieval.py [block …]</code>
+<strong>Output:</strong>
+<code>CARE_review/data/{cmam,breastfeeding,mms}.json</code> +
+<code>deepdive_combined.csv</code></p>
+<p>Each block runs <strong>three PubMed passes plus an OpenAlex
+arm</strong>, all routed through the existing
+<code>build_pubmed_query</code> chokepoint so the population and LMIC
+filters are applied identically to the main pipeline:</p>
 <table>
 <colgroup>
 <col width="25%" />
-<col width="37%" />
-<col width="37%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th>Knob</th>
-<th>Default</th>
+<th>Pass</th>
+<th>Content filter</th>
+<th>Study-type filter</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>TOP_N_FOR_REVIEW</code></td>
-<td>200</td>
-<td>Phase 1 top-N + full-text breadth</td>
+<td><strong>MA</strong></td>
+<td>intervention [AND setting]</td>
+<td><code>MA_FILTER</code></td>
+<td>Clinical backbone</td>
 </tr>
 <tr class="even">
-<td><code>POPULATION_SCORE_MAX</code></td>
-<td>10</td>
-<td>Scoring component 8 cap</td>
+<td><strong>SR</strong></td>
+<td>intervention [AND setting]</td>
+<td><code>SR_FILTER</code></td>
+<td>Clinical breadth</td>
 </tr>
 <tr class="odd">
-<td><code>PUBMED_RETMAX</code> / <code>PUBMED_BATCH_SIZE</code></td>
-<td>500 / 200</td>
-<td>esearch cap / efetch batch</td>
+<td><strong>IMPL</strong></td>
+<td>intervention [AND setting] <strong>AND
+<code>IMPL_OUTCOME_FILTER</code></strong></td>
+<td><code>IMPL_TYPE_FILTER</code></td>
+<td><strong>The novel pass</strong></td>
 </tr>
 <tr class="even">
-<td><code>CEA_PER_INTERVENTION_RETMAX</code></td>
-<td>100</td>
-<td>Phase 2 PubMed cap per intervention</td>
-</tr>
-<tr class="odd">
-<td><code>CEA_OPENALEX_MAX_PAGES</code></td>
-<td>2</td>
-<td>Phase 2 OpenAlex page cap</td>
-</tr>
-<tr class="even">
-<td><code>SHORTLIST_PATH</code> / <code>CEA_OUTPUT_PATH</code></td>
-<td><code>./data/shortlist.json</code> /
-<code>./data/cea_by_intervention.json</code></td>
-<td>Phase 1→2 handoff / Phase 2 output</td>
-</tr>
-<tr class="odd">
-<td><code>GHCEA_LOCAL_PATH</code> / <code>DCP3_LOCAL_PATH</code></td>
-<td><code>./data/*.csv</code></td>
-<td>Optional CEA registry files</td>
+<td><strong>OpenAlex</strong></td>
+<td>free-text equivalent, ± impl terms</td>
+<td>—</td>
+<td>Non-PubMed literature</td>
 </tr>
 </tbody>
 </table>
-<p>API key: put <code>NCBI_API_KEY=...</code> in a gitignored
-<code>.env</code>; auto-loaded by <code>config.py</code> (10 req/s with
-key vs 3 without).</p>
-</div>
-<div id="outputs" class="section level2">
-<h2>Outputs</h2>
-<p>All data lives in <code>data/</code>:</p>
-<p><strong>Phase 1:</strong> <code>data/papers_database.json</code>
-(full DB) · <code>data/papers_ranked.csv</code> (ranked table) ·
-<code>data/top_papers_for_review.json</code> (top 200 with full text) ·
-<code>data/raw_responses/</code> (PubMed XML, OpenAlex JSON, PMC XML).
-<strong>Phase 2:</strong> <code>data/shortlist.json</code>
-(human-authored) · <code>data/cea_by_intervention.json</code> ·
-<code>data/raw_responses/cea/</code>. <strong>Synthesis:</strong>
-<code>output/FULL_INTERVENTION_SYNTH.md</code>. All data outputs are
-gitignored (regenerated/authored).</p>
-</div>
-<div id="running" class="section level2">
-<h2>Running</h2>
-<pre class="bash"><code>python3 code/11_fetch_papers.py                             # Phase 1 (~3–4 min)
-cp data/shortlist.template.json data/shortlist.json         # review data/top_papers_for_review.json, then edit
-python3 code/15_run_cea.py                                  # Phase 2
-python3 code/17_verify_synthesis.py output/FULL_INTERVENTION_SYNTH.md   # lint the synthesis</code></pre>
-<p>Caching: PMC full-text and per-intervention CEA XML are cached under
-<code>data/raw_responses/</code>, so repeat runs are much faster.</p>
+<p><strong>The implementation pass is the methodological core of this
+review.</strong> Two new filters:</p>
+<ul>
+<li><code>IMPL_OUTCOME_FILTER</code> — coverage, adherence, compliance,
+uptake, retention, default, implementation, scale-up, delivery platform,
+feasibility, program/process evaluation, barriers, facilitators,
+fidelity, health system, community health worker. <strong>Deliberately
+contains no cost terms</strong> (cost = Phase 2).</li>
+<li><code>IMPL_TYPE_FILTER</code> — widens beyond MA/SR to admit RCTs,
+evaluation studies, observational studies, cluster-randomised,
+program/process evaluations, mixed methods, qualitative, cohort,
+feasibility, cross-sectional, coverage surveys. Implementation evidence
+does not live in meta-analyses; without this filter it is invisible to
+the pipeline.</li>
+</ul>
+<p><strong>Ranking change</strong> (<code>code/08_scoring.py</code>): a
+new component <code>score_implementation_relevance</code> (0–12, from
+implementation MeSH + keywords) is added to the base
+<code>score_paper</code> via <code>deepdive_score</code>. This is
+<strong>additive</strong>, so a paper strong on both clinical and
+implementation grounds ranks highest. <code>score_paper</code> itself is
+untouched — the original pipeline’s ranking is unchanged.</p>
+<p><strong>Pre-flight validation:</strong> before the full fetch,
+<code>esearch</code> counts only were pulled for all 12 passes to catch
+empty or runaway queries cheaply:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Block</th>
+<th>MA</th>
+<th>SR</th>
+<th>IMPL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>cmam</td>
+<td>27</td>
+<td>41</td>
+<td>74</td>
+</tr>
+<tr class="even">
+<td>breastfeeding-facility</td>
+<td>57</td>
+<td>109</td>
+<td>353</td>
+</tr>
+<tr class="odd">
+<td>breastfeeding-community</td>
+<td>46</td>
+<td>84</td>
+<td>321</td>
+</tr>
+<tr class="even">
+<td>mms</td>
+<td>46</td>
+<td>61</td>
+<td>85</td>
+</tr>
+</tbody>
+</table>
+<p>All non-empty, all under the 500 retmax. The large BF implementation
+counts are expected — that is where the operational literature
+concentrates.</p>
 <hr />
 </div>
-<div id="validation-findings-vitamin-a-supplementation-vas-case-study" class="section level2">
-<h2>Validation findings — Vitamin A Supplementation (VAS) case
-study</h2>
-<p>The two-phase redesign was driven by a manual audit of a VAS
-synthesis produced by the earlier single-phase pipeline. The audit
-surfaced recurring failures and each is now addressed structurally:</p>
-<table>
-<colgroup>
-<col width="72%" />
-<col width="27%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th>Failure in the old pipeline</th>
-<th>Fix in v3</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><strong>CEA blind spot</strong> — VAS rated “Very High”
-cost-effectiveness with zero usable CEAs in the corpus (PubMed isn’t
-where CEAs live).</td>
-<td>Two-phase split: CEA searched per shortlisted intervention;
-<code>cea_rating_allowed</code> guard forces <code>Unknown</code>
-without a CEA record.</td>
-</tr>
-<tr class="even">
-<td><strong>Version vs. evidence confusion</strong> — the 2017 and 2022
-Cochrane reviews (same accession CD008524) counted as independent
-evidence.</td>
-<td>Cochrane-version dedup collapses shared accessions, keeping the
-newest.</td>
-</tr>
-<tr class="odd">
-<td><strong>External-knowledge leak / misattribution</strong> — figures
-like “823,000 deaths” (actually the Lancet <em>Breastfeeding</em>
-series) imported from training data.</td>
-<td>Grounding prompt (corpus PMID per claim) +
-<code>verify_synthesis.py</code> flags <code>NOT_IN_CORPUS</code>.</td>
-</tr>
-<tr class="even">
-<td><strong>Study-type misclassification</strong> — a <em>BMC Public
-Health</em> meta-analysis labelled “Cochrane”.</td>
-<td>Grounding rule: study type stated verbatim from <code>journal</code>
-+ <code>publication_type</code>.</td>
-</tr>
-<tr class="odd">
-<td><strong>No population targeting</strong> — only LMIC geography was
-filtered.</td>
-<td>Population filter in every query + scoring component 8.</td>
-</tr>
-<tr class="even">
-<td><strong>No entity model of evidence</strong> (trial overlap /
-dominant-trial effects).</td>
-<td><em>Deferred</em> — a trial-level evidence graph (parse
-included-studies + forest-plot weights) is the next milestone.</td>
-</tr>
-</tbody>
-</table>
+<div id="stage-2-relevance-validation-human-in-the-loop-checkpoint" class="section level2">
+<h2>Stage 2 — Relevance validation (human-in-the-loop checkpoint)</h2>
+<p><strong>This stage is not automated and should not be.</strong> After
+retrieval, the top-ranked papers per block were inspected before
+committing to the expensive downstream stages. It caught a real
+defect.</p>
+<div id="what-the-check-found" class="section level3">
+<h3>2.1 What the check found</h3>
+<ul>
+<li><strong>MMS — clean.</strong> Top hits on-target;
+adherence/compliance studies surfacing as intended.</li>
+<li><strong>CMAM — good.</strong> Minor topical bleed (a fortification
+review, an adolescent-pregnancy review), which the extraction
+<code>on_topic</code> flag removes later.</li>
+<li><strong>Breastfeeding — diluted.</strong> The top was dominated by
+<em>generic MNCH delivery-platform</em> reviews (IMCI, lay health
+workers, “community intervention packages”, even aflatoxin education)
+rather than breastfeeding-specific evidence. Cause: the broad BF
+intervention clause combined with the implementation-scoring bonus
+floated generic delivery reviews to the top.</li>
+</ul>
 </div>
-<div id="version-history" class="section level2">
-<h2>Version history</h2>
+<div id="the-finding-retrieval-cannot-separate-facility-from-community" class="section level3">
+<h3>2.2 The finding: retrieval cannot separate facility from
+community</h3>
+<p>A diagnostic re-ranking showed that requiring a breastfeeding term
+<strong>in the title</strong> fixed the dilution — but it also revealed
+that the <strong>facility and community top-lists were nearly identical
+even after the fix</strong>. Broad BF reviews (BFHI, IYCF, “scaling up
+BF promotion”) genuinely cover <em>both</em> settings, so they match
+both retrievals.</p>
+<p><strong>Conclusion:</strong> facility-vs-community is a
+<strong>per-study delivery-channel judgment</strong>, not a query-able
+distinction. The split was therefore moved from <em>retrieval</em> to
+<em>extraction</em>, via a <code>bf_delivery_setting</code> field.</p>
+<p><strong>Two changes followed:</strong> 1. Blocks collapsed 4 → 3
+(<code>cmam</code>, <code>breastfeeding</code>, <code>mms</code>). 2. A
+<code>title_anchor</code> regex was added to the BF block, gating the
+<strong>OpenAlex</strong> arm only (PubMed papers already passed a
+precise <code>[Majr]</code>/<code>[ti]</code> query and are
+trusted).</p>
+<p><strong>Result:</strong> OpenAlex 600 → 367 kept; the BF top-50
+became <strong>100% PubMed</strong> and genuinely
+breastfeeding-specific.</p>
+</div>
+<div id="retrieval-funnel" class="section level3">
+<h3>2.3 Retrieval funnel</h3>
 <table>
-<colgroup>
-<col width="37%" />
-<col width="25%" />
-<col width="37%" />
-</colgroup>
 <thead>
 <tr class="header">
-<th>Version</th>
-<th>Date</th>
-<th>Changes</th>
+<th>Block</th>
+<th>Papers</th>
+<th>Implementation-heavy (score ≥6)</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td>v1.0</td>
-<td>2026-05-22</td>
-<td>OpenAlex only, 16 keyword queries, binary keyword scoring.</td>
+<td>cmam</td>
+<td>500</td>
+<td>76</td>
 </tr>
 <tr class="even">
-<td>v2.0</td>
-<td>2026-05-24</td>
-<td>Multi-source (PubMed + OpenAlex), MeSH-based scoring, two-tier MA/SR
-separation, citation enrichment, modular architecture.</td>
+<td>breastfeeding</td>
+<td>640</td>
+<td>94</td>
 </tr>
 <tr class="odd">
-<td>v2.1</td>
-<td>2026-05-24</td>
-<td>Stage 3.5 PMC full-text retrieval; full-text-enhanced synthesis;
-<code>.env</code> auto-loading.</td>
+<td>mms</td>
+<td>531</td>
+<td>97</td>
 </tr>
 <tr class="even">
-<td>v3.0</td>
-<td>2026-06-03</td>
-<td><strong>Two-phase restructure</strong> (evidence →
-cost-effectiveness) with manual shortlist checkpoint. Population
-targeting (filter + scoring component 8). Cochrane-version dedup. Top-N
-→ 200. Per-intervention CEA search + optional local registry +
-<code>cea_rating_allowed</code> guard. Grounding prompt and
-<code>verify_synthesis.py</code> claim verifier.</td>
+<td><strong>Total</strong></td>
+<td><strong>1,671</strong></td>
+<td></td>
 </tr>
 </tbody>
 </table>
+<hr />
+</div>
+</div>
+<div id="stage-3-corpus-assembly" class="section level2">
+<h2>Stage 3 — Corpus assembly</h2>
+<p><strong>Run:</strong>
+<code>python3 CARE_review/code/run_pipeline.py corpus</code>
+<strong>Output:</strong>
+<code>CARE_review/CARE_review/data_corpus.json</code></p>
+<p>Union of the three blocks, deduped by <code>paper_key</code> (PMID
+&gt; OpenAlex ID &gt; DOI). Papers appearing in more than one block keep
+a <strong>list</strong> in <code>deepdive_blocks</code> and the higher
+relevance score — a paper on MMS for breastfeeding women legitimately
+belongs to both.</p>
+<p><strong>1,671 → 1,636 unique</strong> (35 multi-block).</p>
+<hr />
+</div>
+<div id="stage-4-full-text-retrieval" class="section level2">
+<h2>Stage 4 — Full-text retrieval</h2>
+<p><strong>Run:</strong>
+<code>python3 CARE_review/code/run_pipeline.py fulltext</code>
+<strong>Output:</strong> <code>data/fulltext/{key}.json</code>
+(<strong>shared</strong> with the main pipeline)</p>
+<p>Reuses <code>code/19_fulltext_all.py</code> unchanged apart from a
+<code>db_path</code> parameter, so the deep-dive corpus can be annotated
+without touching <code>papers_database.json</code>. Two routes:</p>
+<ol style="list-style-type: decimal">
+<li><strong>PMC</strong> — PMID <em>or DOI</em> → PMCID via the NCBI ID
+Converter → <code>efetch db=pmc</code> JATS.</li>
+<li><strong>Unpaywall PDF fallback</strong> — repository-preferred OA
+PDF → PyMuPDF.</li>
+</ol>
+<p><strong>Result: 981/1,636 (60%)</strong> — 908 PMC + 73 PDF. Only ~9%
+was already cached from the main pipeline, confirming the PICOS-targeted
+queries surfaced a substantially different literature.</p>
+<p><em>Note on the 40% without full text:</em> Cochrane/Wiley restrict
+PMC full text and their OA PDFs are usually closed too. Those papers are
+extracted from abstract + metadata.</p>
+<hr />
+</div>
+<div id="stage-5-extraction-cards-token-balanced-batching" class="section level2">
+<h2>Stage 5 — Extraction cards + token-balanced batching</h2>
+<p><strong>Run:</strong>
+<code>python3 CARE_review/code/run_pipeline.py cards</code>
+<strong>Output:</strong>
+<code>CARE_review/data/extraction_inputs/{key}.json</code> +
+<code>batches.json</code></p>
+<p>One self-contained <strong>card</strong> per paper (metadata +
+abstract + a Methods/Results-biased full-text excerpt capped at 9,000
+words), so an extraction agent needs exactly one <code>Read</code> per
+paper. Cards additionally carry <code>deepdive_blocks</code> and
+<code>implementation_score</code>.</p>
+<p>Cards are greedily bin-packed into <strong>token-balanced
+batches</strong> (~70k tokens, max 18 papers) so each agent gets a
+bounded context. <strong>1,636 cards → 148 batches</strong> (avg 11.1
+papers/batch; large full-text papers get small or singleton
+batches).</p>
+<hr />
+</div>
+<div id="stage-6-multi-agent-extraction" class="section level2">
+<h2>Stage 6 — Multi-agent extraction</h2>
+<p><strong>Prompt:</strong>
+<code>CARE_review/prompts/deepdive_extraction_prompt.md</code>
+<strong>Mechanism:</strong> <code>Workflow</code> — one Sonnet agent per
+batch, ~16 concurrent <strong>Output:</strong>
+<code>CARE_review/data/evidence_db/batch_XXXX.json</code></p>
+<p>Each agent reads the manifest, finds its own batch index, reads the
+prompt, reads its cards, and writes one record per card. It returns only
+a one-line summary — records go to disk, never back through context.</p>
+<div id="the-extended-schema-what-makes-this-review-different" class="section level3">
+<h3>The extended schema (what makes this review different)</h3>
+<p>Beyond the base v4 fields (study design verbatim, effect sizes with
+CIs, <code>included_trials</code>, <code>dominant_trial</code>,
+<code>cochrane_id</code>, <code>on_topic</code>), three fields were
+added:</p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Field</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong><code>bf_delivery_setting</code></strong></td>
+<td><code>facility</code> / <code>community</code> / <code>both</code> /
+<code>n/a</code> — the split moved here from retrieval (§2.2). Judged on
+the <em>delivery channel described</em>, not where the mother
+lives.</td>
+</tr>
+<tr class="even">
+<td><strong><code>comparison_type</code></strong></td>
+<td>The PICOS “C” — <code>simplified_vs_standard</code>,
+<code>combined_vs_separate</code>, <code>mms_vs_ifa</code>,
+<code>community_vs_facility</code>,
+<code>counselling_plus_food_vs_counselling</code>,
+<code>head_to_head_products</code>, …</td>
+</tr>
+<tr class="odd">
+<td><strong><code>implementation_findings[]</code></strong></td>
+<td>Structured <code>{dimension, finding, value, source}</code> where
+dimension ∈ coverage / adherence / delivery_platform / barriers /
+scalability / equity. <strong>The core deliverable of the
+re-scope.</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Inherited grounding rules are restated in the prompt: study design
+verbatim from <code>publication_type</code>+<code>journal</code>;
+all-cause vs cause-specific separate; fixed vs random both, name the
+dominant trial; effect sizes require CIs; <code>cochrane_id</code>
+passthrough. <strong>Cost fields are explicitly excluded</strong> —
+agents are told to ignore ICERs and cost-per-DALY even where
+present.</p>
+</div>
+<div id="operational-lessons-these-matter-for-reproducibility" class="section level3">
+<h3>Operational lessons (these matter for reproducibility)</h3>
+<ol style="list-style-type: decimal">
+<li><strong>Idempotency is mandatory.</strong> Each agent first checks
+whether its output file already exists and is a valid non-empty array;
+if so it skips. This is what makes the run resumable across
+interruptions — and it was needed.</li>
+<li><strong>Session limits fragment the run.</strong> Extraction was
+capped at roughly 26–46 batches per window before hitting the usage
+limit, requiring several resume bursts. Because of idempotency, each
+resume only ran genuinely-missing batches.</li>
+<li><strong>Args can arrive as a JSON string.</strong> The first
+workflow launch returned in 20 ms with 0 agents:
+<code>args.n_batches</code> was <code>undefined</code> because the args
+object reached the script as a string, so
+<code>Array.from({length: undefined})</code> produced an empty array.
+Fix:
+<code>const A = typeof args === &#39;string&#39; ? JSON.parse(args) : (args || {})</code>.
+<strong>Lesson: always verify a fan-out actually spawned agents — a 20
+ms “success” is a failure.</strong></li>
+<li><strong>Batch order ≠ evidence value.</strong> The token-balancer
+front-loads large full-text papers, but not perfectly: after 104
+batches, <strong>125 full-text papers were still un-extracted</strong>,
+mixed into later batches alongside abstract-only records. They were
+re-batched into a dedicated priority set (indices 1000+) and run first,
+which completed full-text coverage in one short burst. <strong>Lesson:
+when a run is resource-fragmented, re-prioritise by evidence value, not
+by batch index.</strong></li>
+</ol>
+<hr />
+</div>
+</div>
+<div id="stage-7-merge-validation" class="section level2">
+<h2>Stage 7 — Merge + validation</h2>
+<p><strong>Run:</strong>
+<code>python3 CARE_review/code/run_pipeline.py merge</code>
+<strong>Output:</strong> <code>CARE_review/data/evidence_db.json</code>,
+<code>evidence_by_intervention.json</code></p>
+<p>Validates each record against required fields, normalises stray keys,
+cross-checks coverage against the corpus, and writes any still-missing
+keys to <code>evidence_db_missing.json</code> so a resume can target
+them.</p>
+<p><strong>Schema-fidelity check</strong> (this is the evidence the
+re-scope worked):</p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Signal</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Records / on-topic</td>
+<td>984 / <strong>648</strong></td>
+</tr>
+<tr class="even">
+<td>Records with ≥1 implementation finding</td>
+<td><strong>630 / 648 (97%)</strong></td>
+</tr>
+<tr class="odd">
+<td><code>bf_delivery_setting</code> distribution</td>
+<td>facility 62 · community 27 · both 65 · n/a 39</td>
+</tr>
+<tr class="even">
+<td>Records with country tags</td>
+<td>618 / 648</td>
+</tr>
+</tbody>
+</table>
+<p>Per-intervention: CMAM 239 (12 MA, 12 SR, 32 RCT, 48
+program-evaluations), Breastfeeding 193 (30 MA, 29 SR, 12 RCT), MMS 203
+(33 MA, 16 SR, 30 RCT).</p>
+<hr />
+</div>
+<div id="stage-8-per-intervention-synthesis" class="section level2">
+<h2>Stage 8 — Per-intervention synthesis</h2>
+<p><strong>Prompt:</strong>
+<code>CARE_review/prompts/deepdive_synthesis_prompt.md</code>
+<strong>Output:</strong>
+<code>CARE_review/data/synthesis_sections/{cmam_sam_mam,breastfeeding,anc_mmn}.md</code></p>
+<p>One section per intervention, written against the evidence DB with
+full-text cards available for tracing exact effect sizes. Structure:
+evidence base → clinical effect sizes → <strong>implementation evidence
+(priority axis)</strong> → comparison arms → mechanism → caveats.</p>
+<p><strong>Ratings — note the substitution:</strong></p>
+<ul>
+<li><strong>Evidence strength</strong> — A / B / C (unchanged).</li>
+<li><strong>Implementation readiness</strong> — High / Moderate / Low /
+Unclear. <strong>Replaces the cost-effectiveness rating</strong>,
+because cost is deferred. Derived from the
+<code>implementation_findings</code> across records.</li>
+<li><strong>Scalability</strong> — Proven national / Proven subnational
+/ Growing / Requires investment.</li>
+</ul>
+<p>To keep the working set tractable, per-intervention
+<strong>digests</strong> are generated from the evidence DB (backbone +
+program-evaluations + qualitative in full, plus the richest
+observational records), rather than reading 200+ raw JSON records.</p>
+<p><em>Practical note:</em> Stages 6 and 8 are normally multi-agent.
+During a session-limit window the synthesis was written in the main loop
+from the digests instead — same inputs, same prompt, same grounding
+rules.</p>
+<hr />
+</div>
+<div id="stage-9-verification" class="section level2">
+<h2>Stage 9 — Verification</h2>
+<p><strong>Run:</strong></p>
+<pre class="bash"><code>python3 code/17_verify_synthesis.py CARE_review/CARE_DEEPDIVE_REVIEW.md CARE_review/CARE_review/data_corpus.json CARE_review/data/evidence_db.json</code></pre>
+<p>The verifier lints <strong>every numeric claim</strong> against the
+corpus + extracted outcomes + full text, flagging three classes:
+<code>NOT_IN_CORPUS</code> (misattribution or training-data leak),
+unsupported numbers, and unsourced numbers.</p>
+<p><strong>Latest result: 130 cited claims · 125 supported · 0
+NOT_IN_CORPUS · 9 unsourced.</strong></p>
+<p><code>NOT_IN_CORPUS = 0</code> is the load-bearing result — it means
+no number was imported from outside the retrieved evidence. The residual
+flags are parser artifacts (DOI digits read as numbers, section
+headings, fractions like “4–8 contacts”, and summary recaps of figures
+cited in full earlier).</p>
+<div id="independent-fact-check-beyond-the-verifier" class="section level3">
+<h3>Independent fact-check (beyond the verifier)</h3>
+<p>The automated verifier checks whether a number exists
+<em>somewhere</em> in the corpus. A separate audit was run to check
+<strong>attribution</strong> — whether the <em>specific cited
+record</em> actually contains the claim:</p>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Check</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>268 values matched against their own cited record</td>
+<td>✅ all resolve</td>
+</tr>
+<tr class="even">
+<td>Record counts vs DB (239/193/203 + tier splits)</td>
+<td>✅ exact</td>
+</tr>
+<tr class="odd">
+<td>Source descriptions (journal + study type verbatim, G1)</td>
+<td>✅ exact, incl. 4 Cochrane IDs</td>
+</tr>
+<tr class="even">
+<td>Interpretive claims traced to record text</td>
+<td>✅ verbatim-supported</td>
+</tr>
+</tbody>
+</table>
+<p>The audit produced two precision improvements: the MMS safety caveat
+gained the WHO technical correction’s actual figures (corrected RR 1.05
+[0.85–1.30] vs original 1.22 [0.95–1.57]) and its actionable iron-dose
+recommendation; and the twin-publication caveat now shows its basis
+(identical estimates across three outcomes).</p>
+<hr />
+</div>
+</div>
+<div id="stage-10-assembly" class="section level2">
+<h2>Stage 10 — Assembly</h2>
+<p><strong>Run:</strong>
+<code>python3 CARE_review/code/run_pipeline.py assemble</code>
+<strong>Output:</strong>
+<code>CARE_review/CARE_DEEPDIVE_REVIEW.md</code></p>
+<p>Stitches the three sections in a fixed display order with a header
+stating record count, generation date, and the explicit scope caveat
+that cost is excluded.</p>
+<hr />
+</div>
+<div id="the-funnel-end-to-end" class="section level2">
+<h2>The funnel, end to end</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Stage</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Retrieved (3 blocks, 12 query passes)</td>
+<td>1,671</td>
+</tr>
+<tr class="even">
+<td>Unique corpus after dedup</td>
+<td>1,636</td>
+</tr>
+<tr class="odd">
+<td>With full text (PMC 908 + PDF 73)</td>
+<td>981 (60%)</td>
+</tr>
+<tr class="even">
+<td>Extraction cards → batches</td>
+<td>1,636 → 156</td>
+</tr>
+<tr class="odd">
+<td>Batches extracted</td>
+<td>112</td>
+</tr>
+<tr class="even">
+<td>Evidence records</td>
+<td>984</td>
+</tr>
+<tr class="odd">
+<td><strong>On-topic records (synthesis input)</strong></td>
+<td><strong>648</strong></td>
+</tr>
+<tr class="even">
+<td>Records with implementation findings</td>
+<td>630 (97%)</td>
+</tr>
+<tr class="odd">
+<td>Cited claims in final document</td>
+<td>130 (0 not-in-corpus)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+</div>
+<div id="reproducing-the-run" class="section level2">
+<h2>Reproducing the run</h2>
+<pre class="bash"><code># Stage 1 — retrieval (all blocks, or one)
+python3 CARE_review/code/run_retrieval.py
+python3 CARE_review/code/run_retrieval.py breastfeeding
+
+# Stages 3-5
+python3 CARE_review/code/run_pipeline.py corpus
+python3 CARE_review/code/run_pipeline.py fulltext
+python3 CARE_review/code/run_pipeline.py cards
+
+# Stage 6 — multi-agent extraction (Workflow; one Sonnet agent per batch,
+#           reading CARE_review/prompts/deepdive_extraction_prompt.md). Idempotent + resumable.
+
+# Stages 7, 9, 10
+python3 CARE_review/code/run_pipeline.py merge
+python3 code/17_verify_synthesis.py CARE_review/CARE_DEEPDIVE_REVIEW.md \
+        CARE_review/CARE_review/data_corpus.json CARE_review/data/evidence_db.json
+python3 CARE_review/code/run_pipeline.py assemble</code></pre>
+<p><strong>New/changed code:</strong> <code>code/03_queries.py</code>
+(<code>DEEPDIVE_BLOCKS</code>, <code>IMPL_*</code>),
+<code>code/08_scoring.py</code>
+(<code>score_implementation_relevance</code>,
+<code>deepdive_score</code>),
+<code>CARE_review/code/retrieval.py</code>,
+<code>CARE_review/code/run_retrieval.py</code>,
+<code>CARE_review/code/pipeline.py</code>,
+<code>CARE_review/code/run_pipeline.py</code>; parameterised
+<code>code/19_fulltext_all.py</code>,
+<code>code/21_build_extraction_inputs.py</code>,
+<code>code/22_merge_evidence_db.py</code>. <strong>Prompts:</strong>
+<code>CARE_review/prompts/deepdive_extraction_prompt.md</code>,
+<code>CARE_review/prompts/deepdive_synthesis_prompt.md</code>.</p>
+<hr />
+</div>
+<div id="known-limitations" class="section level2">
+<h2>Known limitations</h2>
+<ol style="list-style-type: decimal">
+<li><strong>652 abstract-only papers not yet extracted.</strong> All 981
+full-text papers are done, so the evidence-rich core is complete; the
+remainder would add breadth and country-specificity, not depth.</li>
+<li><strong>Cost/CEA deliberately absent.</strong> By design — Phase 2,
+not yet run.</li>
+<li><strong>No country shortlist.</strong> The stated end goal
+(“identify one country to co-design”) is <em>not</em> delivered by this
+document. The raw material exists (618/648 records carry country tags;
+14 countries have evidence across all three interventions), but the
+scoring and recommendation step has not been done.</li>
+<li><strong>No cross-cutting synthesis.</strong> The three sections
+stand alone; there is no summary table and no comparison across Save the
+Children’s three scaling positions (commodity / behaviour /
+health-system), which the PICOS spec (§6) specified.</li>
+<li><strong>English-language records only</strong> — a pipeline-level
+coverage caveat.</li>
+<li><strong><code>bf_delivery_setting</code> is a per-study
+judgment</strong>, and “both”-tagged reviews pool the two channels — so
+the facility-vs-community contrast is assembled from setting-tagged
+studies, not a head-to-head trial.</li>
+<li><strong>Complementary feeding excluded</strong>, though CARE TE#1
+and TE#2 both advocated pairing counselling with food/nutrient support.
+A scoping decision, not an evidence finding.</li>
+</ol>
+<hr />
+</div>
+<div id="design-decisions-worth-carrying-forward" class="section level2">
+<h2>Design decisions worth carrying forward</h2>
+<ul>
+<li><strong>Separate the implementation search from the clinical
+search.</strong> A single query cannot serve both; the third pass with
+its own outcome <em>and</em> study-type filter is what surfaced coverage
+surveys, program evaluations, and CHW-delivery studies that an
+efficacy-only pipeline ranks near the bottom.</li>
+<li><strong>Make implementation relevance additive to the base
+score</strong>, not a replacement — papers strong on both axes should
+win.</li>
+<li><strong>Some distinctions cannot be retrieved, only
+extracted.</strong> The facility-vs-community split is the worked
+example; the diagnostic (near-identical top-lists across two supposedly
+distinct queries) generalises.</li>
+<li><strong>Validate retrieval relevance before spending on full text
+and extraction.</strong> The BF dilution would have propagated silently
+through every downstream stage.</li>
+<li><strong>Design agent tasks to be idempotent and
+file-writing.</strong> It is what made a multi-day, session-limited,
+112-batch extraction recoverable.</li>
+<li><strong>Phase-separate cost from evidence.</strong> It keeps the
+evidence pass honest (no cost-effectiveness framing leaking into
+clinical judgments) and matches how partners actually sequence
+decisions.</li>
+</ul>
 </div>
 </div>
 

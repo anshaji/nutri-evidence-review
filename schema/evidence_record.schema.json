@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/anshaji/nutri-evidence-review/schema/evidence_record.schema.json",
+  "title": "Nutrition evidence extraction record",
+  "description": "One structured record per paper, produced by the full-corpus per-study extraction stage (prompts/extraction_prompt.md; code/21_build_extraction_inputs.py -> extraction workflow -> code/22_merge_evidence_db.py). The file data/evidence_db.json is an array of these records. Every field is grounded ONLY in the source paper; unstated fields take the empty/null value.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["key", "study_design", "evidence_tier", "intervention_category", "on_topic", "outcomes", "key_finding"],
+  "properties": {
+    "key":   { "type": "string", "description": "Stable filesystem-safe id: 'pmid_<n>' | 'oa_<W-id>' | 'doi_<slug>'." },
+    "pmid":  { "type": ["string", "null"], "description": "PubMed id (null for OpenAlex-only papers)." },
+    "doi":   { "type": ["string", "null"] },
+    "title": { "type": "string" },
+    "year":  { "type": ["integer", "null"] },
+    "journal": { "type": "string" },
+    "study_design": {
+      "type": "string",
+      "description": "VERBATIM from publication_type + journal, e.g. 'Meta-analysis', 'Systematic review & meta-analysis', 'Cochrane review', 'RCT', 'Non-randomised trial', 'Cohort', 'Case-control', 'Cross-sectional', 'Modeling study', 'Narrative/other review', 'Guideline', 'Other'. Only 'Cochrane review' when journal is the Cochrane Database of Systematic Reviews."
+    },
+    "evidence_tier": {
+      "description": "Coarse design bucket for ranking/grouping.",
+      "enum": ["meta_analysis", "systematic_review", "rct", "observational", "modeling", "review_other", "other"]
+    },
+    "population": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["group"],
+      "properties": {
+        "group": { "enum": ["under-5", "WRA", "both", "other"] },
+        "detail": { "type": "string", "description": "Who, ages, setting." }
+      }
+    },
+    "intervention_label": { "type": "string", "description": "Free-text canonical intervention name." },
+    "intervention_category": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+(:.+)?$",
+      "description": "Controlled tag or 'other:<label>'. Controlled vocab: vitamin_a, zinc, iron_children, mnp, sq_lns, multiple_micronutrient_children, anc_mmn, ifa_antenatal, folic_acid_periconception, bep_pregnancy, calcium_pregnancy, maternal_nutrition_other, food_fortification, iodine, complementary_feeding, breastfeeding, cmam_sam_mam, wash, cash_transfers, social_protection, deworming, school_feeding, growth_monitoring, nutrition_sensitive_ag, multisectoral, delayed_cord_clamping, vitamin_d_children."
+    },
+    "comparator": { "type": "string", "description": "Control / placebo / standard care / none stated." },
+    "lmic": { "type": "boolean", "description": "Evaluated in low/middle-income or global settings." },
+    "countries": { "type": "array", "items": { "type": "string" } },
+    "outcomes": {
+      "type": "array",
+      "description": "Up to ~6 most important effect estimates (all-cause and cause-specific as SEPARATE rows; fixed and random effects as separate rows).",
+      "items": { "$ref": "#/$defs/outcome" }
+    },
+    "dominant_trial": {
+      "type": "string",
+      "description": "Evidence-graph field: the heaviest-weight trial named by the review (e.g. DEVTA for vitamin A). Empty if none stated."
+    },
+    "included_trials": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Evidence-graph field: primary trials named in a review's included-studies list / forest plots (NCT/ISRCTN or 'Author Year'). Empty for abstract-only or non-reviews."
+    },
+    "cochrane_id": { "type": ["string", "null"], "pattern": "^CD\\d{6,}$", "description": "Version-independent Cochrane accession, e.g. CD008524." },
+    "certainty": { "type": "string", "description": "GRADE / quality-of-evidence wording if stated." },
+    "key_finding": { "type": "string", "description": "1-2 sentence grounded conclusion." },
+    "on_topic": { "type": "boolean", "description": "True if a nutrition / nutrition-sensitive intervention for under-5 or WRA in LMIC/global settings." },
+    "off_topic_reason": { "type": "string" },
+    "fulltext_used": { "type": "boolean", "description": "Whether full text (vs abstract only) informed the record." },
+    "notes": { "type": "string", "description": "Caveats: superseded version, trial overlap, underpowered pathway, reclassification, etc." }
+  },
+  "$defs": {
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome", "measure"],
+      "properties": {
+        "outcome": { "type": "string", "description": "Outcome name, e.g. 'all-cause mortality'." },
+        "measure": { "enum": ["RR", "OR", "MD", "SMD", "HR", "IRR", "prevalence", "other"] },
+        "value":   { "type": ["number", "null"], "description": "Point estimate; null if not stated." },
+        "ci_low":  { "type": ["number", "null"], "description": "Lower 95% CI bound." },
+        "ci_high": { "type": ["number", "null"], "description": "Upper 95% CI bound." },
+        "unit":    { "type": "string" },
+        "n_studies":      { "type": ["integer", "null"] },
+        "n_participants": { "type": ["integer", "null"] },
+        "subgroup": { "type": "string", "description": "e.g. 'fixed-effect', 'random-effect', an age band, a certainty grade." },
+        "direction": {
+          "description": "Direction of effect. 'null' = no significant effect.",
+          "anyOf": [ { "type": "string", "enum": ["benefit", "harm", "null", "mixed", ""] }, { "type": "null" } ]
+        },
+        "source": { "enum": ["abstract", "fulltext"] },
+        "note": { "type": "string", "description": "Optional free-text annotation for this specific outcome row." }
+      }
+    }
+  }
+}
