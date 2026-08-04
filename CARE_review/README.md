@@ -13,6 +13,10 @@ Phase 2 and is deliberately excluded here.
 
 ---
 
+> **Picking this up after a break?** Read **[claude.md](claude.md)** first — it
+> carries the working context: why decisions were made, current state, open gaps
+> against CARE's original ask, and the traps.
+
 ## 📄 Deliverables — start here
 
 | File | What it is |
