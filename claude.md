@@ -142,10 +142,29 @@ study at **extraction**, not retrieval (broad BF reviews cover both). Latest run
 
 **Partner feedback:** raw feedback from Mercy Corps, Save the Children, and CARE technical experts in `/Users/akashshaji/Downloads/IA member nutrition TE feedback on interventions.docx`.
 
+**Status (2026-08-07):** the CARE deliverable is now
+`CARE_review/final-report/CARE_FINAL_REPORT.docx` — a combined report drawing on
+the pipeline deep-dive plus a **methodologically independent hand-verified
+review** (`CARE_review/INDEPENDENT_EVIDENCE_REVIEW.md`) built to check it and to
+cover what the pipeline could not reach: cost, WHO guidelines, and UN burden
+datasets. The two are compared in `CARE_review/REVIEW_COMPARISON.md`. Full
+detail, including the 16 corrections the fact-check produced, is in
+`CARE_review/CLAUDE.md`.
+
 **Paper angle:** the pipeline + this deep-dive may constitute a methods paper on LLM-assisted rapid evidence review (automated retrieval + grounded synthesis + verification). Working paper target: CEGA or SSRN → *Research Synthesis Methods* or *Systematic Reviews*.
 
 ## Open work
 
-- **Cross-review trial matching + forest-plot weight overlap** to auto-detect double-counting — the remaining big piece of the evidence graph (extraction now captures the per-review trial lists it needs).
+- **Population-fidelity check in the verifier — highest-value upgrade.** An
+  independent fact-check of the CARE deep-dive (2026-08-07) found 16 corrections,
+  and **every one passed the verifier**. Traceability is not fidelity: a number can
+  trace to a real corpus record and still carry the wrong population, comparator,
+  certainty rating or vintage. The worst case described a **preterm/low-birth-weight**
+  effect (KMC, RR 0.68) as applying to all newborns — a ~7× overstatement of the
+  eligible population. A check comparing the population attached to an effect
+  estimate in synthesis against the population field in the extraction record would
+  have caught that, plus two others in the same set. This is also the strongest
+  material the methods paper has for "what automated synthesis gets wrong".
+- **Cross-review trial matching + forest-plot weight overlap** to auto-detect double-counting — the remaining big piece of the evidence graph (extraction now captures the per-review trial lists it needs). *The same fact-check found the pipeline had double-counted one Bhutta-group MMS analysis published twice as independent corroboration — the exact failure this would catch.*
 - Standardized LMIC country list; OpenAlex vs PubMed/Web-of-Science coverage validation.
 - Structured/automated Stage-4 review prompts.

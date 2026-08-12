@@ -21,8 +21,28 @@ Phase 2 and is deliberately excluded here.
 
 | File | What it is |
 |---|---|
-| **[CARE_DEEPDIVE_REVIEW.md](CARE_DEEPDIVE_REVIEW.md)** | **The review.** Three PICOS sections built from 648 on-topic records. Verified: 130 cited claims, 0 not-in-corpus. |
+| **CARE_DEEPDIVE_REPORT.docx** | **The deliverable.** ~29pp partner-facing report. Generated — do not hand-edit. |
+| **[CARE_DEEPDIVE_REPORT.md](CARE_DEEPDIVE_REPORT.md)** | Same report in markdown (assembled from `report/`). Verified: **240 cited claims, 0 not-in-corpus**. |
+| **[report/](report/)** | **Edit here.** The nine source sections — exec summary, method, cross-cutting synthesis, country shortlist, three intervention chapters, limitations, appendices. |
+| [CARE_DEEPDIVE_REVIEW.md](CARE_DEEPDIVE_REVIEW.md) | *Superseded* predecessor, kept as a record. Its three sections became chapters 5–7. |
 | **[workplan_care_deep_dive.docx](workplan_care_deep_dive.docx)** | Partner-facing workplan (objectives, PICOS scope, timeline, deliverables). |
+
+**Markdown is the source of truth; the .docx is generated from it.** Edit
+`report/*.md`, then:
+
+```bash
+bash CARE_review/code/render_report.sh   # assemble → .docx → verify every number
+```
+
+### What the report answers
+
+| CARE's question | Where |
+|---|---|
+| Does it work? | §5–7, one chapter per intervention |
+| Can we scale it, through what? | §3.3 (three scaling positions), §5.4, §6.3–6.4, §7.5–7.6 |
+| What blocks it? | §5.6, §6.6, §7.7 |
+| **Where?** | **§4 — scored shortlist of 18 eligible countries.** No lead named by design; §4.6 sets out what would settle it. |
+| Cost | Out of scope — Phase 2 (§2.1, §8.1) |
 
 ## 📚 Method documentation — `docs/`
 
@@ -52,6 +72,9 @@ The deep-dive layer owns all its own logic; it reuses the core pipeline
 | **[code/scoring.py](code/scoring.py)** | `score_implementation_relevance` (0–12) and `deepdive_score` — additive over the core scorer, which is left untouched. |
 | **[code/retrieval.py](code/retrieval.py)** | Stage 1 orchestrator — MA + SR + IMPL passes per block, dedup, enrich, rank. |
 | **[code/pipeline.py](code/pipeline.py)** | Stages 3–10 — corpus assembly, full text, cards, merge, assemble. |
+| **[code/country_analysis.py](code/country_analysis.py)** | Country normalisation + scoring behind §4 and Appendix C. Documents the two artifacts it controls for: CHW-cadre-name bias and multi-country cross-tagging. |
+| **[code/build_reference_docx.py](code/build_reference_docx.py)** | Builds the styled pandoc template (Cambria/Calibri — both ship with Office, so no embedding). |
+| **[code/render_report.sh](code/render_report.sh)** | Assemble sections → `.docx` → run the verifier. One command. |
 | **[code/run_retrieval.py](code/run_retrieval.py)** · **[code/run_pipeline.py](code/run_pipeline.py)** | Entry points. |
 
 *Reused from the core pipeline:* `pubmed_client`, `openalex_client`, `dedup`,
@@ -103,12 +126,15 @@ python3 code/17_verify_synthesis.py CARE_review/CARE_DEEPDIVE_REVIEW.md \
 
 ## Status
 
-- ✅ All 981 full-text papers extracted; 648 on-topic records; verifier clean.
-- ⬜ **652 abstract-only papers** not yet extracted (breadth, not depth).
-- ⬜ **Country shortlist** — CARE's stated end goal, not yet delivered. Raw material
-  exists (618/648 records carry country tags; 14 countries span all three interventions).
-- ⬜ **Cross-cutting synthesis** — summary table and the three-scaling-positions
+- ✅ All 981 full-text papers extracted; 648 on-topic records; verifier clean
+  (240 cited claims, 0 not-in-corpus).
+- ✅ **Country shortlist** — 18 eligible countries scored; Ethiopia and India lead.
+  No single country named, by decision; §4.6 lists what would settle it.
+- ✅ **Cross-cutting synthesis** — summary table plus the three-scaling-positions
   comparison specified in PICOS §6.
+- ✅ **Partner-facing `.docx`** rendered and reproducible.
+- ⬜ **652 abstract-only papers** not yet extracted (breadth, not depth).
 - ⬜ **Cost / Phase 2** — deferred by design.
+- ⬜ **Liz's senior review**, then send to CARE (target 2026-08-08).
 
 See `../task.md` for live task state.
