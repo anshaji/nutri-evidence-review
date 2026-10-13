@@ -1,6 +1,6 @@
 # Evidence Atlas — country profiles for child wasting
 
-**Status:** plan + probe results, no code yet · **Written:** 2026-09-24 · **Owner:** Akash
+**Status:** plan + probes, no code yet. Direction under revision after the 2026-09-25 sanity check (§2.4) · **Written:** 2026-09-24 · **Owner:** Akash
 **Folder name is provisional** (`atlas/`); rename before the first commit if you prefer.
 
 ---
@@ -43,9 +43,10 @@ Everything below was tested live from this machine with plain `curl`/`urllib`.
 |---|---|---|---|
 | **World Bank WDI API** (`api.worldbank.org/v2`) | Yes, JSON | Wasting and severe wasting prevalence (JME survey values), under-5 population, health expenditure, physicians/nurses/beds density, UHC index, skilled birth attendance, immunisation, WASH, poverty, Gini, rural share, female literacy, fertility, and **social-protection coverage** (ASPIRE `per_allsp.cov_pop_tot`, needs `source=25`) | One indicator per call; `mrnev=1` returns latest non-empty value. Country metadata endpoint gives region, income group and lending type for the standardised LMIC list (an item already on the repo's open-work list). |
 | **UNICEF JME via SDMX** (`sdmx.data.unicef.org`) | Yes, CSV | Wasting and severe wasting **disaggregated by wealth quintile, residence, sex, age band, maternal education**, with CI, SE and weighted sample size, and the source survey named | Ethiopia returned 94 rows for one indicator. This is the best single burden source. |
-| **WHO GHO OData** (`ghoapi.azureedge.net`) | Yes, JSON | Survey-based wasting with CI and survey citation; **model-based numbers affected** (`NUTWASTINGNUM`, `NUTSEVWASTINGNUM`, millions); **community health worker density** (`HRH_29`) and counts (`HWF_0024`) | CHW density is the platform indicator CMAM scaling hinges on. |
+| **WHO GHO OData** (`ghoapi.azureedge.net`) | Yes, JSON | Survey-based wasting with CI and survey citation; **community health worker counts** (`HWF_0024`: 108 countries, 86 with a 2020+ value) | *Corrected 2026-09-25:* the model-based numbers affected (`NUTWASTINGNUM`) are regional and global only, and the density series `HRH_29` returns no country rows. Density must be computed from counts, and CHW cadre definitions differ widely between countries. |
 | **DHS Program API** (`api.dhsprogram.com`) | Yes, JSON, no key | Wasting by **subnational region**, wealth, residence, age, mother's education, birth size; 92 countries; multiple survey rounds so a within-country trend exists | Ethiopia 2016: Somali region 22.7% vs SNNPR 6.0%. This is the "where inside the country" layer. |
 | INFORM Risk index API | Reachable, needs an integer workflow id | Fragility / hazard / coping-capacity scores | Fix the query later; not needed for PoC. |
+| IPC API (`ipcinfo.org`) | Key via request form | Subnational acute food insecurity phases | Acute malnutrition phases were listed as "to be added" when the API launched. Worth requesting a key for crisis countries. |
 | WHO GINA (policies and programmes) | HTTP 301, HTML app | Nutrition policies and programme actions by country | Not machine-readable. Treat as a manual source for the registry. |
 | acutemalnutrition.org country pages | HTTP 200, HTML | CMAM admissions and coverage narratives | Candidate for careful scraping later; manual for PoC. |
 | Global Nutrition Report country profiles | HTTP 200, HTML | Consolidated indicators and policy commitments | Manual cross-check source. |
@@ -92,6 +93,53 @@ prevention evidence (SQ-LNS, MAM supplementary feeding, cash, IYCF, WASH) needs 
 retrieval block; and country tags come from LLM extraction, so the atlas must reuse the
 `normalise_country` logic from `CARE_review/code/country_analysis.py` rather than trust
 raw strings.
+
+
+### 2.4 Sanity check: does context predict what we want to transport? (2026-09-25)
+
+Three checks on whether a country profile predicts the quantities the atlas would carry
+across countries.
+
+**Efficacy transports without matching.** The SQ-LNS individual-participant-data
+meta-analysis (Dewey et al. 2021, PMID 34590672; 14 RCTs, n = 37,066) found wasting fell
+by 14%. The effect "generally did not differ" by region, stunting burden, malaria,
+sanitation, water quality, supplementation duration, contact frequency or compliance.
+The modifiers that did matter were individual: child sex, birth order and household
+sanitation. For this intervention, the global pooled estimate is already the best
+predictor for any country, and profile matching adds nothing. This IPD analysis is not
+in the corpus, which is itself a sign the corpus was not built for this purpose.
+
+**Programme performance does not track the country.** Recovery rates extracted from the
+corpus, one value per study, single-country studies only:
+
+| Measure | Value |
+|---|---|
+| Studies with a usable recovery rate | 38, in 15 countries |
+| Grand mean, SD | 69.2%, 18.4 points |
+| Variance between countries (6 countries with ≥ 2 studies) | 25% |
+| Variance within countries | 75% |
+| Ethiopia alone, 15 studies | 32.7% to 87.0% |
+| Leave-one-out error predicting a study from its own country's other studies | 16.2 points |
+| Same, predicting from the global mean | 13.5 points |
+
+Knowing the country made the prediction worse, not better. The sample is small and mixes
+SAM and MAM, inpatient and outpatient, and different discharge definitions, so the
+numbers are indicative only. The direction is still clear: performance varies by
+programme, site and delivery model far more than by country.
+
+**Implementer is a known modifier.** Vivalt (2020, *JEEA* 18(6)), across 635 impact
+evaluations, found government-implemented programmes have smaller effects than
+NGO- or academic-implemented ones. For a tool aimed at government scale-up, the
+implementer is the modifier that matters most, and it is recordable per study.
+Pritchett and Sandefur (2015, *AER P&P* 105(5)) found local non-experimental estimates
+beat experimental estimates from other contexts on mean squared error. That supports
+blending local observational data, but only where both sources measure the same
+estimand.
+
+**Implication.** The unit of comparison should be the **delivery model**, meaning
+implementer, platform, protocol, setting type and subnational context, not the country.
+The country profile stays as the context layer. See the 2026-09-25 revision note for
+what this changes in the PoC.
 
 ---
 
@@ -184,8 +232,11 @@ scale to 126 countries or spend on new retrieval.
 | Evidence-poor, high burden | Yemen, Mauritania, Djibouti, Laos, Papua New Guinea | Wasting ≥ 10% with little or no corpus evidence: the analogue finder's real use case |
 | Sanity case | Ecuador | Your example; low prevalence (0.7%), tests that the tool does not over-claim |
 
-Six of these are also on the WHO/UNICEF Global Action Plan front-runner list, which
-gives the registry an obvious first source.
+Seven of these (Ethiopia, Malawi, Kenya, Niger, Pakistan, Yemen, Papua New Guinea) are
+among the 24 Global Action Plan frontrunner countries with government-endorsed wasting
+roadmaps, which gives the registry an obvious first source. *Corrected 2026-09-25 from
+"six"; the list comes from a secondary source because childwasting.org blocks automated
+access.*
 
 ### 4.2 Phases and checkpoints
 
@@ -276,3 +327,23 @@ registry will go stale unless someone owns it.
 5. **Similarity weights.** **Equal domain weights plus one platform-weighted variant** for the PoC; expert-elicited weights later.
 
 Reply with any changes and I will start P1.
+
+---
+
+## 7. Revision note (2026-09-25): proposed change of direction
+
+Proposed, not yet agreed. Based on §2.4.
+
+| Part of the idea | Keep? | Change |
+|---|---|---|
+| Descriptive country profile | Keep, but it is not the novel part | WHO NLIS and Global Nutrition Report profiles already cover most indicators, and 24 frontrunner countries have wasting roadmaps. Our addition is linking the evidence corpus and implementation findings to each country, with provenance. |
+| Country-to-country analogue matching | Demote | Country explains a quarter of the variation in programme performance, and a country's own average predicted worse than the global one. Keep as a browsing aid, not a prediction. |
+| Delivery-model comparison | **New core** | Compare programmes by implementer, platform, protocol, setting type and subnational context. Test whether these features predict recovery and coverage better than country does. |
+| Trial plus observational blending | Narrow | Use for estimands both sources measure, mainly simplified vs standard CMAM protocols and prevention with control arms. Not for treatment vs no treatment. |
+| Simulation | Reframe | Efficacy from global pooled estimates, which transport. Coverage and programme performance from delivery-model evidence, which is where the uncertainty lives. Output ranges and the coverage needed for impact, not point predictions. The LLM structures programme context from reports; it does not produce numbers. |
+
+**Revised first probe (replaces P1 for now).** Add implementer, platform, protocol and
+setting-type fields to the ~100 CMAM programme-level records already in the corpus. Then
+repeat the §2.4 variance test with those features instead of country. If delivery-model
+features explain materially more than 25% of the variance, the reframed atlas has a
+measurable core. If not, the atlas should be descriptive only.
